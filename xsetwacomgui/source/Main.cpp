@@ -1,8 +1,8 @@
-#include <algorithm>
 #define IMGUI_DEFINE_MATH_OPERATORS
 
 #include "Widgets.hpp"
 
+#include <imgui/extensions/imgui_toast.hpp>
 #include <imgui/extensions/imgui_bezier.hpp>
 #include <imgui/imgui.hpp>
 #include <imgui/imgui_internal.hpp>
@@ -28,7 +28,20 @@ static constexpr auto WIDTH = 800;
 static constexpr auto HEIGHT = 785;
 static constexpr auto FPS = 60;
 
-liberror::Result<void> load_device_settings(libwacom::Area& area, libwacom::Pressure& pressure, bool& forceFullArea, bool& forceAspectRatio)
+struct Context
+{
+    std::vector<libwacom::Device> const& devices;
+    libwacom::Device const& selectedDevice;
+    int& selectedDeviceIndex;
+    libwacom::Area& deviceArea;
+    libwacom::Pressure& devicePressure;
+    bool& hasChangedDeviceArea;
+    bool& hasChangedDevicePressure;
+    bool& forceFullArea;
+    bool& forceAspectRatio;
+};
+
+liberror::Result<void> load_device_settings(Context ctx)
 {
     std::ifstream settings(APPLICATION_DEVICE_SETTINGS);
     std::stringstream content;
@@ -38,46 +51,46 @@ liberror::Result<void> load_device_settings(libwacom::Area& area, libwacom::Pres
     {
         auto settingsJson = nlohmann::json::parse(content.str());
 
-        forceFullArea = settingsJson["forceFullArea"].get<bool>();
-        forceAspectRatio = settingsJson["forceAspectRatio"].get<bool>();
-        area.offsetX = settingsJson["area"]["offsetX"].get<float>();
-        area.offsetY = settingsJson["area"]["offsetY"].get<float>();
-        area.width = settingsJson["area"]["width"].get<float>();
-        area.height = settingsJson["area"]["height"].get<float>();
-        pressure.minX = settingsJson["pressure"]["minX"].get<float>();
-        pressure.minY = settingsJson["pressure"]["minY"].get<float>();
-        pressure.maxX = settingsJson["pressure"]["maxX"].get<float>();
-        pressure.maxY = settingsJson["pressure"]["maxY"].get<float>();
+        ctx.forceFullArea = settingsJson["forceFullArea"].get<bool>();
+        ctx.forceAspectRatio = settingsJson["forceAspectRatio"].get<bool>();
+        ctx.deviceArea.offsetX = settingsJson["area"]["offsetX"].get<float>();
+        ctx.deviceArea.offsetY = settingsJson["area"]["offsetY"].get<float>();
+        ctx.deviceArea.width = settingsJson["area"]["width"].get<float>();
+        ctx.deviceArea.height = settingsJson["area"]["height"].get<float>();
+        ctx.devicePressure.minX = settingsJson["pressure"]["minX"].get<float>();
+        ctx.devicePressure.minY = settingsJson["pressure"]["minY"].get<float>();
+        ctx.devicePressure.maxX = settingsJson["pressure"]["maxX"].get<float>();
+        ctx.devicePressure.maxY = settingsJson["pressure"]["maxY"].get<float>();
     }
     catch (std::exception const& error)
     {
         return liberror::make_error("Failed to properly parse settings file: {}", error.what());
     }
 
-    spdlog::info("Loaded settings from file {}", APPLICATION_DEVICE_SETTINGS);
+    ImGui::PushToast("Info", fmt::format("Loaded settings from file {}", APPLICATION_DEVICE_SETTINGS).data());
 
     return {};
 }
 
-void save_device_settings(libwacom::Area const& area, libwacom::Pressure const& pressure, bool forceFullArea, bool forceAspectRatio)
+void save_device_settings(Context ctx)
 {
     nlohmann::ordered_json settingsJson {
-        { "forceFullArea", forceFullArea },
-        { "forceAspectRatio", forceAspectRatio },
+        { "forceFullArea", ctx.forceFullArea },
+        { "forceAspectRatio", ctx.forceAspectRatio },
         {
             "area", {
-                { "offsetX", area.offsetX },
-                { "offsetY", area.offsetY },
-                { "width", area.width },
-                { "height", area.height }
+                { "offsetX", ctx.deviceArea.offsetX },
+                { "offsetY", ctx.deviceArea.offsetY },
+                { "width", ctx.deviceArea.width },
+                { "height", ctx.deviceArea.height }
             }
         },
         {
             "pressure", {
-                { "minX", pressure.minX },
-                { "minY", pressure.minY },
-                { "maxX", pressure.maxX },
-                { "maxY", pressure.maxY },
+                { "minX", ctx.devicePressure.minX },
+                { "minY", ctx.devicePressure.minY },
+                { "maxX", ctx.devicePressure.maxX },
+                { "maxY", ctx.devicePressure.maxY },
             }
         }
     };
@@ -85,10 +98,10 @@ void save_device_settings(libwacom::Area const& area, libwacom::Pressure const& 
     std::ofstream file { APPLICATION_DEVICE_SETTINGS };
     file << std::setw(4) << settingsJson;
 
-    spdlog::info("Saved settings to file {}", APPLICATION_DEVICE_SETTINGS);
+    ImGui::PushToast("Success", "Saved settings to settings.json");
 }
 
-liberror::Result<void> render_window(std::vector<libwacom::Device> const& devices, libwacom::Device const& selectedDevice, int& selectedDeviceIndex, libwacom::Area& deviceArea, libwacom::Pressure& devicePressure, bool& hasChangedDeviceArea, bool& hasChangedDevicePressure, bool& forceFullArea, bool& forceAspectRatio)
+liberror::Result<void> render_window(Context ctx)
 {
     ImGui::BeginGroup();
     {
@@ -104,12 +117,12 @@ liberror::Result<void> render_window(std::vector<libwacom::Device> const& device
 
         static ImVec2 deviceAreaAnchors[4] { { -1, -1 }, { -1, -1 }, { -1, -1 }, { -1, -1 } };
 
-        if (!devices.empty())
+        if (!ctx.devices.empty())
         {
-            deviceAreaAnchors[0] = { deviceArea.offsetX / selectedDevice.area.width, deviceArea.offsetY / selectedDevice.area.height };
-            deviceAreaAnchors[1] = { deviceArea.offsetX / selectedDevice.area.width, (deviceArea.height + deviceArea.offsetY) / selectedDevice.area.height };
-            deviceAreaAnchors[2] = { (deviceArea.width + deviceArea.offsetX) / selectedDevice.area.width, deviceArea.offsetY / selectedDevice.area.height };
-            deviceAreaAnchors[3] = { (deviceArea.width + deviceArea.offsetX) / selectedDevice.area.width, (deviceArea.height + deviceArea.offsetY) / selectedDevice.area.height };
+            deviceAreaAnchors[0] = { ctx.deviceArea.offsetX / ctx.selectedDevice.area.width, ctx.deviceArea.offsetY / ctx.selectedDevice.area.height };
+            deviceAreaAnchors[1] = { ctx.deviceArea.offsetX / ctx.selectedDevice.area.width, (ctx.deviceArea.height + ctx.deviceArea.offsetY) / ctx.selectedDevice.area.height };
+            deviceAreaAnchors[2] = { (ctx.deviceArea.width + ctx.deviceArea.offsetX) / ctx.selectedDevice.area.width, ctx.deviceArea.offsetY / ctx.selectedDevice.area.height };
+            deviceAreaAnchors[3] = { (ctx.deviceArea.width + ctx.deviceArea.offsetX) / ctx.selectedDevice.area.width, (ctx.deviceArea.height + ctx.deviceArea.offsetY) / ctx.selectedDevice.area.height };
         }
         else
         {
@@ -122,17 +135,22 @@ liberror::Result<void> render_window(std::vector<libwacom::Device> const& device
         static const ImVec2 deviceMapperSize { 15 * 16, 15 * 9 };
         ImGui::SetCursorPosX((ImGui::GetWindowWidth() - deviceMapperSize.x)/2);
         static ImRect deviceMapperPosition {};
-        hasChangedDeviceArea = area_mapper("Tablet", deviceAreaAnchors, deviceMapperSize, &deviceMapperPosition, forceFullArea, forceAspectRatio);
+        ctx.hasChangedDeviceArea = area_mapper("Tablet", deviceAreaAnchors, deviceMapperSize, &deviceMapperPosition, ctx.forceFullArea, ctx.forceAspectRatio);
         ImGui::SetCursorPosX(cursorPosX);
 
-        if (hasChangedDeviceArea)
+        if (ctx.hasChangedDeviceArea)
         {
-            deviceArea = {
-                .offsetX = deviceAreaAnchors[0].x * selectedDevice.area.width,
-                .offsetY = deviceAreaAnchors[0].y * selectedDevice.area.height,
-                .width   = (deviceAreaAnchors[2].x - deviceAreaAnchors[0].x) * selectedDevice.area.width,
-                .height  = (deviceAreaAnchors[3].y - deviceAreaAnchors[2].y) * selectedDevice.area.height
+            ctx.deviceArea = {
+                .offsetX = deviceAreaAnchors[0].x * ctx.selectedDevice.area.width,
+                .offsetY = deviceAreaAnchors[0].y * ctx.selectedDevice.area.height,
+                .width   = (deviceAreaAnchors[2].x - deviceAreaAnchors[0].x) * ctx.selectedDevice.area.width,
+                .height  = (deviceAreaAnchors[3].y - deviceAreaAnchors[2].y) * ctx.selectedDevice.area.height
             };
+        }
+
+        if (ctx.hasChangedDeviceArea && ctx.forceFullArea)
+        {
+            ctx.deviceArea = ctx.selectedDevice.area;
         }
 
         for (auto [monitorAnchor, deviceAnchor] : fplus::zip(std::span<ImVec2>(monitorAreaAnchors, 4), std::span<ImVec2>(deviceAreaAnchors, 4)))
@@ -154,9 +172,9 @@ liberror::Result<void> render_window(std::vector<libwacom::Device> const& device
             {
                 ImGui::AlignTextToFramePadding();
                 ImGui::Text("Device");
-                auto deviceNames = fplus::transform([] (libwacom::Device const& device) { return device.name.data(); }, devices);
+                auto deviceNames = fplus::transform([] (libwacom::Device const& device) { return device.name.data(); }, ctx.devices);
                 ImGui::SetNextItemWidth(308);
-                ImGui::Combo("##Device", &selectedDeviceIndex, deviceNames.data(), static_cast<int>(deviceNames.size()));
+                ImGui::Combo("##Device", &ctx.selectedDeviceIndex, deviceNames.data(), static_cast<int>(deviceNames.size()));
             }
             {
                 ImGui::BeginGroup();
@@ -164,7 +182,7 @@ liberror::Result<void> render_window(std::vector<libwacom::Device> const& device
                     ImGui::AlignTextToFramePadding();
                     ImGui::Text("Width");
                     ImGui::SetNextItemWidth(150);
-                    hasChangedDeviceArea |= ImGui::InputFloat("##TabletWidth", &deviceArea.width, 0.f, 0.f, "%.0f");
+                    ctx.hasChangedDeviceArea |= ImGui::InputFloat("##TabletWidth", &ctx.deviceArea.width, 0.f, 0.f, "%.0f");
                 }
                 ImGui::EndGroup();
                 ImGui::SameLine();
@@ -173,7 +191,7 @@ liberror::Result<void> render_window(std::vector<libwacom::Device> const& device
                     ImGui::AlignTextToFramePadding();
                     ImGui::Text("Height");
                     ImGui::SetNextItemWidth(150);
-                    hasChangedDeviceArea |= ImGui::InputFloat("##TabletHeight", &deviceArea.height, 0.f, 0.f, "%.0f");
+                    ctx.hasChangedDeviceArea |= ImGui::InputFloat("##TabletHeight", &ctx.deviceArea.height, 0.f, 0.f, "%.0f");
                 }
                 ImGui::EndGroup();
             }
@@ -183,7 +201,7 @@ liberror::Result<void> render_window(std::vector<libwacom::Device> const& device
                     ImGui::AlignTextToFramePadding();
                     ImGui::Text("Offset X");
                     ImGui::SetNextItemWidth(150);
-                    hasChangedDeviceArea |= ImGui::InputFloat("##TabletOffsetX", &deviceArea.offsetX, 0.f, 0.f, "%.0f");
+                    ctx.hasChangedDeviceArea |= ImGui::InputFloat("##TabletOffsetX", &ctx.deviceArea.offsetX, 0.f, 0.f, "%.0f");
                 }
                 ImGui::EndGroup();
                 ImGui::SameLine();
@@ -192,23 +210,23 @@ liberror::Result<void> render_window(std::vector<libwacom::Device> const& device
                     ImGui::AlignTextToFramePadding();
                     ImGui::Text("Offset Y");
                     ImGui::SetNextItemWidth(150);
-                    hasChangedDeviceArea |= ImGui::InputFloat("##TabletOffsetY", &deviceArea.offsetY, 0.f, 0.f, "%.0f");
+                    ctx.hasChangedDeviceArea |= ImGui::InputFloat("##TabletOffsetY", &ctx.deviceArea.offsetY, 0.f, 0.f, "%.0f");
                 }
                 ImGui::EndGroup();
             }
 
-            hasChangedDeviceArea |= ImGui::Checkbox("Full Area", &forceFullArea);
+            ctx.hasChangedDeviceArea |= ImGui::Checkbox("Full Area", &ctx.forceFullArea);
             ImGui::BeginDisabled();
-            ImGui::Checkbox("Force Proportions", &forceAspectRatio);
+            ImGui::Checkbox("Force Proportions", &ctx.forceAspectRatio);
             ImGui::EndDisabled();
         }
         ImGui::EndGroup();
         ImGui::SameLine();
         ImGui::BeginGroup();
         {
-            static float devicePressureAnchors[4] = { devicePressure.minX, devicePressure.minY, devicePressure.maxX, devicePressure.maxY };
+            static float devicePressureAnchors[4] = { ctx.devicePressure.minX, ctx.devicePressure.minY, ctx.devicePressure.maxX, ctx.devicePressure.maxY };
 
-            if (devices.empty())
+            if (ctx.devices.empty())
             {
                 devicePressureAnchors[0] = 0;
                 devicePressureAnchors[1] = 0;
@@ -217,11 +235,11 @@ liberror::Result<void> render_window(std::vector<libwacom::Device> const& device
             }
 
             ImGui::AlignTextToFramePadding();
-            hasChangedDevicePressure = ImGui::BezierEditor("Pressure Curve", devicePressureAnchors, { 250, 250 });
+            ctx.hasChangedDevicePressure = ImGui::BezierEditor("Pressure Curve", devicePressureAnchors, { 250, 250 });
 
-            if (hasChangedDevicePressure)
+            if (ctx.hasChangedDevicePressure)
             {
-                devicePressure = { devicePressureAnchors[0], devicePressureAnchors[1], devicePressureAnchors[2], devicePressureAnchors[3] };
+                ctx.devicePressure = { devicePressureAnchors[0], devicePressureAnchors[1], devicePressureAnchors[2], devicePressureAnchors[3] };
             }
         }
         ImGui::EndGroup();
@@ -230,9 +248,9 @@ liberror::Result<void> render_window(std::vector<libwacom::Device> const& device
 
     if (ImGui::Button("Save & Apply", { 200, 35 }))
     {
-        libwacom::set_stylus_area(selectedDevice.id, deviceArea);
-        libwacom::set_stylus_pressure_curve(selectedDevice.id, devicePressure);
-        save_device_settings(deviceArea, devicePressure, forceFullArea, forceAspectRatio);
+        libwacom::set_stylus_area(ctx.selectedDevice.id, ctx.deviceArea);
+        libwacom::set_stylus_pressure_curve(ctx.selectedDevice.id, ctx.devicePressure);
+        save_device_settings(ctx);
     }
 
     return {};
@@ -264,6 +282,8 @@ int main()
     bool hasChangedDeviceArea = false;
     bool hasChangedDevicePressure = false;
 
+    Context ctx { devices, selectedDevice, selectedDeviceIndex, deviceArea, devicePressure, hasChangedDeviceArea, hasChangedDevicePressure, forceFullArea, forceAspectRatio };
+
     while (!WindowShouldClose())
     {
         BeginDrawing();
@@ -281,28 +301,33 @@ int main()
         ImGui::SetNextWindowSize({ static_cast<float>(width), static_cast<float>(height) });
         ImGui::PushFont(font);
         {
-            ImGui::Begin(APPLICATION, nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+            ImGui::Begin(APPLICATION, nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus);
+            ImGui::RenderToasts();
             {
                 ImGui::BeginDisabled(devices.empty());
                 {
-                    if (devices.empty() || forceFullArea) deviceArea = selectedDevice.area;
-                    if (devices.empty()) devicePressure = { 0, 0, 1, 1 };
+                    if (devices.empty() && deviceArea.width == -1 && deviceArea.height == -1)
+                    {
+                        deviceArea = selectedDevice.area;
+                        devicePressure = { 0, 0, 1, 1 };
+                        ImGui::PushToast("Warning", "No available devices were found");
+                    }
 
                     if (!devices.empty() && devicePressure.minX == -1 && devicePressure.minY == -1 && deviceArea.width == -1 && deviceArea.height == -1)
                     {
                         if (std::filesystem::exists(APPLICATION_DEVICE_SETTINGS))
                         {
-                            MUST(load_device_settings(deviceArea, devicePressure, forceFullArea, forceAspectRatio));
+                            MUST(load_device_settings(ctx));
                         }
                         else
                         {
-                            spdlog::warn("Settings file not found, reading properties from xsetwacom");
+                            ImGui::PushToast("Warning", "Could not find settings file, reading properties from xsetwacom");
                             deviceArea = MUST(libwacom::get_stylus_area(selectedDevice.id));
                             devicePressure = MUST(libwacom::get_stylus_pressure_curve(selectedDevice.id));
                         }
                     }
 
-                    MUST(render_window(devices, selectedDevice, selectedDeviceIndex, deviceArea, devicePressure, hasChangedDeviceArea, hasChangedDevicePressure, forceFullArea, forceAspectRatio));
+                    MUST(render_window(ctx));
                 }
                 ImGui::EndDisabled();
             }
