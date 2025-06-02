@@ -1,0 +1,37 @@
+{
+    "version": 6,
+    "cmakeMinimumRequired": { "major": 3, "minor": 25, "patch": 0 },
+    "configurePresets": [
+        {
+            "name": "base",
+            "displayName": "x64 base",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build",
+            "architecture": { "value": "x64", "strategy": "external" },
+            "cacheVariables": {
+                "EXPORT_DIR": "${sourceDir}/build/cmake",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/build/${presetName}",
+                "xsetwacomgui_CompilerOptions": "-Werror;-Wall;-Wextra;-Wshadow;-Wnon-virtual-dtor;-Wold-style-cast;-Wcast-align;-Wunused;-Woverloaded-virtual;-Wpedantic;-Wconversion;-Wsign-conversion;-Wnull-dereference;-Wdouble-promotion;-Wimplicit-fallthrough"
+            }
+        },
+        {
+            "name": "debug",
+            "inherits": [ "base" ],
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "ENABLE_CLANGTIDY": true,
+                "ENABLE_CPPCHECK": true
+            }
+        },
+        {
+            "name": "release",
+            "inherits": [ "base" ],
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "ENABLE_CLANGTIDY": false,
+                "ENABLE_CPPCHECK": false
+            }
+        }]
+}
+
