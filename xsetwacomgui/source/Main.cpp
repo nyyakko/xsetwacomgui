@@ -135,7 +135,7 @@ liberror::Result<void> render_window(Context ctx)
         static const ImVec2 deviceMapperSize { 15 * 16, 15 * 9 };
         ImGui::SetCursorPosX((ImGui::GetWindowWidth() - deviceMapperSize.x)/2);
         static ImRect deviceMapperPosition {};
-        ctx.hasChangedDeviceArea = area_mapper("Tablet", deviceAreaAnchors, deviceMapperSize, &deviceMapperPosition, ctx.forceFullArea, ctx.forceAspectRatio);
+        ctx.hasChangedDeviceArea |= area_mapper("Tablet", deviceAreaAnchors, deviceMapperSize, &deviceMapperPosition, ctx.forceFullArea, ctx.forceAspectRatio);
         ImGui::SetCursorPosX(cursorPosX);
 
         if (ctx.hasChangedDeviceArea)
