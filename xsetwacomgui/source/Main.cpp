@@ -20,9 +20,12 @@
 #include <filesystem>
 #include <fstream>
 #include <sstream>
+#include <cstdlib>
 
-static constexpr auto APPLICATION = "XSetWacomGUI";
-static constexpr auto APPLICATION_DEVICE_SETTINGS = "settings.json";
+static constexpr auto APPLICATION_NAME = "XSetWacomGUI";
+
+#define APPLICATION_SETTINGS_PATH get_base_config_path() / APPLICATION_NAME
+#define APPLICATION_SETTINGS APPLICATION_SETTINGS_PATH / "devices.json"
 
 static constexpr auto WIDTH = 800;
 static constexpr auto HEIGHT = 785;
@@ -41,9 +44,17 @@ struct Context
     bool& forceAspectRatio;
 };
 
+std::filesystem::path get_base_config_path()
+{
+    auto home = getenv("XDG_CONFIG_HOME");
+    if (home == nullptr) home = getenv("HOME");
+    assert(home != nullptr && "Why are you homeless?");
+    return std::filesystem::path(home) / ".config";
+}
+
 liberror::Result<void> load_device_settings(Context ctx)
 {
-    std::ifstream settings(APPLICATION_DEVICE_SETTINGS);
+    std::ifstream settings(APPLICATION_SETTINGS);
     std::stringstream content;
     content << settings.rdbuf();
 
@@ -67,7 +78,7 @@ liberror::Result<void> load_device_settings(Context ctx)
         return liberror::make_error("Failed to properly parse settings file: {}", error.what());
     }
 
-    ImGui::PushToast("Info", fmt::format("Loaded settings from file {}", APPLICATION_DEVICE_SETTINGS).data());
+    ImGui::PushToast("Info", "Loaded settings from file");
 
     return {};
 }
@@ -95,10 +106,10 @@ void save_device_settings(Context ctx)
         }
     };
 
-    std::ofstream file { APPLICATION_DEVICE_SETTINGS };
+    std::ofstream file(APPLICATION_SETTINGS);
     file << std::setw(4) << settingsJson;
 
-    ImGui::PushToast("Success", "Saved settings to settings.json");
+    ImGui::PushToast("Success", "The changes were sucessfully saved");
 }
 
 liberror::Result<void> render_window(Context ctx)
@@ -258,7 +269,7 @@ liberror::Result<void> render_window(Context ctx)
 
 int main()
 {
-    InitWindow(WIDTH, HEIGHT, APPLICATION);
+    InitWindow(WIDTH, HEIGHT, APPLICATION_NAME);
     SetTargetFPS(FPS);
 
     auto const window = static_cast<GLFWwindow*>(GetWindowHandle());
@@ -284,6 +295,11 @@ int main()
 
     Context ctx { devices, selectedDevice, selectedDeviceIndex, deviceArea, devicePressure, hasChangedDeviceArea, hasChangedDevicePressure, forceFullArea, forceAspectRatio };
 
+    if (!std::filesystem::exists(APPLICATION_SETTINGS_PATH))
+    {
+        std::filesystem::create_directory(APPLICATION_SETTINGS_PATH);
+    }
+
     while (!WindowShouldClose())
     {
         BeginDrawing();
@@ -301,7 +317,7 @@ int main()
         ImGui::SetNextWindowSize({ static_cast<float>(width), static_cast<float>(height) });
         ImGui::PushFont(font);
         {
-            ImGui::Begin(APPLICATION, nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus);
+            ImGui::Begin(APPLICATION_NAME, nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus);
             ImGui::RenderToasts();
             {
                 ImGui::BeginDisabled(devices.empty());
@@ -315,7 +331,7 @@ int main()
 
                     if (!devices.empty() && devicePressure.minX == -1 && devicePressure.minY == -1 && deviceArea.width == -1 && deviceArea.height == -1)
                     {
-                        if (std::filesystem::exists(APPLICATION_DEVICE_SETTINGS))
+                        if (std::filesystem::exists(APPLICATION_SETTINGS))
                         {
                             MUST(load_device_settings(ctx));
                         }
