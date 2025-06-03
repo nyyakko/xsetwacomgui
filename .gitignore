@@ -5,3 +5,6 @@
 
 build/
 cmake/CPM.cmake
+
+settings.json
+imgui.ini
