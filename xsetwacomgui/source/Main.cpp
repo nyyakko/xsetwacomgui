@@ -52,7 +52,7 @@ std::filesystem::path get_base_config_path()
     return std::filesystem::path(home) / ".config";
 }
 
-liberror::Result<void> load_device_settings(Context ctx)
+void load_device_settings(Context ctx)
 {
     std::ifstream settings(APPLICATION_SETTINGS);
     std::stringstream content;
@@ -75,12 +75,8 @@ liberror::Result<void> load_device_settings(Context ctx)
     }
     catch (std::exception const& error)
     {
-        return liberror::make_error("Failed to properly parse settings file: {}", error.what());
+        ImGui::PushToast("Info", "Failed to load device settings");
     }
-
-    ImGui::PushToast("Info", "Loaded settings from file");
-
-    return {};
 }
 
 void save_device_settings(Context ctx)
@@ -109,7 +105,7 @@ void save_device_settings(Context ctx)
     std::ofstream file(APPLICATION_SETTINGS);
     file << std::setw(4) << settingsJson;
 
-    ImGui::PushToast("Success", "The changes were sucessfully saved");
+    ImGui::PushToast("Success", "Successfully saved device settings");
 }
 
 liberror::Result<void> render_window(Context ctx)
@@ -326,18 +322,18 @@ int main()
                     {
                         deviceArea = selectedDevice.area;
                         devicePressure = { 0, 0, 1, 1 };
-                        ImGui::PushToast("Warning", "No available devices were found");
+                        ImGui::PushToast("Warning", "No devices were found");
                     }
 
                     if (!devices.empty() && devicePressure.minX == -1 && devicePressure.minY == -1 && deviceArea.width == -1 && deviceArea.height == -1)
                     {
                         if (std::filesystem::exists(APPLICATION_SETTINGS))
                         {
-                            MUST(load_device_settings(ctx));
+                            load_device_settings(ctx);
                         }
                         else
                         {
-                            ImGui::PushToast("Warning", "Could not find settings file, reading properties from xsetwacom");
+                            ImGui::PushToast("Warning", "Device settings could not be found, reading directly from xsetwacom instead");
                             deviceArea = MUST(libwacom::get_stylus_area(selectedDevice.id));
                             devicePressure = MUST(libwacom::get_stylus_pressure_curve(selectedDevice.id));
                         }
