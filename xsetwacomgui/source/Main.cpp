@@ -19,7 +19,7 @@
 #include <span>
 
 static constexpr auto WIDTH = 800;
-static constexpr auto HEIGHT = 785;
+static constexpr auto HEIGHT = 815;
 static constexpr auto FPS = 60;
 
 liberror::Result<void> render_window(DeviceSetttings settings, std::vector<libwacom::Device>& devices)
@@ -114,95 +114,98 @@ liberror::Result<void> render_window(DeviceSetttings settings, std::vector<libwa
     }
     ImGui::EndGroup();
 
-    ImGui::Separator();
-
-    ImGui::BeginGroup();
+    if (ImGui::BeginTabBar("##Tabs"))
     {
-        ImGui::SetCursorPosX((ImGui::GetWindowWidth() - (250 + 308))/2);
-        ImGui::BeginGroup();
+        if (ImGui::BeginTabItem("Tablet Settings"))
         {
-            ImGui::AlignTextToFramePadding();
-            ImGui::Text("Device");
-            auto deviceNames = fplus::transform([] (libwacom::Device const& device) { return device.name.data(); }, devices);
-            ImGui::SetNextItemWidth(308);
-            static int deviceIndex;
-            hasChangedDevice |= ImGui::Combo("##Device", &deviceIndex, deviceNames.data(), static_cast<int>(deviceNames.size()));
-
-            if (hasChangedDevice)
+            ImGui::SetCursorPosX((ImGui::GetWindowWidth() - (250 + 308))/2);
+            ImGui::BeginGroup();
             {
-                device = devices.at(static_cast<size_t>(deviceIndex));
-                deviceDefaultArea = TRY(libwacom::get_stylus_default_area(device.id));
-            }
+                ImGui::AlignTextToFramePadding();
+                ImGui::Text("Device");
+                auto deviceNames = fplus::transform([] (libwacom::Device const& device) { return device.name.data(); }, devices);
+                ImGui::SetNextItemWidth(308);
+                static int deviceIndex;
+                hasChangedDevice |= ImGui::Combo("##Device", &deviceIndex, deviceNames.data(), static_cast<int>(deviceNames.size()));
 
-            {
-                ImGui::BeginGroup();
+                if (hasChangedDevice)
                 {
-                    ImGui::AlignTextToFramePadding();
-                    ImGui::Text("Width");
-                    ImGui::SetNextItemWidth(150);
-                    hasChangedDeviceArea |= ImGui::InputFloat("##TabletWidth", &settings.area.width, 0.f, 0.f, "%.0f");
+                    device = devices.at(static_cast<size_t>(deviceIndex));
+                    deviceDefaultArea = TRY(libwacom::get_stylus_default_area(device.id));
                 }
-                ImGui::EndGroup();
-                ImGui::SameLine();
-                ImGui::BeginGroup();
-                {
-                    ImGui::AlignTextToFramePadding();
-                    ImGui::Text("Height");
-                    ImGui::SetNextItemWidth(150);
-                    hasChangedDeviceArea |= ImGui::InputFloat("##TabletHeight", &settings.area.height, 0.f, 0.f, "%.0f");
-                }
-                ImGui::EndGroup();
-            }
-            {
-                ImGui::BeginGroup();
-                {
-                    ImGui::AlignTextToFramePadding();
-                    ImGui::Text("Offset X");
-                    ImGui::SetNextItemWidth(150);
-                    hasChangedDeviceArea |= ImGui::InputFloat("##TabletOffsetX", &settings.area.offsetX, 0.f, 0.f, "%.0f");
-                }
-                ImGui::EndGroup();
-                ImGui::SameLine();
-                ImGui::BeginGroup();
-                {
-                    ImGui::AlignTextToFramePadding();
-                    ImGui::Text("Offset Y");
-                    ImGui::SetNextItemWidth(150);
-                    hasChangedDeviceArea |= ImGui::InputFloat("##TabletOffsetY", &settings.area.offsetY, 0.f, 0.f, "%.0f");
-                }
-                ImGui::EndGroup();
-            }
 
-            hasChangedDeviceArea |= ImGui::Checkbox("Full Area", &settings.forceFullArea);
-            ImGui::BeginDisabled();
-            ImGui::Checkbox("Force Proportions", &settings.forceAspectRatio);
-            ImGui::EndDisabled();
+                {
+                    ImGui::BeginGroup();
+                    {
+                        ImGui::AlignTextToFramePadding();
+                        ImGui::Text("Width");
+                        ImGui::SetNextItemWidth(150);
+                        hasChangedDeviceArea |= ImGui::InputFloat("##TabletWidth", &settings.area.width, 0.f, 0.f, "%.0f");
+                    }
+                    ImGui::EndGroup();
+                    ImGui::SameLine();
+                    ImGui::BeginGroup();
+                    {
+                        ImGui::AlignTextToFramePadding();
+                        ImGui::Text("Height");
+                        ImGui::SetNextItemWidth(150);
+                        hasChangedDeviceArea |= ImGui::InputFloat("##TabletHeight", &settings.area.height, 0.f, 0.f, "%.0f");
+                    }
+                    ImGui::EndGroup();
+                }
+                {
+                    ImGui::BeginGroup();
+                    {
+                        ImGui::AlignTextToFramePadding();
+                        ImGui::Text("Offset X");
+                        ImGui::SetNextItemWidth(150);
+                        hasChangedDeviceArea |= ImGui::InputFloat("##TabletOffsetX", &settings.area.offsetX, 0.f, 0.f, "%.0f");
+                    }
+                    ImGui::EndGroup();
+                    ImGui::SameLine();
+                    ImGui::BeginGroup();
+                    {
+                        ImGui::AlignTextToFramePadding();
+                        ImGui::Text("Offset Y");
+                        ImGui::SetNextItemWidth(150);
+                        hasChangedDeviceArea |= ImGui::InputFloat("##TabletOffsetY", &settings.area.offsetY, 0.f, 0.f, "%.0f");
+                    }
+                    ImGui::EndGroup();
+                }
+
+                hasChangedDeviceArea |= ImGui::Checkbox("Full Area", &settings.forceFullArea);
+                ImGui::BeginDisabled();
+                ImGui::Checkbox("Force Proportions", &settings.forceAspectRatio);
+                ImGui::EndDisabled();
+            }
+            ImGui::EndGroup();
+            ImGui::SameLine();
+            ImGui::BeginGroup();
+            {
+                static float devicePressureAnchors[4] = { settings.pressure.minX, settings.pressure.minY, settings.pressure.maxX, settings.pressure.maxY };
+
+                if (devices.empty())
+                {
+                    devicePressureAnchors[0] = 0;
+                    devicePressureAnchors[1] = 0;
+                    devicePressureAnchors[2] = 1;
+                    devicePressureAnchors[3] = 1;
+                }
+
+                ImGui::AlignTextToFramePadding();
+                hasChangedDevicePressure = ImGui::BezierEditor("Pressure Curve", devicePressureAnchors, { 250, 250 });
+
+                if (hasChangedDevicePressure)
+                {
+                    settings.pressure = { devicePressureAnchors[0], devicePressureAnchors[1], devicePressureAnchors[2], devicePressureAnchors[3] };
+                }
+            }
+            ImGui::EndGroup();
+            ImGui::EndTabItem();
         }
-        ImGui::EndGroup();
-        ImGui::SameLine();
-        ImGui::BeginGroup();
-        {
-            static float devicePressureAnchors[4] = { settings.pressure.minX, settings.pressure.minY, settings.pressure.maxX, settings.pressure.maxY };
 
-            if (devices.empty())
-            {
-                devicePressureAnchors[0] = 0;
-                devicePressureAnchors[1] = 0;
-                devicePressureAnchors[2] = 1;
-                devicePressureAnchors[3] = 1;
-            }
-
-            ImGui::AlignTextToFramePadding();
-            hasChangedDevicePressure = ImGui::BezierEditor("Pressure Curve", devicePressureAnchors, { 250, 250 });
-
-            if (hasChangedDevicePressure)
-            {
-                settings.pressure = { devicePressureAnchors[0], devicePressureAnchors[1], devicePressureAnchors[2], devicePressureAnchors[3] };
-            }
-        }
-        ImGui::EndGroup();
+        ImGui::EndTabBar();
     }
-    ImGui::EndGroup();
 
     if (ImGui::Button("Save & Apply", { 200, 35 }))
     {
