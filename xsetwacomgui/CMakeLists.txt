@@ -6,6 +6,7 @@ add_executable(${PROJECT_NAME} "${xsetwacomgui_SourceFiles}")
 target_compile_definitions(
     ${PROJECT_NAME} PRIVATE
         HOME="${PROJECT_SOURCE_DIR}"
+        NAME="${PROJECT_NAME}"
 )
 
 if (ENABLE_CLANGTIDY)

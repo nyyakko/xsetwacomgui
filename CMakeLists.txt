@@ -9,7 +9,6 @@ set(xsetwacomgui_CompilerOptions ${xsetwacomgui_CompilerOptions} -Wno-gnu-statem
 # set(xsetwacomgui_LinkerOptions ${xsetwacomgui_LinkerOptions})
 
 CPMAddPackage ("gh:fmtlib/fmt#10.2.1")
-CPMAddPackage ("gh:gabime/spdlog@1.15.3")
 CPMAddPackage ("gh:Dobiasd/FunctionalPlus#v0.2.24")
 CPMAddPackage ("gh:nlohmann/json@3.11.3")
 CPMAddPackage (NAME raylib   URL https://github.com/raysan5/raylib/archive/refs/tags/5.5.tar.gz)
@@ -23,7 +22,6 @@ set(xsetwacomgui_ExternalLibraries
     GL
     raylib
     fmt::fmt
-    spdlog::spdlog
     LibError::LibError
     LibEnum::LibEnum
     LibWacom::LibWacom
