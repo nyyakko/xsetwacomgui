@@ -14,7 +14,7 @@ std::filesystem::path get_settings_base_path()
     return std::filesystem::path(home) / ".config";
 }
 
-bool load_device_settings(DeviceSetttings settings)
+bool load_device_settings(Settings& settings)
 {
     std::ifstream stream(SETTINGS_FILE);
     std::stringstream content;
@@ -23,16 +23,24 @@ bool load_device_settings(DeviceSetttings settings)
     try
     {
         auto json = nlohmann::json::parse(content.str());
-        settings.forceFullArea    = json["forceFullArea"].get<bool>();
-        settings.forceAspectRatio = json["forceAspectRatio"].get<bool>();
-        settings.area.offsetX     = json["area"]["offsetX"].get<float>();
-        settings.area.offsetY     = json["area"]["offsetY"].get<float>();
-        settings.area.width       = json["area"]["width"].get<float>();
-        settings.area.height      = json["area"]["height"].get<float>();
-        settings.pressure.minX    = json["pressure"]["minX"].get<float>();
-        settings.pressure.minY    = json["pressure"]["minY"].get<float>();
-        settings.pressure.maxX    = json["pressure"]["maxX"].get<float>();
-        settings.pressure.maxY    = json["pressure"]["maxY"].get<float>();
+        settings.monitorName             = json["monitorName"].get<std::string>();
+        settings.monitorForceFullArea    = json["monitorForceFullArea"].get<bool>();
+        settings.monitorForceAspectRatio = json["monitorForceAspectRatio"].get<bool>();
+        settings.monitorArea.offsetX     = json["monitorArea"]["offsetX"].get<float>();
+        settings.monitorArea.offsetY     = json["monitorArea"]["offsetY"].get<float>();
+        settings.monitorArea.width       = json["monitorArea"]["width"].get<float>();
+        settings.monitorArea.height      = json["monitorArea"]["height"].get<float>();
+        settings.deviceName              = json["deviceName"].get<std::string>();
+        settings.deviceForceFullArea     = json["deviceForceFullArea"].get<bool>();
+        settings.deviceForceAspectRatio  = json["deviceForceAspectRatio"].get<bool>();
+        settings.deviceArea.offsetX      = json["deviceArea"]["offsetX"].get<float>();
+        settings.deviceArea.offsetY      = json["deviceArea"]["offsetY"].get<float>();
+        settings.deviceArea.width        = json["deviceArea"]["width"].get<float>();
+        settings.deviceArea.height       = json["deviceArea"]["height"].get<float>();
+        settings.devicePressure.minX     = json["devicePressure"]["minX"].get<float>();
+        settings.devicePressure.minY     = json["devicePressure"]["minY"].get<float>();
+        settings.devicePressure.maxX     = json["devicePressure"]["maxX"].get<float>();
+        settings.devicePressure.maxY     = json["devicePressure"]["maxY"].get<float>();
     }
     catch (std::exception const& error)
     {
@@ -42,27 +50,39 @@ bool load_device_settings(DeviceSetttings settings)
     return true;
 }
 
-bool save_device_settings(DeviceSetttings settings)
+bool save_device_settings(Settings const& settings)
 {
     nlohmann::ordered_json json {
-        { "forceFullArea", settings.forceFullArea },
-        { "forceAspectRatio", settings.forceAspectRatio },
+        { "deviceName", settings.deviceName },
         {
-            "area", {
-                { "offsetX", settings.area.offsetX },
-                { "offsetY", settings.area.offsetY },
-                { "width", settings.area.width },
-                { "height", settings.area.height }
+            "deviceArea", {
+                { "offsetX", settings.deviceArea.offsetX },
+                { "offsetY", settings.deviceArea.offsetY },
+                { "width", settings.deviceArea.width },
+                { "height", settings.deviceArea.height }
             }
         },
         {
-            "pressure", {
-                { "minX", settings.pressure.minX },
-                { "minY", settings.pressure.minY },
-                { "maxX", settings.pressure.maxX },
-                { "maxY", settings.pressure.maxY },
+            "devicePressure", {
+                { "minX", settings.devicePressure.minX },
+                { "minY", settings.devicePressure.minY },
+                { "maxX", settings.devicePressure.maxX },
+                { "maxY", settings.devicePressure.maxY },
             }
-        }
+        },
+        { "deviceForceFullArea", settings.deviceForceFullArea },
+        { "deviceForceAspectRatio", settings.deviceForceAspectRatio },
+        { "monitorName", settings.monitorName },
+        {
+            "monitorArea", {
+                { "offsetX", settings.monitorArea.offsetX },
+                { "offsetY", settings.monitorArea.offsetY },
+                { "width", settings.monitorArea.width },
+                { "height", settings.monitorArea.height }
+            }
+        },
+        { "monitorForceFullArea", settings.monitorForceFullArea },
+        { "monitorForceAspectRatio", settings.monitorForceAspectRatio },
     };
 
     std::ofstream stream(SETTINGS_FILE);
