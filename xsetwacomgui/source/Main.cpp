@@ -395,7 +395,7 @@ int main()
         ImGui::SetNextWindowSize({ static_cast<float>(width), static_cast<float>(height) });
         ImGui::PushFont(font);
         {
-            ImGui::Begin(NAME, nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus);
+            ImGui::Begin(NAME, nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoSavedSettings);
             ImGui::RenderToasts();
             {
                 ImGui::BeginDisabled(devices.empty());
