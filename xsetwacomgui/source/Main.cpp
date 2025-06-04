@@ -60,18 +60,17 @@ void load_device_settings(Context ctx)
 
     try
     {
-        auto settingsJson = nlohmann::json::parse(content.str());
-
-        ctx.forceFullArea = settingsJson["forceFullArea"].get<bool>();
-        ctx.forceAspectRatio = settingsJson["forceAspectRatio"].get<bool>();
-        ctx.deviceArea.offsetX = settingsJson["area"]["offsetX"].get<float>();
-        ctx.deviceArea.offsetY = settingsJson["area"]["offsetY"].get<float>();
-        ctx.deviceArea.width = settingsJson["area"]["width"].get<float>();
-        ctx.deviceArea.height = settingsJson["area"]["height"].get<float>();
-        ctx.devicePressure.minX = settingsJson["pressure"]["minX"].get<float>();
-        ctx.devicePressure.minY = settingsJson["pressure"]["minY"].get<float>();
-        ctx.devicePressure.maxX = settingsJson["pressure"]["maxX"].get<float>();
-        ctx.devicePressure.maxY = settingsJson["pressure"]["maxY"].get<float>();
+        auto json = nlohmann::json::parse(content.str());
+        ctx.forceFullArea       = json["forceFullArea"].get<bool>();
+        ctx.forceAspectRatio    = json["forceAspectRatio"].get<bool>();
+        ctx.deviceArea.offsetX  = json["area"]["offsetX"].get<float>();
+        ctx.deviceArea.offsetY  = json["area"]["offsetY"].get<float>();
+        ctx.deviceArea.width    = json["area"]["width"].get<float>();
+        ctx.deviceArea.height   = json["area"]["height"].get<float>();
+        ctx.devicePressure.minX = json["pressure"]["minX"].get<float>();
+        ctx.devicePressure.minY = json["pressure"]["minY"].get<float>();
+        ctx.devicePressure.maxX = json["pressure"]["maxX"].get<float>();
+        ctx.devicePressure.maxY = json["pressure"]["maxY"].get<float>();
     }
     catch (std::exception const& error)
     {
@@ -176,13 +175,12 @@ liberror::Result<void> render_window(Context ctx)
         ImGui::SetCursorPosX((ImGui::GetWindowWidth() - (250 + 308))/2);
         ImGui::BeginGroup();
         {
-            {
-                ImGui::AlignTextToFramePadding();
-                ImGui::Text("Device");
-                auto deviceNames = fplus::transform([] (libwacom::Device const& device) { return device.name.data(); }, ctx.devices);
-                ImGui::SetNextItemWidth(308);
-                ImGui::Combo("##Device", &ctx.selectedDeviceIndex, deviceNames.data(), static_cast<int>(deviceNames.size()));
-            }
+            ImGui::AlignTextToFramePadding();
+            ImGui::Text("Device");
+            auto deviceNames = fplus::transform([] (libwacom::Device const& device) { return device.name.data(); }, ctx.devices);
+            ImGui::SetNextItemWidth(308);
+            ImGui::Combo("##Device", &ctx.selectedDeviceIndex, deviceNames.data(), static_cast<int>(deviceNames.size()));
+
             {
                 ImGui::BeginGroup();
                 {
