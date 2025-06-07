@@ -1,5 +1,7 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
 
+#include <spdlog/spdlog.h>
+
 #include "Monitor.hpp"
 #include "Widgets.hpp"
 #include "Settings.hpp"
@@ -18,6 +20,7 @@
 #include <filesystem>
 #include <cstdlib>
 #include <span>
+#include <ranges>
 
 static constexpr auto WIDTH = 800;
 static constexpr auto HEIGHT = 815;
@@ -348,24 +351,21 @@ liberror::Result<void> render_window(Settings& settings, std::vector<libwacom::D
     return {};
 }
 
-int main()
+void show_help()
 {
-    InitWindow(WIDTH, HEIGHT, NAME);
-    SetTargetFPS(FPS);
+    fmt::println("A graphical xsetwacom wrapper for ease of use.");
+    fmt::println("Usage:");
+    fmt::println("  xsetwacomgui [OPTION...]");
+    fmt::println("");
+    fmt::println("  --no-gui        Launches the program without the UI. This is intended for");
+    fmt::println("                  loading saved device settings on system boot.");
+}
 
-    auto const window = static_cast<GLFWwindow*>(GetWindowHandle());
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGui::StyleColorsDark();
-    ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init("#version 130");
-
-    auto& io = ImGui::GetIO();
-
-    io.IniFilename = nullptr;
-    io.LogFilename = nullptr;
-
-    auto* font = io.Fonts->AddFontFromFileTTF(HOME"/resources/fonts/iosevka.ttf", 20.f, nullptr, io.Fonts->GetGlyphRangesDefault());
+int main(int argc, char const** argv)
+{
+    auto arguments =
+        std::span<char const*>(argv, size_t(argc))
+            | std::views::transform([] (auto arg) { return std::string_view(arg); });
 
     std::vector<Monitor> monitors = MUST(get_available_monitors());
 
@@ -388,6 +388,66 @@ int main()
     {
         std::filesystem::create_directory(SETTINGS_PATH);
     }
+
+    if (std::find(arguments.begin(), arguments.end(), "--help") != arguments.end())
+    {
+        show_help();
+        return EXIT_SUCCESS;
+    }
+
+    if (std::find(arguments.begin(), arguments.end(), "--no-gui") != arguments.end())
+    {
+        if (!std::filesystem::exists(SETTINGS_FILE))
+        {
+            spdlog::error("Device settings could not be found");
+            return EXIT_FAILURE;
+        }
+
+        if (!load_device_settings(settings))
+        {
+            spdlog::error("Failed to load device settings");
+            return EXIT_FAILURE;
+        }
+
+        if (devices.empty() || monitors.empty())
+        {
+            return EXIT_SUCCESS;
+        }
+
+        auto device  = devices.front();
+        auto monitor = fplus::find_first_by([] (Monitor const& monitor) { return monitor.primary; }, monitors).get_with_default({});
+
+        libwacom::set_stylus_output_from_display_area(device.id, {
+            monitor.offsetX + settings.monitorArea.offsetX,
+            monitor.offsetY + settings.monitorArea.offsetY,
+            settings.monitorArea.width,
+            settings.monitorArea.height,
+        });
+
+        libwacom::set_stylus_area(device.id, settings.deviceArea);
+        libwacom::set_stylus_pressure_curve(device.id, settings.devicePressure);
+
+        fmt::println("Device settings loaded successfully");
+
+        return EXIT_SUCCESS;
+    }
+
+    InitWindow(WIDTH, HEIGHT, NAME);
+    SetTargetFPS(FPS);
+
+    auto const window = static_cast<GLFWwindow*>(GetWindowHandle());
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGui::StyleColorsDark();
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 130");
+
+    auto& io = ImGui::GetIO();
+
+    io.IniFilename = nullptr;
+    io.LogFilename = nullptr;
+
+    auto* font = io.Fonts->AddFontFromFileTTF(HOME"/resources/fonts/iosevka.ttf", 20.f, nullptr, io.Fonts->GetGlyphRangesDefault());
 
     while (!WindowShouldClose())
     {
@@ -429,4 +489,6 @@ int main()
     ImGui::DestroyContext();
 
     CloseWindow();
+
+    return EXIT_SUCCESS;
 }

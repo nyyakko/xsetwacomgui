@@ -7,6 +7,7 @@ include(cmake/get_cpm.cmake)
 CPMAddPackage("gh:fmtlib/fmt#10.2.1")
 CPMAddPackage("gh:Dobiasd/FunctionalPlus#v0.2.24")
 CPMAddPackage("gh:nlohmann/json@3.11.3")
+CPMAddPackage("gh:gabime/spdlog@1.15.3")
 CPMAddPackage(NAME raylib   URL https://github.com/raysan5/raylib/archive/refs/tags/5.5.tar.gz)
 CPMAddPackage(NAME expected GITHUB_REPOSITORY nyyakko/expected GIT_TAG master OPTIONS "ENABLE_CPPCHECK OFF")
 CPMAddPackage(NAME LibError GITHUB_REPOSITORY nyyakko/LibError GIT_TAG master OPTIONS "ENABLE_CPPCHECK OFF")
@@ -27,6 +28,7 @@ set(xsetwacomgui_ExternalLibraries
     LibEnum::LibEnum
     LibWacom::LibWacom
     imgui::imgui
+    spdlog::spdlog
     FunctionalPlus::fplus
     nlohmann_json::nlohmann_json
 )
