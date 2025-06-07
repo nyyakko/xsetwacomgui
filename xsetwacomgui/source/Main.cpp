@@ -26,6 +26,16 @@ static constexpr auto WIDTH = 800;
 static constexpr auto HEIGHT = 815;
 static constexpr auto FPS = 60;
 
+void show_help()
+{
+    fmt::println("A graphical xsetwacom wrapper for ease of use.");
+    fmt::println("Usage:");
+    fmt::println("  xsetwacomgui [OPTION...]");
+    fmt::println("");
+    fmt::println("  --no-gui        Launches the program without the UI. This is intended for");
+    fmt::println("                  loading saved device settings on system boot.");
+}
+
 liberror::Result<void> apply_settings_to_device(libwacom::Device const& device, Monitor const& monitor, Settings const& settings)
 {
     TRY(libwacom::set_stylus_output_from_display_area(device.id, {
@@ -356,16 +366,6 @@ liberror::Result<void> render_window(Settings& settings, std::vector<libwacom::D
     ImGui::SetCursorPos(previousCursorPosition);
 
     return {};
-}
-
-void show_help()
-{
-    fmt::println("A graphical xsetwacom wrapper for ease of use.");
-    fmt::println("Usage:");
-    fmt::println("  xsetwacomgui [OPTION...]");
-    fmt::println("");
-    fmt::println("  --no-gui        Launches the program without the UI. This is intended for");
-    fmt::println("                  loading saved device settings on system boot.");
 }
 
 int main(int argc, char const** argv)
