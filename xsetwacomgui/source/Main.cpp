@@ -42,6 +42,7 @@ liberror::Result<void> render_window(Settings& settings, std::vector<libwacom::D
         ImGui::PushToast("Warning", "No devices were found");
         settings.deviceArea = { 0, 0, 0, 0 };
         settings.devicePressure = { 0, 0, 1, 1 };
+        settings.monitorArea = monitorDefaultArea;
     }
 
     if (!devices.empty() && settings.devicePressure.minX == -1 && settings.devicePressure.minY == -1 && settings.deviceArea.width == -1 && settings.deviceArea.height == -1)
