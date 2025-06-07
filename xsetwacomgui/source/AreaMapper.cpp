@@ -1,5 +1,5 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
-#include "Widgets.hpp"
+#include "AreaMapper.hpp"
 
 static auto constexpr MAPPER_GRAB_RADIUS = 6;
 

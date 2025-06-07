@@ -2,8 +2,8 @@
 
 #include <spdlog/spdlog.h>
 
+#include "AreaMapper.hpp"
 #include "Monitor.hpp"
-#include "Widgets.hpp"
 #include "Settings.hpp"
 
 #include <imgui/extensions/imgui_toast.hpp>
