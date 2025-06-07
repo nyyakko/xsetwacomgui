@@ -26,6 +26,21 @@ static constexpr auto WIDTH = 800;
 static constexpr auto HEIGHT = 815;
 static constexpr auto FPS = 60;
 
+liberror::Result<void> apply_settings_to_device(libwacom::Device const& device, Monitor const& monitor, Settings const& settings)
+{
+    TRY(libwacom::set_stylus_output_from_display_area(device.id, {
+        monitor.offsetX + settings.monitorArea.offsetX,
+        monitor.offsetY + settings.monitorArea.offsetY,
+        settings.monitorArea.width,
+        settings.monitorArea.height,
+    }));
+
+    TRY(libwacom::set_stylus_area(device.id, settings.deviceArea));
+    TRY(libwacom::set_stylus_pressure_curve(device.id, settings.devicePressure));
+
+    return {};
+}
+
 liberror::Result<void> render_window(Settings& settings, std::vector<libwacom::Device>& devices, std::vector<Monitor>& monitors)
 {
     static libwacom::Device device = devices.empty() ? libwacom::Device {} : devices.front();
@@ -336,15 +351,7 @@ liberror::Result<void> render_window(Settings& settings, std::vector<libwacom::D
             ImGui::PushToast("Success", "Successfully saved device settings");
         }
 
-        libwacom::set_stylus_output_from_display_area(device.id, {
-            monitor.offsetX + settings.monitorArea.offsetX,
-            monitor.offsetY + settings.monitorArea.offsetY,
-            settings.monitorArea.width,
-            settings.monitorArea.height,
-        });
-
-        libwacom::set_stylus_area(device.id, settings.deviceArea);
-        libwacom::set_stylus_pressure_curve(device.id, settings.devicePressure);
+        TRY(apply_settings_to_device(device, monitor, settings));
     }
     ImGui::SetCursorPos(previousCursorPosition);
 
@@ -417,15 +424,7 @@ int main(int argc, char const** argv)
         auto device  = devices.front();
         auto monitor = fplus::find_first_by([] (Monitor const& monitor) { return monitor.primary; }, monitors).get_with_default({});
 
-        libwacom::set_stylus_output_from_display_area(device.id, {
-            monitor.offsetX + settings.monitorArea.offsetX,
-            monitor.offsetY + settings.monitorArea.offsetY,
-            settings.monitorArea.width,
-            settings.monitorArea.height,
-        });
-
-        libwacom::set_stylus_area(device.id, settings.deviceArea);
-        libwacom::set_stylus_pressure_curve(device.id, settings.devicePressure);
+        MUST(apply_settings_to_device(device, monitor, settings));
 
         fmt::println("Device settings loaded successfully");
 
