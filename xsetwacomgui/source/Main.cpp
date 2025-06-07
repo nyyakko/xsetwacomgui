@@ -360,7 +360,11 @@ int main()
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 130");
 
-    auto io = ImGui::GetIO();
+    auto& io = ImGui::GetIO();
+
+    io.IniFilename = nullptr;
+    io.LogFilename = nullptr;
+
     auto* font = io.Fonts->AddFontFromFileTTF(HOME"/resources/fonts/iosevka.ttf", 20.f, nullptr, io.Fonts->GetGlyphRangesDefault());
 
     std::vector<Monitor> monitors = MUST(get_available_monitors());
