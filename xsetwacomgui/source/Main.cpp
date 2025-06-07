@@ -39,9 +39,9 @@ liberror::Result<void> render_window(Settings& settings, std::vector<libwacom::D
 
     if (devices.empty() && settings.devicePressure.minX == -1 && settings.devicePressure.minY == -1 && settings.deviceArea.width == -1 && settings.deviceArea.height == -1)
     {
+        ImGui::PushToast("Warning", "No devices were found");
         settings.deviceArea = { 0, 0, 0, 0 };
         settings.devicePressure = { 0, 0, 1, 1 };
-        ImGui::PushToast("Warning", "No devices were found");
     }
 
     if (!devices.empty() && settings.devicePressure.minX == -1 && settings.devicePressure.minY == -1 && settings.deviceArea.width == -1 && settings.deviceArea.height == -1)
@@ -223,9 +223,16 @@ liberror::Result<void> render_window(Settings& settings, std::vector<libwacom::D
             ImGui::SameLine();
             ImGui::BeginGroup();
             {
-                static float devicePressureAnchors[4] = { settings.devicePressure.minX, settings.devicePressure.minY, settings.devicePressure.maxX, settings.devicePressure.maxY };
+                static float devicePressureAnchors[4] = {};
 
-                if (devices.empty())
+                if (!devices.empty())
+                {
+                    devicePressureAnchors[0] = settings.devicePressure.minX;
+                    devicePressureAnchors[1] = settings.devicePressure.minY;
+                    devicePressureAnchors[2] = settings.devicePressure.maxX;
+                    devicePressureAnchors[3] = settings.devicePressure.maxY;
+                }
+                else
                 {
                     devicePressureAnchors[0] = 0;
                     devicePressureAnchors[1] = 0;
