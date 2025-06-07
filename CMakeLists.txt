@@ -2,11 +2,7 @@ cmake_minimum_required(VERSION 3.25)
 
 project(xsetwacomgui LANGUAGES CXX)
 
-include(cmake/static_analyzers.cmake)
 include(cmake/get_cpm.cmake)
-
-set(xsetwacomgui_CompilerOptions ${xsetwacomgui_CompilerOptions} -Wno-gnu-statement-expression-from-macro-expansion)
-# set(xsetwacomgui_LinkerOptions ${xsetwacomgui_LinkerOptions})
 
 CPMAddPackage("gh:fmtlib/fmt#10.2.1")
 CPMAddPackage("gh:Dobiasd/FunctionalPlus#v0.2.24")
@@ -17,6 +13,11 @@ CPMAddPackage(NAME LibError GITHUB_REPOSITORY nyyakko/LibError GIT_TAG master OP
 CPMAddPackage(NAME LibEnum  GITHUB_REPOSITORY nyyakko/LibEnum  GIT_TAG master OPTIONS "ENABLE_CPPCHECK OFF")
 CPMAddPackage(NAME LibWacom GITHUB_REPOSITORY nyyakko/LibWacom GIT_TAG master OPTIONS "ENABLE_CPPCHECK OFF")
 CPMAddPackage(NAME imgui    GITHUB_REPOSITORY nyyakko/imgui    GIT_TAG master OPTIONS "ENABLE_CPPCHECK OFF")
+
+include(cmake/static_analyzers.cmake)
+
+set(xsetwacomgui_CompilerOptions ${xsetwacomgui_CompilerOptions} -Wno-gnu-statement-expression-from-macro-expansion)
+# set(xsetwacomgui_LinkerOptions ${xsetwacomgui_LinkerOptions})
 
 set(xsetwacomgui_ExternalLibraries
     GL
