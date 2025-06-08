@@ -74,16 +74,6 @@ void render_application_settings_popup(ApplicationSettings& settings)
                 settings.theme = ApplicationSettings::Theme::from_int(themeIndex);
             }
 
-            ImGui::Text("%s", Localisation::get(settings.language, Localisation::Popup_Settings_Tabs_Appearance_Scale));
-            static float scale = settings.scale;
-            auto hasChangedUIScale = ImGui::InputFloat("##UiScale", &scale, 0.1f);
-
-            if (hasChangedUIScale)
-            {
-                scale = ImClamp(scale, 1.0f, 10.f);
-                settings.scale = scale;
-            }
-
             ImGui::Text("%s", Localisation::get(settings.language, Localisation::Popup_Settings_Tabs_Appearance_Font));
             static auto fonts = get_available_fonts();
             static auto fontsData = fplus::transform([] (auto const& font) { return font.first.data(); }, fonts );
@@ -95,6 +85,21 @@ void render_application_settings_popup(ApplicationSettings& settings)
             if (hasChangedUIFont)
             {
                 settings.font = fonts.at(static_cast<size_t>(fontIndex)).second;
+            }
+
+            ImGui::EndTabItem();
+        }
+
+        if (ImGui::BeginTabItem(Localisation::get(settings.language, Localisation::Popup_Settings_Tabs_Display_Title)))
+        {
+            ImGui::Text("%s", Localisation::get(settings.language, Localisation::Popup_Settings_Tabs_Display_Scale));
+            static float scale = settings.scale;
+            auto hasChangedUIScale = ImGui::InputFloat("##UiScale", &scale, 0.1f);
+
+            if (hasChangedUIScale)
+            {
+                scale = ImClamp(scale, 1.0f, 10.f);
+                settings.scale = scale;
             }
 
             ImGui::EndTabItem();
