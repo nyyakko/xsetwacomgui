@@ -101,8 +101,8 @@ bool load_application_settings(ApplicationSettings& settings)
     {
         auto json = nlohmann::json::parse(content.str());
 
-        settings.scale = json["interface"]["scale"].get<float>();
-        settings.theme = ApplicationSettings::Theme::from_string((json["interface"]["theme"].get<std::string>()));
+        settings.scale    = json["interface"]["scale"].get<float>();
+        settings.theme    = ApplicationSettings::Theme::from_string((json["interface"]["theme"].get<std::string>()));
         settings.language = json["general"]["language"].get<std::string>();
     }
     catch (std::exception const& error)
