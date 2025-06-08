@@ -22,8 +22,25 @@
 #include <span>
 #include <ranges>
 
-static constexpr auto WIDTH = 800;
-static constexpr auto HEIGHT = 815;
+float& the_scale()
+{
+    static float scale = 1.0f;
+    return scale;
+}
+
+void set_scale(float value)
+{
+    auto& scale = the_scale();
+    scale = value;
+}
+
+float operator""_scaled(unsigned long long i)
+{
+    return static_cast<float>(i) * the_scale();
+}
+
+static auto WIDTH = 800_scaled;
+static auto HEIGHT = 815_scaled;
 static constexpr auto FPS = 60;
 
 void show_help()
@@ -88,7 +105,7 @@ void render_region_mappers(Context& context, Settings& settings, std::vector<lib
         monitorAreaAnchors[3] = { 1, 1 };
     }
 
-    static const ImVec2 monitorMapperSize { 20 * 16, 20 * 9 };
+    static const ImVec2 monitorMapperSize { 20 * 16_scaled, 20 * 9_scaled };
     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - monitorMapperSize.x)/2);
     static ImRect monitorMapperPosition {};
     context.hasChangedMonitorArea |= area_mapper("Monitor", monitorAreaAnchors, monitorMapperSize, &monitorMapperPosition, settings.monitorForceFullArea, settings.monitorForceAspectRatio);
@@ -126,7 +143,7 @@ void render_region_mappers(Context& context, Settings& settings, std::vector<lib
         deviceAreaAnchors[3] = { 1, 1 };
     }
 
-    static const ImVec2 deviceMapperSize { 15 * 16, 15 * 9 };
+    static const ImVec2 deviceMapperSize { 15 * 16_scaled, 15 * 9_scaled };
     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - deviceMapperSize.x)/2);
     static ImRect deviceMapperPosition {};
     context.hasChangedDeviceArea |= area_mapper("Tablet", deviceAreaAnchors, deviceMapperSize, &deviceMapperPosition, settings.deviceForceFullArea, settings.deviceForceAspectRatio);
@@ -157,14 +174,14 @@ void render_region_mappers(Context& context, Settings& settings, std::vector<lib
 
 liberror::Result<void> render_tablet_settings_tab(Context& context, Settings& settings, std::vector<libwacom::Device>& devices)
 {
-    ImGui::SetCursorPosX((ImGui::GetWindowWidth() - (250 + 308))/2);
+    ImGui::SetCursorPosX((ImGui::GetWindowWidth() - (250_scaled + 308_scaled))/2);
 
     ImGui::BeginGroup();
     {
         ImGui::AlignTextToFramePadding();
         ImGui::Text("Device");
         auto deviceNames = fplus::transform([] (libwacom::Device const& device) { return device.name.data(); }, devices);
-        ImGui::SetNextItemWidth(308);
+        ImGui::SetNextItemWidth(308_scaled);
         static int deviceIndex;
         context.hasChangedDevice |= ImGui::Combo("##Device", &deviceIndex, deviceNames.data(), static_cast<int>(deviceNames.size()));
 
@@ -180,7 +197,7 @@ liberror::Result<void> render_tablet_settings_tab(Context& context, Settings& se
             {
                 ImGui::AlignTextToFramePadding();
                 ImGui::Text("Width");
-                ImGui::SetNextItemWidth(150);
+                ImGui::SetNextItemWidth(150_scaled);
                 context.hasChangedDeviceArea |= ImGui::InputFloat("##TabletWidth", &settings.deviceArea.width, 0.f, 0.f, "%.0f");
             }
             ImGui::EndGroup();
@@ -189,7 +206,7 @@ liberror::Result<void> render_tablet_settings_tab(Context& context, Settings& se
             {
                 ImGui::AlignTextToFramePadding();
                 ImGui::Text("Height");
-                ImGui::SetNextItemWidth(150);
+                ImGui::SetNextItemWidth(150_scaled);
                 context.hasChangedDeviceArea |= ImGui::InputFloat("##TabletHeight", &settings.deviceArea.height, 0.f, 0.f, "%.0f");
             }
             ImGui::EndGroup();
@@ -199,7 +216,7 @@ liberror::Result<void> render_tablet_settings_tab(Context& context, Settings& se
             {
                 ImGui::AlignTextToFramePadding();
                 ImGui::Text("Offset X");
-                ImGui::SetNextItemWidth(150);
+                ImGui::SetNextItemWidth(150_scaled);
                 context.hasChangedDeviceArea |= ImGui::InputFloat("##TabletOffsetX", &settings.deviceArea.offsetX, 0.f, 0.f, "%.0f");
             }
             ImGui::EndGroup();
@@ -208,7 +225,7 @@ liberror::Result<void> render_tablet_settings_tab(Context& context, Settings& se
             {
                 ImGui::AlignTextToFramePadding();
                 ImGui::Text("Offset Y");
-                ImGui::SetNextItemWidth(150);
+                ImGui::SetNextItemWidth(150_scaled);
                 context.hasChangedDeviceArea |= ImGui::InputFloat("##TabletOffsetY", &settings.deviceArea.offsetY, 0.f, 0.f, "%.0f");
             }
             ImGui::EndGroup();
@@ -241,7 +258,7 @@ liberror::Result<void> render_tablet_settings_tab(Context& context, Settings& se
         }
 
         ImGui::AlignTextToFramePadding();
-        context.hasChangedDevicePressure = ImGui::BezierEditor("Pressure Curve", devicePressureAnchors, { 250, 250 });
+        context.hasChangedDevicePressure = ImGui::BezierEditor("Pressure Curve", devicePressureAnchors, { 250_scaled, 250_scaled });
 
         if (context.hasChangedDevicePressure)
         {
@@ -255,7 +272,7 @@ liberror::Result<void> render_tablet_settings_tab(Context& context, Settings& se
 
 liberror::Result<void> render_monitor_settings_tab(Context& context, Settings& settings, std::vector<Monitor>& monitors)
 {
-    ImGui::SetCursorPosX((ImGui::GetWindowWidth() - 308)/2);
+    ImGui::SetCursorPosX((ImGui::GetWindowWidth() - 308_scaled)/2);
 
     ImGui::BeginGroup();
     {
@@ -263,7 +280,7 @@ liberror::Result<void> render_monitor_settings_tab(Context& context, Settings& s
         ImGui::Text("Monitor");
         auto monitorNames = fplus::transform([] (Monitor const& monitor) { return fmt::format("{} ({}x{})", monitor.name, monitor.width, monitor.height); }, monitors);
         auto monitorNamesData = fplus::transform([] (std::string const& name) { return name.data(); }, monitorNames);
-        ImGui::SetNextItemWidth(308);
+        ImGui::SetNextItemWidth(308_scaled);
         static int monitorIndex;
         context.hasChangedMonitor |= ImGui::Combo("##Monitors", &monitorIndex, monitorNamesData.data(), static_cast<int>(monitorNamesData.size()));
 
@@ -279,7 +296,7 @@ liberror::Result<void> render_monitor_settings_tab(Context& context, Settings& s
             {
                 ImGui::AlignTextToFramePadding();
                 ImGui::Text("Width");
-                ImGui::SetNextItemWidth(150);
+                ImGui::SetNextItemWidth(150_scaled);
                 context.hasChangedMonitorArea |= ImGui::InputFloat("##MonitorWidth", &settings.monitorArea.width, 0.f, 0.f, "%.0f");
             }
             ImGui::EndGroup();
@@ -288,7 +305,7 @@ liberror::Result<void> render_monitor_settings_tab(Context& context, Settings& s
             {
                 ImGui::AlignTextToFramePadding();
                 ImGui::Text("Height");
-                ImGui::SetNextItemWidth(150);
+                ImGui::SetNextItemWidth(150_scaled);
                 context.hasChangedMonitorArea |= ImGui::InputFloat("##MonitorHeight", &settings.monitorArea.height, 0.f, 0.f, "%.0f");
             }
             ImGui::EndGroup();
@@ -298,7 +315,7 @@ liberror::Result<void> render_monitor_settings_tab(Context& context, Settings& s
             {
                 ImGui::AlignTextToFramePadding();
                 ImGui::Text("Offset X");
-                ImGui::SetNextItemWidth(150);
+                ImGui::SetNextItemWidth(150_scaled);
                 context.hasChangedMonitorArea |= ImGui::InputFloat("##MonitorOffsetX", &settings.monitorArea.offsetX, 0.f, 0.f, "%.0f");
             }
             ImGui::EndGroup();
@@ -307,7 +324,7 @@ liberror::Result<void> render_monitor_settings_tab(Context& context, Settings& s
             {
                 ImGui::AlignTextToFramePadding();
                 ImGui::Text("Offset Y");
-                ImGui::SetNextItemWidth(150);
+                ImGui::SetNextItemWidth(150_scaled);
                 context.hasChangedMonitorArea |= ImGui::InputFloat("##MonitorOffsetY", &settings.monitorArea.offsetY, 0.f, 0.f, "%.0f");
             }
             ImGui::EndGroup();
@@ -385,8 +402,8 @@ liberror::Result<void> render_window(Settings& settings, std::vector<libwacom::D
     }
 
     auto previousCursorPosition = ImGui::GetCursorPos();
-    ImGui::SetCursorPosY(HEIGHT - 43);
-    if (ImGui::Button("Save & Apply", { 200, 35 }))
+    ImGui::SetCursorPosY(ImGui::GetWindowHeight() - 43_scaled);
+    if (ImGui::Button("Save & Apply", { 200_scaled, 35_scaled }))
     {
         if (save_device_settings(settings))
         {
@@ -463,7 +480,7 @@ int main(int argc, char const** argv)
         return EXIT_SUCCESS;
     }
 
-    InitWindow(WIDTH, HEIGHT, NAME);
+    InitWindow(static_cast<int>(WIDTH), static_cast<int>(HEIGHT), NAME);
     SetTargetFPS(FPS);
 
     auto const window = static_cast<GLFWwindow*>(GetWindowHandle());
@@ -478,7 +495,7 @@ int main(int argc, char const** argv)
     io.IniFilename = nullptr;
     io.LogFilename = nullptr;
 
-    auto* font = io.Fonts->AddFontFromFileTTF(HOME"/resources/fonts/iosevka.ttf", 20.f, nullptr, io.Fonts->GetGlyphRangesDefault());
+    auto* font = io.Fonts->AddFontFromFileTTF(HOME"/resources/fonts/iosevka.ttf", 20_scaled, nullptr, io.Fonts->GetGlyphRangesDefault());
 
     while (!WindowShouldClose())
     {
