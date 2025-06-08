@@ -578,15 +578,6 @@ int main(int argc, char const** argv)
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
 
-    if (applicationSettings.theme == ApplicationSettings::Theme::DARK)
-    {
-        ImGui::StyleColorsDark();
-    }
-    else
-    {
-        ImGui::StyleColorsLight();
-    }
-
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 130");
 
@@ -602,6 +593,15 @@ int main(int argc, char const** argv)
         BeginDrawing();
 
         ClearBackground(BLACK);
+
+        if (applicationSettings.theme == ApplicationSettings::Theme::DARK)
+        {
+            ImGui::StyleColorsDark();
+        }
+        else
+        {
+            ImGui::StyleColorsLight();
+        }
 
         glfwPollEvents();
         ImGui_ImplOpenGL3_NewFrame();
