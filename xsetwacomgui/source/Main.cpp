@@ -51,26 +51,294 @@ liberror::Result<void> apply_settings_to_device(libwacom::Device const& device, 
     return {};
 }
 
+struct Context
+{
+    libwacom::Device device;
+    libwacom::Area deviceDefaultArea;
+
+    Monitor monitor;
+    libwacom::Area monitorDefaultArea;
+
+    bool hasChangedDevice = false;
+    bool hasChangedDeviceArea = false;
+    bool hasChangedDevicePressure = false;
+    bool hasChangedMonitor = false;
+    bool hasChangedMonitorArea = false;
+};
+
+void render_region_mappers(Context& context, Settings& settings, std::vector<libwacom::Device>& devices, std::vector<Monitor>& monitors)
+{
+    auto [cursorPosX, cursorPosY] = ImGui::GetCursorPos();
+    ImDrawList* drawList = ImGui::GetWindowDrawList();
+
+    static ImVec2 monitorAreaAnchors[4] { { 0, 0 }, { 0, 1 }, { 1, 0 }, { 1, 1 } };
+
+    if (!monitors.empty())
+    {
+        monitorAreaAnchors[0] = { settings.monitorArea.offsetX / context.monitorDefaultArea.width, settings.monitorArea.offsetY / context.monitorDefaultArea.height };
+        monitorAreaAnchors[1] = { settings.monitorArea.offsetX / context.monitorDefaultArea.width, (settings.monitorArea.height + settings.monitorArea.offsetY) / context.monitorDefaultArea.height };
+        monitorAreaAnchors[2] = { (settings.monitorArea.width + settings.monitorArea.offsetX) / context.monitorDefaultArea.width, settings.monitorArea.offsetY / context.monitorDefaultArea.height };
+        monitorAreaAnchors[3] = { (settings.monitorArea.width + settings.monitorArea.offsetX) / context.monitorDefaultArea.width, (settings.monitorArea.height + settings.monitorArea.offsetY) / context.monitorDefaultArea.height };
+    }
+    else
+    {
+        monitorAreaAnchors[0] = { 0, 0 };
+        monitorAreaAnchors[1] = { 0, 1 };
+        monitorAreaAnchors[2] = { 1, 0 };
+        monitorAreaAnchors[3] = { 1, 1 };
+    }
+
+    static const ImVec2 monitorMapperSize { 20 * 16, 20 * 9 };
+    ImGui::SetCursorPosX((ImGui::GetWindowWidth() - monitorMapperSize.x)/2);
+    static ImRect monitorMapperPosition {};
+    context.hasChangedMonitorArea |= area_mapper("Monitor", monitorAreaAnchors, monitorMapperSize, &monitorMapperPosition, settings.monitorForceFullArea, settings.monitorForceAspectRatio);
+    ImGui::SetCursorPosX(cursorPosX);
+
+    if (context.hasChangedMonitorArea)
+    {
+        settings.monitorArea = {
+            .offsetX = monitorAreaAnchors[0].x * context.monitorDefaultArea.width,
+            .offsetY = monitorAreaAnchors[0].y * context.monitorDefaultArea.height,
+            .width   = (monitorAreaAnchors[2].x - monitorAreaAnchors[0].x) * context.monitorDefaultArea.width,
+            .height  = (monitorAreaAnchors[3].y - monitorAreaAnchors[2].y) * context.monitorDefaultArea.height
+        };
+    }
+
+    if (context.hasChangedMonitorArea && settings.monitorForceFullArea)
+    {
+        settings.monitorArea = context.monitorDefaultArea;
+    }
+
+    static ImVec2 deviceAreaAnchors[4] { { -1, -1 }, { -1, -1 }, { -1, -1 }, { -1, -1 } };
+
+    if (!devices.empty())
+    {
+        deviceAreaAnchors[0] = { settings.deviceArea.offsetX / context.deviceDefaultArea.width, settings.deviceArea.offsetY / context.deviceDefaultArea.height };
+        deviceAreaAnchors[1] = { settings.deviceArea.offsetX / context.deviceDefaultArea.width, (settings.deviceArea.height + settings.deviceArea.offsetY) / context.deviceDefaultArea.height };
+        deviceAreaAnchors[2] = { (settings.deviceArea.width + settings.deviceArea.offsetX) / context.deviceDefaultArea.width, settings.deviceArea.offsetY / context.deviceDefaultArea.height };
+        deviceAreaAnchors[3] = { (settings.deviceArea.width + settings.deviceArea.offsetX) / context.deviceDefaultArea.width, (settings.deviceArea.height + settings.deviceArea.offsetY) / context.deviceDefaultArea.height };
+    }
+    else
+    {
+        deviceAreaAnchors[0] = { 0, 0 };
+        deviceAreaAnchors[1] = { 0, 1 };
+        deviceAreaAnchors[2] = { 1, 0 };
+        deviceAreaAnchors[3] = { 1, 1 };
+    }
+
+    static const ImVec2 deviceMapperSize { 15 * 16, 15 * 9 };
+    ImGui::SetCursorPosX((ImGui::GetWindowWidth() - deviceMapperSize.x)/2);
+    static ImRect deviceMapperPosition {};
+    context.hasChangedDeviceArea |= area_mapper("Tablet", deviceAreaAnchors, deviceMapperSize, &deviceMapperPosition, settings.deviceForceFullArea, settings.deviceForceAspectRatio);
+    ImGui::SetCursorPosX(cursorPosX);
+
+    if (context.hasChangedDeviceArea)
+    {
+        settings.deviceArea = {
+            .offsetX = deviceAreaAnchors[0].x * context.deviceDefaultArea.width,
+            .offsetY = deviceAreaAnchors[0].y * context.deviceDefaultArea.height,
+            .width   = (deviceAreaAnchors[2].x - deviceAreaAnchors[0].x) * context.deviceDefaultArea.width,
+            .height  = (deviceAreaAnchors[3].y - deviceAreaAnchors[2].y) * context.deviceDefaultArea.height
+        };
+    }
+
+    if (context.hasChangedDeviceArea && settings.deviceForceFullArea)
+    {
+        settings.deviceArea = context.deviceDefaultArea;
+    }
+
+    for (auto [monitorAnchor, deviceAnchor] : fplus::zip(std::span<ImVec2>(monitorAreaAnchors, 4), std::span<ImVec2>(deviceAreaAnchors, 4)))
+    {
+        auto p1 = monitorAnchor * (monitorMapperPosition.Max - monitorMapperPosition.Min) + monitorMapperPosition.Min;
+        auto p2 = deviceAnchor * (deviceMapperPosition.Max - deviceMapperPosition.Min) + deviceMapperPosition.Min;
+        drawList->AddLine(p1, p2, ImColor(255, 0, 0, 127), 2.f);
+    }
+}
+
+liberror::Result<void> render_tablet_settings_tab(Context& context, Settings& settings, std::vector<libwacom::Device>& devices)
+{
+    ImGui::SetCursorPosX((ImGui::GetWindowWidth() - (250 + 308))/2);
+
+    ImGui::BeginGroup();
+    {
+        ImGui::AlignTextToFramePadding();
+        ImGui::Text("Device");
+        auto deviceNames = fplus::transform([] (libwacom::Device const& device) { return device.name.data(); }, devices);
+        ImGui::SetNextItemWidth(308);
+        static int deviceIndex;
+        context.hasChangedDevice |= ImGui::Combo("##Device", &deviceIndex, deviceNames.data(), static_cast<int>(deviceNames.size()));
+
+        if (context.hasChangedDevice)
+        {
+            context.device = devices.at(static_cast<size_t>(deviceIndex));
+            context.deviceDefaultArea = TRY(libwacom::get_stylus_default_area(context.device.id));
+            settings.deviceArea = context.deviceDefaultArea;
+        }
+
+        {
+            ImGui::BeginGroup();
+            {
+                ImGui::AlignTextToFramePadding();
+                ImGui::Text("Width");
+                ImGui::SetNextItemWidth(150);
+                context.hasChangedDeviceArea |= ImGui::InputFloat("##TabletWidth", &settings.deviceArea.width, 0.f, 0.f, "%.0f");
+            }
+            ImGui::EndGroup();
+            ImGui::SameLine();
+            ImGui::BeginGroup();
+            {
+                ImGui::AlignTextToFramePadding();
+                ImGui::Text("Height");
+                ImGui::SetNextItemWidth(150);
+                context.hasChangedDeviceArea |= ImGui::InputFloat("##TabletHeight", &settings.deviceArea.height, 0.f, 0.f, "%.0f");
+            }
+            ImGui::EndGroup();
+        }
+        {
+            ImGui::BeginGroup();
+            {
+                ImGui::AlignTextToFramePadding();
+                ImGui::Text("Offset X");
+                ImGui::SetNextItemWidth(150);
+                context.hasChangedDeviceArea |= ImGui::InputFloat("##TabletOffsetX", &settings.deviceArea.offsetX, 0.f, 0.f, "%.0f");
+            }
+            ImGui::EndGroup();
+            ImGui::SameLine();
+            ImGui::BeginGroup();
+            {
+                ImGui::AlignTextToFramePadding();
+                ImGui::Text("Offset Y");
+                ImGui::SetNextItemWidth(150);
+                context.hasChangedDeviceArea |= ImGui::InputFloat("##TabletOffsetY", &settings.deviceArea.offsetY, 0.f, 0.f, "%.0f");
+            }
+            ImGui::EndGroup();
+        }
+
+        context.hasChangedDeviceArea |= ImGui::Checkbox("Full Area", &settings.deviceForceFullArea);
+        ImGui::BeginDisabled();
+        ImGui::Checkbox("Force Proportions", &settings.deviceForceAspectRatio);
+        ImGui::EndDisabled();
+    }
+    ImGui::EndGroup();
+    ImGui::SameLine();
+    ImGui::BeginGroup();
+    {
+        static float devicePressureAnchors[4] = {};
+
+        if (!devices.empty())
+        {
+            devicePressureAnchors[0] = settings.devicePressure.minX;
+            devicePressureAnchors[1] = settings.devicePressure.minY;
+            devicePressureAnchors[2] = settings.devicePressure.maxX;
+            devicePressureAnchors[3] = settings.devicePressure.maxY;
+        }
+        else
+        {
+            devicePressureAnchors[0] = 0;
+            devicePressureAnchors[1] = 0;
+            devicePressureAnchors[2] = 1;
+            devicePressureAnchors[3] = 1;
+        }
+
+        ImGui::AlignTextToFramePadding();
+        context.hasChangedDevicePressure = ImGui::BezierEditor("Pressure Curve", devicePressureAnchors, { 250, 250 });
+
+        if (context.hasChangedDevicePressure)
+        {
+            settings.devicePressure = { devicePressureAnchors[0], devicePressureAnchors[1], devicePressureAnchors[2], devicePressureAnchors[3] };
+        }
+    }
+    ImGui::EndGroup();
+
+    return {};
+}
+
+liberror::Result<void> render_monitor_settings_tab(Context& context, Settings& settings, std::vector<Monitor>& monitors)
+{
+    ImGui::SetCursorPosX((ImGui::GetWindowWidth() - 308)/2);
+
+    ImGui::BeginGroup();
+    {
+        ImGui::AlignTextToFramePadding();
+        ImGui::Text("Monitor");
+        auto monitorNames = fplus::transform([] (Monitor const& monitor) { return fmt::format("{} ({}x{})", monitor.name, monitor.width, monitor.height); }, monitors);
+        auto monitorNamesData = fplus::transform([] (std::string const& name) { return name.data(); }, monitorNames);
+        ImGui::SetNextItemWidth(308);
+        static int monitorIndex;
+        context.hasChangedMonitor |= ImGui::Combo("##Monitors", &monitorIndex, monitorNamesData.data(), static_cast<int>(monitorNamesData.size()));
+
+        if (context.hasChangedMonitor)
+        {
+            context.monitor = monitors.at(static_cast<size_t>(monitorIndex));
+            context.monitorDefaultArea = libwacom::Area { 0, 0, context.monitor.width, context.monitor.height };
+            settings.monitorArea = context.monitorDefaultArea;
+        }
+
+        {
+            ImGui::BeginGroup();
+            {
+                ImGui::AlignTextToFramePadding();
+                ImGui::Text("Width");
+                ImGui::SetNextItemWidth(150);
+                context.hasChangedMonitorArea |= ImGui::InputFloat("##MonitorWidth", &settings.monitorArea.width, 0.f, 0.f, "%.0f");
+            }
+            ImGui::EndGroup();
+            ImGui::SameLine();
+            ImGui::BeginGroup();
+            {
+                ImGui::AlignTextToFramePadding();
+                ImGui::Text("Height");
+                ImGui::SetNextItemWidth(150);
+                context.hasChangedMonitorArea |= ImGui::InputFloat("##MonitorHeight", &settings.monitorArea.height, 0.f, 0.f, "%.0f");
+            }
+            ImGui::EndGroup();
+        }
+        {
+            ImGui::BeginGroup();
+            {
+                ImGui::AlignTextToFramePadding();
+                ImGui::Text("Offset X");
+                ImGui::SetNextItemWidth(150);
+                context.hasChangedMonitorArea |= ImGui::InputFloat("##MonitorOffsetX", &settings.monitorArea.offsetX, 0.f, 0.f, "%.0f");
+            }
+            ImGui::EndGroup();
+            ImGui::SameLine();
+            ImGui::BeginGroup();
+            {
+                ImGui::AlignTextToFramePadding();
+                ImGui::Text("Offset Y");
+                ImGui::SetNextItemWidth(150);
+                context.hasChangedMonitorArea |= ImGui::InputFloat("##MonitorOffsetY", &settings.monitorArea.offsetY, 0.f, 0.f, "%.0f");
+            }
+            ImGui::EndGroup();
+        }
+
+        context.hasChangedMonitorArea |= ImGui::Checkbox("Full Area", &settings.monitorForceFullArea);
+        ImGui::BeginDisabled();
+        ImGui::Checkbox("Force Proportions", &settings.monitorForceAspectRatio);
+        ImGui::EndDisabled();
+    }
+    ImGui::EndGroup();
+
+    return {};
+}
+
 liberror::Result<void> render_window(Settings& settings, std::vector<libwacom::Device>& devices, std::vector<Monitor>& monitors)
 {
-    static libwacom::Device device = devices.empty() ? libwacom::Device {} : devices.front();
-    static libwacom::Area deviceDefaultArea = devices.empty() ? libwacom::Area {} : TRY(libwacom::get_stylus_default_area(device.id));
-
-    static Monitor monitor = fplus::find_first_by([] (Monitor const& monitor) { return monitor.primary; }, monitors).get_with_default({});
-    static libwacom::Area monitorDefaultArea = monitors.empty() ? libwacom::Area {} : libwacom::Area { 0, 0, monitor.width, monitor.height };
-
-    static bool hasChangedDevice; // cppcheck-suppress variableScope
-    static bool hasChangedDeviceArea; // cppcheck-suppress variableScope
-    static bool hasChangedDevicePressure; // cppcheck-suppress variableScope
-    static bool hasChangedMonitor; // cppcheck-suppress variableScope
-    static bool hasChangedMonitorArea; // cppcheck-suppress variableScope
+    static Context context = [&] () {
+        libwacom::Device device = devices.empty() ? libwacom::Device {} : devices.front();
+        libwacom::Area deviceDefaultArea = devices.empty() ? libwacom::Area {} : MUST(libwacom::get_stylus_default_area(device.id));
+        Monitor monitor = fplus::find_first_by([] (Monitor const& monitor) { return monitor.primary; }, monitors).get_with_default({});
+        libwacom::Area monitorDefaultArea = monitors.empty() ? libwacom::Area {} : libwacom::Area { 0, 0, monitor.width, monitor.height };
+        return Context { device, deviceDefaultArea, monitor, monitorDefaultArea };
+    }();
 
     if (devices.empty() && settings.devicePressure.minX == -1 && settings.devicePressure.minY == -1 && settings.deviceArea.width == -1 && settings.deviceArea.height == -1)
     {
         ImGui::PushToast("Warning", "No devices were found");
         settings.deviceArea = { 0, 0, 0, 0 };
         settings.devicePressure = { 0, 0, 1, 1 };
-        settings.monitorArea = monitorDefaultArea;
+        settings.monitorArea = context.monitorDefaultArea;
     }
 
     if (!devices.empty() && settings.devicePressure.minX == -1 && settings.devicePressure.minY == -1 && settings.deviceArea.width == -1 && settings.deviceArea.height == -1)
@@ -84,102 +352,18 @@ liberror::Result<void> render_window(Settings& settings, std::vector<libwacom::D
         }
         else
         {
-            ImGui::PushToast("Warning", "Device settings could not be found, reading directly from xsetwacom instead");
-            settings.deviceName = device.name;
-            settings.deviceArea = MUST(libwacom::get_stylus_area(device.id));
-            settings.devicePressure = MUST(libwacom::get_stylus_pressure_curve(device.id));
-            settings.monitorArea = monitorDefaultArea;
-            settings.monitorName = monitor.name;
+            ImGui::PushToast("Warning", "No saved device settings could be found, reading directly from xsetwacom instead");
+            settings.deviceName = context.device.name;
+            settings.deviceArea = MUST(libwacom::get_stylus_area(context.device.id));
+            settings.devicePressure = MUST(libwacom::get_stylus_pressure_curve(context.device.id));
+            settings.monitorArea = context.monitorDefaultArea;
+            settings.monitorName = context.monitor.name;
         }
     }
 
     ImGui::BeginGroup();
     {
-        auto [cursorPosX, cursorPosY] = ImGui::GetCursorPos();
-        ImDrawList* drawList = ImGui::GetWindowDrawList();
-
-        static ImVec2 monitorAreaAnchors[4] { { 0, 0 }, { 0, 1 }, { 1, 0 }, { 1, 1 } };
-
-        if (!monitors.empty())
-        {
-            monitorAreaAnchors[0] = { settings.monitorArea.offsetX / monitorDefaultArea.width, settings.monitorArea.offsetY / monitorDefaultArea.height };
-            monitorAreaAnchors[1] = { settings.monitorArea.offsetX / monitorDefaultArea.width, (settings.monitorArea.height + settings.monitorArea.offsetY) / monitorDefaultArea.height };
-            monitorAreaAnchors[2] = { (settings.monitorArea.width + settings.monitorArea.offsetX) / monitorDefaultArea.width, settings.monitorArea.offsetY / monitorDefaultArea.height };
-            monitorAreaAnchors[3] = { (settings.monitorArea.width + settings.monitorArea.offsetX) / monitorDefaultArea.width, (settings.monitorArea.height + settings.monitorArea.offsetY) / monitorDefaultArea.height };
-        }
-        else
-        {
-            monitorAreaAnchors[0] = { 0, 0 };
-            monitorAreaAnchors[1] = { 0, 1 };
-            monitorAreaAnchors[2] = { 1, 0 };
-            monitorAreaAnchors[3] = { 1, 1 };
-        }
-
-        static const ImVec2 monitorMapperSize { 20 * 16, 20 * 9 };
-        ImGui::SetCursorPosX((ImGui::GetWindowWidth() - monitorMapperSize.x)/2);
-        static ImRect monitorMapperPosition {};
-        hasChangedMonitorArea |= area_mapper("Monitor", monitorAreaAnchors, monitorMapperSize, &monitorMapperPosition, settings.monitorForceFullArea, settings.monitorForceAspectRatio);
-        ImGui::SetCursorPosX(cursorPosX);
-
-        if (hasChangedMonitorArea)
-        {
-            settings.monitorArea = {
-                .offsetX = monitorAreaAnchors[0].x * monitorDefaultArea.width,
-                .offsetY = monitorAreaAnchors[0].y * monitorDefaultArea.height,
-                .width   = (monitorAreaAnchors[2].x - monitorAreaAnchors[0].x) * monitorDefaultArea.width,
-                .height  = (monitorAreaAnchors[3].y - monitorAreaAnchors[2].y) * monitorDefaultArea.height
-            };
-        }
-
-        if (hasChangedMonitorArea && settings.monitorForceFullArea)
-        {
-            settings.monitorArea = monitorDefaultArea;
-        }
-
-        static ImVec2 deviceAreaAnchors[4] { { -1, -1 }, { -1, -1 }, { -1, -1 }, { -1, -1 } };
-
-        if (!devices.empty())
-        {
-            deviceAreaAnchors[0] = { settings.deviceArea.offsetX / deviceDefaultArea.width, settings.deviceArea.offsetY / deviceDefaultArea.height };
-            deviceAreaAnchors[1] = { settings.deviceArea.offsetX / deviceDefaultArea.width, (settings.deviceArea.height + settings.deviceArea.offsetY) / deviceDefaultArea.height };
-            deviceAreaAnchors[2] = { (settings.deviceArea.width + settings.deviceArea.offsetX) / deviceDefaultArea.width, settings.deviceArea.offsetY / deviceDefaultArea.height };
-            deviceAreaAnchors[3] = { (settings.deviceArea.width + settings.deviceArea.offsetX) / deviceDefaultArea.width, (settings.deviceArea.height + settings.deviceArea.offsetY) / deviceDefaultArea.height };
-        }
-        else
-        {
-            deviceAreaAnchors[0] = { 0, 0 };
-            deviceAreaAnchors[1] = { 0, 1 };
-            deviceAreaAnchors[2] = { 1, 0 };
-            deviceAreaAnchors[3] = { 1, 1 };
-        }
-
-        static const ImVec2 deviceMapperSize { 15 * 16, 15 * 9 };
-        ImGui::SetCursorPosX((ImGui::GetWindowWidth() - deviceMapperSize.x)/2);
-        static ImRect deviceMapperPosition {};
-        hasChangedDeviceArea |= area_mapper("Tablet", deviceAreaAnchors, deviceMapperSize, &deviceMapperPosition, settings.deviceForceFullArea, settings.deviceForceAspectRatio);
-        ImGui::SetCursorPosX(cursorPosX);
-
-        if (hasChangedDeviceArea)
-        {
-            settings.deviceArea = {
-                .offsetX = deviceAreaAnchors[0].x * deviceDefaultArea.width,
-                .offsetY = deviceAreaAnchors[0].y * deviceDefaultArea.height,
-                .width   = (deviceAreaAnchors[2].x - deviceAreaAnchors[0].x) * deviceDefaultArea.width,
-                .height  = (deviceAreaAnchors[3].y - deviceAreaAnchors[2].y) * deviceDefaultArea.height
-            };
-        }
-
-        if (hasChangedDeviceArea && settings.deviceForceFullArea)
-        {
-            settings.deviceArea = deviceDefaultArea;
-        }
-
-        for (auto [monitorAnchor, deviceAnchor] : fplus::zip(std::span<ImVec2>(monitorAreaAnchors, 4), std::span<ImVec2>(deviceAreaAnchors, 4)))
-        {
-            auto p1 = monitorAnchor * (monitorMapperPosition.Max - monitorMapperPosition.Min) + monitorMapperPosition.Min;
-            auto p2 = deviceAnchor * (deviceMapperPosition.Max - deviceMapperPosition.Min) + deviceMapperPosition.Min;
-            drawList->AddLine(p1, p2, ImColor(255, 0, 0, 127), 2.f);
-        }
+        render_region_mappers(context, settings, devices, monitors);
     }
     ImGui::EndGroup();
 
@@ -187,165 +371,13 @@ liberror::Result<void> render_window(Settings& settings, std::vector<libwacom::D
     {
         if (ImGui::BeginTabItem("Tablet Settings"))
         {
-            ImGui::SetCursorPosX((ImGui::GetWindowWidth() - (250 + 308))/2);
-            ImGui::BeginGroup();
-            {
-                ImGui::AlignTextToFramePadding();
-                ImGui::Text("Device");
-                auto deviceNames = fplus::transform([] (libwacom::Device const& device) { return device.name.data(); }, devices);
-                ImGui::SetNextItemWidth(308);
-                static int deviceIndex;
-                hasChangedDevice |= ImGui::Combo("##Device", &deviceIndex, deviceNames.data(), static_cast<int>(deviceNames.size()));
-
-                if (hasChangedDevice)
-                {
-                    device = devices.at(static_cast<size_t>(deviceIndex));
-                    deviceDefaultArea = TRY(libwacom::get_stylus_default_area(device.id));
-                    settings.deviceArea = deviceDefaultArea;
-                }
-
-                {
-                    ImGui::BeginGroup();
-                    {
-                        ImGui::AlignTextToFramePadding();
-                        ImGui::Text("Width");
-                        ImGui::SetNextItemWidth(150);
-                        hasChangedDeviceArea |= ImGui::InputFloat("##TabletWidth", &settings.deviceArea.width, 0.f, 0.f, "%.0f");
-                    }
-                    ImGui::EndGroup();
-                    ImGui::SameLine();
-                    ImGui::BeginGroup();
-                    {
-                        ImGui::AlignTextToFramePadding();
-                        ImGui::Text("Height");
-                        ImGui::SetNextItemWidth(150);
-                        hasChangedDeviceArea |= ImGui::InputFloat("##TabletHeight", &settings.deviceArea.height, 0.f, 0.f, "%.0f");
-                    }
-                    ImGui::EndGroup();
-                }
-                {
-                    ImGui::BeginGroup();
-                    {
-                        ImGui::AlignTextToFramePadding();
-                        ImGui::Text("Offset X");
-                        ImGui::SetNextItemWidth(150);
-                        hasChangedDeviceArea |= ImGui::InputFloat("##TabletOffsetX", &settings.deviceArea.offsetX, 0.f, 0.f, "%.0f");
-                    }
-                    ImGui::EndGroup();
-                    ImGui::SameLine();
-                    ImGui::BeginGroup();
-                    {
-                        ImGui::AlignTextToFramePadding();
-                        ImGui::Text("Offset Y");
-                        ImGui::SetNextItemWidth(150);
-                        hasChangedDeviceArea |= ImGui::InputFloat("##TabletOffsetY", &settings.deviceArea.offsetY, 0.f, 0.f, "%.0f");
-                    }
-                    ImGui::EndGroup();
-                }
-
-                hasChangedDeviceArea |= ImGui::Checkbox("Full Area", &settings.deviceForceFullArea);
-                ImGui::BeginDisabled();
-                ImGui::Checkbox("Force Proportions", &settings.deviceForceAspectRatio);
-                ImGui::EndDisabled();
-            }
-            ImGui::EndGroup();
-            ImGui::SameLine();
-            ImGui::BeginGroup();
-            {
-                static float devicePressureAnchors[4] = {};
-
-                if (!devices.empty())
-                {
-                    devicePressureAnchors[0] = settings.devicePressure.minX;
-                    devicePressureAnchors[1] = settings.devicePressure.minY;
-                    devicePressureAnchors[2] = settings.devicePressure.maxX;
-                    devicePressureAnchors[3] = settings.devicePressure.maxY;
-                }
-                else
-                {
-                    devicePressureAnchors[0] = 0;
-                    devicePressureAnchors[1] = 0;
-                    devicePressureAnchors[2] = 1;
-                    devicePressureAnchors[3] = 1;
-                }
-
-                ImGui::AlignTextToFramePadding();
-                hasChangedDevicePressure = ImGui::BezierEditor("Pressure Curve", devicePressureAnchors, { 250, 250 });
-
-                if (hasChangedDevicePressure)
-                {
-                    settings.devicePressure = { devicePressureAnchors[0], devicePressureAnchors[1], devicePressureAnchors[2], devicePressureAnchors[3] };
-                }
-            }
-            ImGui::EndGroup();
+            TRY(render_tablet_settings_tab(context, settings, devices));
             ImGui::EndTabItem();
         }
 
         if (ImGui::BeginTabItem("Monitor Settings"))
         {
-            ImGui::SetCursorPosX((ImGui::GetWindowWidth() - 308)/2);
-            ImGui::BeginGroup();
-            {
-                ImGui::AlignTextToFramePadding();
-                ImGui::Text("Monitor");
-                auto monitorNames = fplus::transform([] (Monitor const& monitor) { return fmt::format("{} ({}x{})", monitor.name, monitor.width, monitor.height); }, monitors);
-                auto monitorNamesData = fplus::transform([] (std::string const& name) { return name.data(); }, monitorNames);
-                ImGui::SetNextItemWidth(308);
-                static int monitorIndex;
-                hasChangedMonitor |= ImGui::Combo("##Monitors", &monitorIndex, monitorNamesData.data(), static_cast<int>(monitorNamesData.size()));
-
-                if (hasChangedMonitor)
-                {
-                    monitor = monitors.at(static_cast<size_t>(monitorIndex));
-                    monitorDefaultArea = libwacom::Area { 0, 0, monitor.width, monitor.height };
-                    settings.monitorArea = monitorDefaultArea;
-                }
-
-                {
-                    ImGui::BeginGroup();
-                    {
-                        ImGui::AlignTextToFramePadding();
-                        ImGui::Text("Width");
-                        ImGui::SetNextItemWidth(150);
-                        hasChangedMonitorArea |= ImGui::InputFloat("##MonitorWidth", &settings.monitorArea.width, 0.f, 0.f, "%.0f");
-                    }
-                    ImGui::EndGroup();
-                    ImGui::SameLine();
-                    ImGui::BeginGroup();
-                    {
-                        ImGui::AlignTextToFramePadding();
-                        ImGui::Text("Height");
-                        ImGui::SetNextItemWidth(150);
-                        hasChangedMonitorArea |= ImGui::InputFloat("##MonitorHeight", &settings.monitorArea.height, 0.f, 0.f, "%.0f");
-                    }
-                    ImGui::EndGroup();
-                }
-                {
-                    ImGui::BeginGroup();
-                    {
-                        ImGui::AlignTextToFramePadding();
-                        ImGui::Text("Offset X");
-                        ImGui::SetNextItemWidth(150);
-                        hasChangedMonitorArea |= ImGui::InputFloat("##MonitorOffsetX", &settings.monitorArea.offsetX, 0.f, 0.f, "%.0f");
-                    }
-                    ImGui::EndGroup();
-                    ImGui::SameLine();
-                    ImGui::BeginGroup();
-                    {
-                        ImGui::AlignTextToFramePadding();
-                        ImGui::Text("Offset Y");
-                        ImGui::SetNextItemWidth(150);
-                        hasChangedMonitorArea |= ImGui::InputFloat("##MonitorOffsetY", &settings.monitorArea.offsetY, 0.f, 0.f, "%.0f");
-                    }
-                    ImGui::EndGroup();
-                }
-
-                hasChangedMonitorArea |= ImGui::Checkbox("Full Area", &settings.monitorForceFullArea);
-                ImGui::BeginDisabled();
-                ImGui::Checkbox("Force Proportions", &settings.monitorForceAspectRatio);
-                ImGui::EndDisabled();
-            }
-            ImGui::EndGroup();
+            TRY(render_monitor_settings_tab(context, settings, monitors));
             ImGui::EndTabItem();
         }
 
@@ -361,7 +393,7 @@ liberror::Result<void> render_window(Settings& settings, std::vector<libwacom::D
             ImGui::PushToast("Success", "Successfully saved device settings");
         }
 
-        TRY(apply_settings_to_device(device, monitor, settings));
+        TRY(apply_settings_to_device(context.device, context.monitor, settings));
     }
     ImGui::SetCursorPos(previousCursorPosition);
 
