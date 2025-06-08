@@ -621,9 +621,9 @@ int main(int argc, char const** argv)
 
                 if (ImGui::BeginMenuBar())
                 {
-                    if (ImGui::BeginMenu(Localisation::the()[applicationSettings.language][Localisation::MenuBar_Settings].data()))
+                    if (ImGui::BeginMenu(Localisation::get(applicationSettings.language, Localisation::MenuBar_Settings)))
                     {
-                        if (ImGui::MenuItem(Localisation::the()[applicationSettings.language][Localisation::MenuBar_Settings_Application].data()))
+                        if (ImGui::MenuItem(Localisation::get(applicationSettings.language, Localisation::MenuBar_Settings_Application)))
                         {
                             isApplicationSettingsOpen = true;
                         }
@@ -640,7 +640,7 @@ int main(int argc, char const** argv)
                     ImGui::SetNextWindowSize({ applicationSettingsWidth, applicationSettingsHeight });
                     ImGui::SetNextWindowPos({ (static_cast<float>(windowWidth) - applicationSettingsWidth)/2, (static_cast<float>(windowHeight) - applicationSettingsHeight)/2 });
                     ImGui::Begin(
-                        Localisation::the()[applicationSettings.language][Localisation::MenuBar_Settings_Application].data(),
+                        Localisation::get(applicationSettings.language, Localisation::MenuBar_Settings_Application),
                         &isApplicationSettingsOpen,
                         ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
                     );
