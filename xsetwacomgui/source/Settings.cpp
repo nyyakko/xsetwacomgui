@@ -14,9 +14,9 @@ std::filesystem::path get_settings_base_path()
     return std::filesystem::path(home) / ".config";
 }
 
-bool load_device_settings(Settings& settings)
+bool load_device_settings(DeviceSettings& settings)
 {
-    std::ifstream stream(SETTINGS_FILE);
+    std::ifstream stream(DEVICE_SETTINGS_FILE);
     std::stringstream content;
     content << stream.rdbuf();
 
@@ -50,7 +50,7 @@ bool load_device_settings(Settings& settings)
     return true;
 }
 
-bool save_device_settings(Settings const& settings)
+bool save_device_settings(DeviceSettings const& settings)
 {
     nlohmann::ordered_json json {
         { "deviceName", settings.deviceName },
@@ -85,7 +85,51 @@ bool save_device_settings(Settings const& settings)
         { "monitorForceAspectRatio", settings.monitorForceAspectRatio },
     };
 
-    std::ofstream stream(SETTINGS_FILE);
+    std::ofstream stream(DEVICE_SETTINGS_FILE);
+    stream << std::setw(4) << json;
+
+    return true;
+}
+
+bool load_application_settings(ApplicationSettings& settings)
+{
+    std::ifstream stream(APPLICATION_SETTINGS_FILE);
+    std::stringstream content;
+    content << stream.rdbuf();
+
+    try
+    {
+        auto json = nlohmann::json::parse(content.str());
+
+        settings.scale = json["interface"]["scale"].get<float>();
+        settings.theme = ApplicationSettings::Theme::from_string((json["interface"]["theme"].get<std::string>()));
+        settings.language = json["general"]["language"].get<std::string>();
+    }
+    catch (std::exception const& error)
+    {
+        return false;
+    }
+
+    return true;
+}
+
+bool save_application_settings(ApplicationSettings& settings)
+{
+    nlohmann::ordered_json json {
+        {
+            "interface", {
+                { "scale", settings.scale },
+                { "theme", settings.theme.to_string() },
+            }
+        },
+        {
+            "general", {
+                { "language", settings.language },
+            }
+        }
+    };
+
+    std::ofstream stream(APPLICATION_SETTINGS_FILE);
     stream << std::setw(4) << json;
 
     return true;

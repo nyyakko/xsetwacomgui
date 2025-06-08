@@ -6,9 +6,12 @@
 #include <libwacom/Device.hpp>
 
 #define SETTINGS_PATH get_settings_base_path() / NAME
-#define SETTINGS_FILE SETTINGS_PATH / "devices.json"
+#define DEVICE_SETTINGS_FILE SETTINGS_PATH / "device.json"
+#define APPLICATION_SETTINGS_FILE SETTINGS_PATH / "application.json"
 
-struct Settings
+std::filesystem::path get_settings_base_path();
+
+struct DeviceSettings
 {
     std::string deviceName;
     libwacom::Area deviceArea;
@@ -21,7 +24,17 @@ struct Settings
     bool monitorForceAspectRatio;
 };
 
-std::filesystem::path get_settings_base_path();
-bool load_device_settings(Settings& settings);
-bool save_device_settings(Settings const& settings);
+bool load_device_settings(DeviceSettings& settings);
+bool save_device_settings(DeviceSettings const& settings);
 
+struct ApplicationSettings
+{
+    ENUM_CLASS(Theme, DARK, WHITE)
+
+    float scale;
+    Theme theme;
+    std::string language;
+};
+
+bool load_application_settings(ApplicationSettings& settings);
+bool save_application_settings(ApplicationSettings& settings);

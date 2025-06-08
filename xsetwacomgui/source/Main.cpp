@@ -22,6 +22,33 @@
 #include <span>
 #include <ranges>
 
+static constexpr auto FPS = 60;
+
+void show_help()
+{
+    fmt::println("A graphical xsetwacom wrapper for ease of use.");
+    fmt::println("Usage:");
+    fmt::println("  xsetwacomgui [OPTION...]");
+    fmt::println("");
+    fmt::println("  --no-gui        Launches the program without the UI. This is intended for");
+    fmt::println("                  loading saved device settings on system boot.");
+}
+
+liberror::Result<void> apply_settings_to_device(libwacom::Device const& device, Monitor const& monitor, DeviceSettings const& settings)
+{
+    TRY(libwacom::set_stylus_output_from_display_area(device.id, {
+        monitor.offsetX + settings.monitorArea.offsetX,
+        monitor.offsetY + settings.monitorArea.offsetY,
+        settings.monitorArea.width,
+        settings.monitorArea.height,
+    }));
+
+    TRY(libwacom::set_stylus_area(device.id, settings.deviceArea));
+    TRY(libwacom::set_stylus_pressure_curve(device.id, settings.devicePressure));
+
+    return {};
+}
+
 float& the_scale()
 {
     static float scale = 1.0f;
@@ -39,33 +66,54 @@ float operator""_scaled(unsigned long long i)
     return static_cast<float>(i) * the_scale();
 }
 
-static auto WIDTH = 800_scaled;
-static auto HEIGHT = 815_scaled;
-static constexpr auto FPS = 60;
-
-void show_help()
+void render_application_settings_popup(ApplicationSettings& settings)
 {
-    fmt::println("A graphical xsetwacom wrapper for ease of use.");
-    fmt::println("Usage:");
-    fmt::println("  xsetwacomgui [OPTION...]");
-    fmt::println("");
-    fmt::println("  --no-gui        Launches the program without the UI. This is intended for");
-    fmt::println("                  loading saved device settings on system boot.");
-}
+    if (ImGui::BeginTabBar("##Tabs_2"))
+    {
+        if (ImGui::BeginTabItem("Appearance"))
+        {
+            ImGui::AlignTextToFramePadding();
+            ImGui::Text("Theme");
+            ImGui::SameLine();
+            static char const* themes[] = { "Dark", "Light" };
+            static int themeIndex = static_cast<int>(settings.theme);
+            auto hasChangedUITheme = ImGui::Combo("##Theme", &themeIndex, themes, std::size(themes));
 
-liberror::Result<void> apply_settings_to_device(libwacom::Device const& device, Monitor const& monitor, Settings const& settings)
-{
-    TRY(libwacom::set_stylus_output_from_display_area(device.id, {
-        monitor.offsetX + settings.monitorArea.offsetX,
-        monitor.offsetY + settings.monitorArea.offsetY,
-        settings.monitorArea.width,
-        settings.monitorArea.height,
-    }));
+            if (hasChangedUITheme)
+            {
+                settings.theme = ApplicationSettings::Theme::from_int(themeIndex);
+            }
 
-    TRY(libwacom::set_stylus_area(device.id, settings.deviceArea));
-    TRY(libwacom::set_stylus_pressure_curve(device.id, settings.devicePressure));
+            ImGui::AlignTextToFramePadding();
+            ImGui::Text("Scale");
+            ImGui::SameLine();
+            static float scale = settings.scale;
+            auto hasChangedUIScale = ImGui::InputFloat("##UiScale", &scale, 0.1f);
 
-    return {};
+            if (hasChangedUIScale)
+            {
+                scale = ImClamp(scale, 1.0f, 10.f);
+                settings.scale = scale;
+            }
+
+            ImGui::EndTabItem();
+        }
+
+        if (ImGui::BeginTabItem("Language"))
+        {
+            ImGui::EndTabItem();
+        }
+
+        ImGui::EndTabBar();
+    }
+
+    auto previousCursorPosition = ImGui::GetCursorPos();
+    ImGui::SetCursorPosY(ImGui::GetWindowHeight() - (35_scaled + ImGui::GetStyle().WindowPadding.x));
+    if (ImGui::Button("Save", { 200_scaled, 35_scaled }))
+    {
+        save_application_settings(settings);
+    }
+    ImGui::SetCursorPos(previousCursorPosition);
 }
 
 struct Context
@@ -83,7 +131,7 @@ struct Context
     bool hasChangedMonitorArea = false;
 };
 
-void render_region_mappers(Context& context, Settings& settings, std::vector<libwacom::Device>& devices, std::vector<Monitor>& monitors)
+void render_region_mappers(Context& context, DeviceSettings& settings, std::vector<libwacom::Device>& devices, std::vector<Monitor>& monitors)
 {
     auto [cursorPosX, cursorPosY] = ImGui::GetCursorPos();
     ImDrawList* drawList = ImGui::GetWindowDrawList();
@@ -172,16 +220,16 @@ void render_region_mappers(Context& context, Settings& settings, std::vector<lib
     }
 }
 
-liberror::Result<void> render_tablet_settings_tab(Context& context, Settings& settings, std::vector<libwacom::Device>& devices)
+liberror::Result<void> render_tablet_settings_tab(Context& context, DeviceSettings& settings, std::vector<libwacom::Device>& devices)
 {
-    ImGui::SetCursorPosX((ImGui::GetWindowWidth() - (250_scaled + 308_scaled))/2);
+    ImGui::SetCursorPosX((ImGui::GetWindowWidth() - (250_scaled + 300_scaled + ImGui::GetStyle().WindowPadding.x))/2);
 
     ImGui::BeginGroup();
     {
         ImGui::AlignTextToFramePadding();
         ImGui::Text("Device");
         auto deviceNames = fplus::transform([] (libwacom::Device const& device) { return device.name.data(); }, devices);
-        ImGui::SetNextItemWidth(308_scaled);
+        ImGui::SetNextItemWidth(300_scaled + ImGui::GetStyle().WindowPadding.x);
         static int deviceIndex;
         context.hasChangedDevice |= ImGui::Combo("##Device", &deviceIndex, deviceNames.data(), static_cast<int>(deviceNames.size()));
 
@@ -270,9 +318,9 @@ liberror::Result<void> render_tablet_settings_tab(Context& context, Settings& se
     return {};
 }
 
-liberror::Result<void> render_monitor_settings_tab(Context& context, Settings& settings, std::vector<Monitor>& monitors)
+liberror::Result<void> render_monitor_settings_tab(Context& context, DeviceSettings& settings, std::vector<Monitor>& monitors)
 {
-    ImGui::SetCursorPosX((ImGui::GetWindowWidth() - 308_scaled)/2);
+    ImGui::SetCursorPosX((ImGui::GetWindowWidth() - (300_scaled + ImGui::GetStyle().WindowPadding.x))/2);
 
     ImGui::BeginGroup();
     {
@@ -280,7 +328,7 @@ liberror::Result<void> render_monitor_settings_tab(Context& context, Settings& s
         ImGui::Text("Monitor");
         auto monitorNames = fplus::transform([] (Monitor const& monitor) { return fmt::format("{} ({}x{})", monitor.name, monitor.width, monitor.height); }, monitors);
         auto monitorNamesData = fplus::transform([] (std::string const& name) { return name.data(); }, monitorNames);
-        ImGui::SetNextItemWidth(308_scaled);
+        ImGui::SetNextItemWidth(300_scaled + ImGui::GetStyle().WindowPadding.x);
         static int monitorIndex;
         context.hasChangedMonitor |= ImGui::Combo("##Monitors", &monitorIndex, monitorNamesData.data(), static_cast<int>(monitorNamesData.size()));
 
@@ -340,7 +388,7 @@ liberror::Result<void> render_monitor_settings_tab(Context& context, Settings& s
     return {};
 }
 
-liberror::Result<void> render_window(Settings& settings, std::vector<libwacom::Device>& devices, std::vector<Monitor>& monitors)
+liberror::Result<void> render_window(DeviceSettings& settings, std::vector<libwacom::Device>& devices, std::vector<Monitor>& monitors)
 {
     static Context context = [&] () {
         libwacom::Device device = devices.empty() ? libwacom::Device {} : devices.front();
@@ -360,7 +408,7 @@ liberror::Result<void> render_window(Settings& settings, std::vector<libwacom::D
 
     if (!devices.empty() && settings.devicePressure.minX == -1 && settings.devicePressure.minY == -1 && settings.deviceArea.width == -1 && settings.deviceArea.height == -1)
     {
-        if (std::filesystem::exists(SETTINGS_FILE))
+        if (std::filesystem::exists(DEVICE_SETTINGS_FILE))
         {
             if (!load_device_settings(settings))
             {
@@ -384,7 +432,7 @@ liberror::Result<void> render_window(Settings& settings, std::vector<libwacom::D
     }
     ImGui::EndGroup();
 
-    if (ImGui::BeginTabBar("##Tabs"))
+    if (ImGui::BeginTabBar("##Tabs_1"))
     {
         if (ImGui::BeginTabItem("Tablet Settings"))
         {
@@ -402,7 +450,7 @@ liberror::Result<void> render_window(Settings& settings, std::vector<libwacom::D
     }
 
     auto previousCursorPosition = ImGui::GetCursorPos();
-    ImGui::SetCursorPosY(ImGui::GetWindowHeight() - 43_scaled);
+    ImGui::SetCursorPosY(ImGui::GetWindowHeight() - (35_scaled + ImGui::GetStyle().WindowPadding.x));
     if (ImGui::Button("Save & Apply", { 200_scaled, 35_scaled }))
     {
         if (save_device_settings(settings))
@@ -428,7 +476,7 @@ int main(int argc, char const** argv)
     std::vector<libwacom::Device> devices = MUST(libwacom::get_available_devices());
     devices = fplus::keep_if([] (auto&& device) { return device.kind == libwacom::Device::Kind::STYLUS; }, devices);
 
-    Settings settings {
+    DeviceSettings deviceSettings {
         .deviceName = "INVALID",
         .deviceArea = { -1, -1, -1, -1 },
         .devicePressure = { -1, -1, -1, -1 },
@@ -453,13 +501,13 @@ int main(int argc, char const** argv)
 
     if (std::find(arguments.begin(), arguments.end(), "--no-gui") != arguments.end())
     {
-        if (!std::filesystem::exists(SETTINGS_FILE))
+        if (!std::filesystem::exists(DEVICE_SETTINGS_FILE))
         {
             spdlog::error("Device settings could not be found");
             return EXIT_FAILURE;
         }
 
-        if (!load_device_settings(settings))
+        if (!load_device_settings(deviceSettings))
         {
             spdlog::error("Failed to load device settings");
             return EXIT_FAILURE;
@@ -473,20 +521,49 @@ int main(int argc, char const** argv)
         auto device  = devices.front();
         auto monitor = fplus::find_first_by([] (Monitor const& monitor) { return monitor.primary; }, monitors).get_with_default({});
 
-        MUST(apply_settings_to_device(device, monitor, settings));
+        MUST(apply_settings_to_device(device, monitor, deviceSettings));
 
         fmt::println("Device settings loaded successfully");
 
         return EXIT_SUCCESS;
     }
 
-    InitWindow(static_cast<int>(WIDTH), static_cast<int>(HEIGHT), NAME);
+    ApplicationSettings applicationSettings {
+        .scale = 1.0,
+        .theme = ApplicationSettings::Theme::DARK,
+        .language = "en_us"
+    };
+
+    if (!std::filesystem::exists(APPLICATION_SETTINGS_FILE))
+    {
+        save_application_settings(applicationSettings);
+    }
+    else
+    {
+        if (!load_application_settings(applicationSettings))
+        {
+            spdlog::error("Failed to load application settings");
+        }
+    }
+
+    set_scale(applicationSettings.scale);
+
+    InitWindow(static_cast<int>(800_scaled), static_cast<int>(815_scaled), NAME);
     SetTargetFPS(FPS);
 
     auto const window = static_cast<GLFWwindow*>(GetWindowHandle());
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGui::StyleColorsDark();
+
+    if (applicationSettings.theme == ApplicationSettings::Theme::DARK)
+    {
+        ImGui::StyleColorsDark();
+    }
+    else
+    {
+        ImGui::StyleColorsLight();
+    }
+
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 130");
 
@@ -508,18 +585,55 @@ int main(int argc, char const** argv)
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        int width, height;
-        glfwGetWindowSize(window, &width, &height);
+        int windowWidth, windowHeight;
+        glfwGetWindowSize(window, &windowWidth, &windowHeight);
         ImGui::SetNextWindowPos({});
-        ImGui::SetNextWindowSize({ static_cast<float>(width), static_cast<float>(height) });
+        ImGui::SetNextWindowSize({ static_cast<float>(windowWidth), static_cast<float>(windowHeight) });
         ImGui::PushFont(font);
         {
-            ImGui::Begin(NAME, nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoSavedSettings);
+            ImGui::Begin(NAME, nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar);
             ImGui::RenderToasts();
             {
+                bool isApplicationSettingsOpen = false;
+
+                if (ImGui::BeginMenuBar())
+                {
+                    if (ImGui::BeginMenu("Settings"))
+                    {
+                        if (ImGui::MenuItem("Application Settings..."))
+                        {
+                            isApplicationSettingsOpen = true;
+                        }
+
+                        ImGui::EndMenu();
+                    }
+
+                    ImGui::EndMenuBar();
+                }
+
+                if (isApplicationSettingsOpen)
+                {
+                    ImGui::OpenPopup("ApplicationSettingsPopup");
+                }
+
+                float applicationSettingsWidth = static_cast<float>(windowWidth)/1.5f, applicationSettingsHeight = static_cast<float>(windowHeight)/1.5f;
+                ImGui::SetNextWindowSize({ applicationSettingsWidth, applicationSettingsHeight });
+                ImGui::SetNextWindowPos({ (static_cast<float>(windowWidth) - applicationSettingsWidth)/2, (static_cast<float>(windowHeight) - applicationSettingsHeight)/2 });
+                if (ImGui::BeginPopup("ApplicationSettingsPopup", ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize))
+                {
+                    ImGui::Text("Application Settings...");
+                    ImGui::SameLine();
+                    ImGui::SetCursorPosX(applicationSettingsWidth - (100 + ImGui::GetStyle().WindowPadding.x));
+                    if (ImGui::Button("Close", { 100, 25 })) ImGui::CloseCurrentPopup();
+
+                    render_application_settings_popup(applicationSettings);
+
+                    ImGui::EndPopup();
+                }
+
                 ImGui::BeginDisabled(devices.empty());
                 {
-                    MUST(render_window(settings, devices, monitors));
+                    MUST(render_window(deviceSettings, devices, monitors));
                 }
                 ImGui::EndDisabled();
             }
