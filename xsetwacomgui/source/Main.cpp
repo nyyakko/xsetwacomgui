@@ -2,6 +2,7 @@
 
 #include <spdlog/spdlog.h>
 
+#include "Scaling.hpp"
 #include "Localisation.hpp"
 #include "AreaMapper.hpp"
 #include "Monitor.hpp"
@@ -52,23 +53,6 @@ liberror::Result<void> apply_settings_to_device(libwacom::Device const& device, 
     TRY(libwacom::set_stylus_pressure_curve(device.id, settings.devicePressure));
 
     return {};
-}
-
-float& the_scale()
-{
-    static float scale = 1.0f;
-    return scale;
-}
-
-void set_scale(float value)
-{
-    auto& scale = the_scale();
-    scale = value;
-}
-
-float operator""_scaled(unsigned long long i)
-{
-    return static_cast<float>(i) * the_scale();
 }
 
 void render_application_settings_popup(ApplicationSettings& settings)
