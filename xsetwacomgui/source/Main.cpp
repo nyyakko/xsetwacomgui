@@ -28,8 +28,6 @@
 #include <ranges>
 #include <algorithm>
 
-#define LOCALISATION(LANGUAGE, VALUE) Localisation::the()[LANGUAGE][VALUE].data()
-
 void show_help()
 {
     fmt::println("A graphical xsetwacom wrapper for ease of use.");
