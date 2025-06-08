@@ -47,7 +47,7 @@ bool load_device_settings(DeviceSettings& settings)
         return false;
     }
 
-    return true;
+    return !(stream.bad() || stream.fail());
 }
 
 bool save_device_settings(DeviceSettings const& settings)
@@ -88,7 +88,7 @@ bool save_device_settings(DeviceSettings const& settings)
     std::ofstream stream(DEVICE_SETTINGS_FILE);
     stream << std::setw(4) << json;
 
-    return true;
+    return !(stream.bad() || stream.fail());
 }
 
 bool load_application_settings(ApplicationSettings& settings)
@@ -110,7 +110,7 @@ bool load_application_settings(ApplicationSettings& settings)
         return false;
     }
 
-    return true;
+    return !(stream.bad() || stream.fail());
 }
 
 bool save_application_settings(ApplicationSettings& settings)
@@ -132,5 +132,5 @@ bool save_application_settings(ApplicationSettings& settings)
     std::ofstream stream(APPLICATION_SETTINGS_FILE);
     stream << std::setw(4) << json;
 
-    return true;
+    return !(stream.bad() || stream.fail());
 }

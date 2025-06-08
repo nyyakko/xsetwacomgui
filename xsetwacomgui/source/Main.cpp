@@ -536,7 +536,10 @@ int main(int argc, char const** argv)
 
     if (!std::filesystem::exists(SETTINGS_PATH))
     {
-        std::filesystem::create_directory(SETTINGS_PATH);
+        if (!std::filesystem::create_directory(SETTINGS_PATH))
+        {
+            spdlog::error("Failed to create settings directory");
+        }
     }
 
     if (std::find(arguments.begin(), arguments.end(), "--help") != arguments.end())
