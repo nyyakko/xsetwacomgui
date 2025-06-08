@@ -108,8 +108,8 @@ void render_application_settings_popup(ApplicationSettings& settings)
     }
 
     auto previousCursorPosition = ImGui::GetCursorPos();
-    ImGui::SetCursorPosY(ImGui::GetWindowHeight() - (35_scaled + ImGui::GetStyle().WindowPadding.x));
-    if (ImGui::Button("Save", { 200_scaled, 35_scaled }))
+    ImGui::SetCursorPosY(ImGui::GetWindowHeight() - (25_scaled + ImGui::GetStyle().WindowPadding.x));
+    if (ImGui::Button("Save", { 100_scaled, 25_scaled }))
     {
         save_application_settings(settings);
     }

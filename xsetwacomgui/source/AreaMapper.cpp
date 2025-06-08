@@ -10,7 +10,6 @@ static auto constexpr MAPPER_GRAB_RADIUS = 6;
 
 static void area_mapper_render_grid(ImDrawList* drawList, ImRect frame, ImVec2 size)
 {
-
     for (size_t i = 0; i <= static_cast<size_t>(size.x); i += static_cast<size_t>(size.x / 4))
         drawList->AddLine({ frame.Min.x + static_cast<float>(i), frame.Min.y }, { frame.Min.x + static_cast<float>(i), frame.Max.y }, MAPPER_GRID_COLOR);
     for (size_t i = 0; i <= static_cast<size_t>(size.y); i += static_cast<size_t>(size.y / 4))
