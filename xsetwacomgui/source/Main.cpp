@@ -7,6 +7,9 @@
 #include "Monitor.hpp"
 #include "Settings.hpp"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "external/stb_image/stb_image.h"
+
 #include <imgui/extensions/imgui_toast.hpp>
 #include <imgui/extensions/imgui_bezier.hpp>
 #include <imgui/imgui.hpp>
@@ -133,6 +136,30 @@ void render_application_settings_popup(ApplicationSettings& settings)
         }
     }
     ImGui::SetCursorPos(previousCursorPosition);
+}
+
+void render_goddess()
+{
+    static auto width = 0, height = 0;
+    static auto channels = 0;
+    static auto image = stbi_load(HOME"/resources/images/jahy.png", &width, &height, &channels, STBI_rgb_alpha);
+    static GLuint imageTexture;
+
+    if (image != nullptr)
+    {
+        glGenTextures(1, &imageTexture);
+        glBindTexture(GL_TEXTURE_2D, imageTexture);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
+        stbi_image_free(image);
+        image = nullptr;
+    }
+
+    static ImVec2 frameDimensions { static_cast<float>(width) * 70/100, static_cast<float>(height) * 70/100 };
+    ImGui::SetCursorPos({ (ImGui::GetWindowWidth() - frameDimensions.x) / 2, (ImGui::GetWindowHeight() - frameDimensions.y) / 2 });
+    ImGui::Image(imageTexture, frameDimensions);
 }
 
 struct Context
@@ -625,6 +652,7 @@ int main(int argc, char const** argv)
             ImGui::RenderToasts();
             {
                 static bool isApplicationSettingsOpen = false;
+                static bool isGoddessOpen = false;
 
                 if (ImGui::BeginMenuBar())
                 {
@@ -633,6 +661,16 @@ int main(int argc, char const** argv)
                         if (ImGui::MenuItem(Localisation::get(applicationSettings.language, Localisation::MenuBar_Settings_Application)))
                         {
                             isApplicationSettingsOpen = true;
+                        }
+
+                        ImGui::EndMenu();
+                    }
+
+                    if (ImGui::BeginMenu(Localisation::get(applicationSettings.language, Localisation::MenuBar_Other)))
+                    {
+                        if (ImGui::MenuItem(Localisation::get(applicationSettings.language, Localisation::MenuBar_Other_Goddess)))
+                        {
+                            isGoddessOpen = true;
                         }
 
                         ImGui::EndMenu();
@@ -653,6 +691,22 @@ int main(int argc, char const** argv)
                     );
                     {
                         render_application_settings_popup(applicationSettings);
+                    }
+                    ImGui::End();
+                }
+
+                if (isGoddessOpen)
+                {
+                    float goddessWidth = static_cast<float>(windowWidth)/1.5f, goddessHeight = static_cast<float>(windowHeight)/1.5f;
+                    ImGui::SetNextWindowSize({ goddessWidth, goddessHeight });
+                    ImGui::SetNextWindowPos({ (static_cast<float>(windowWidth) - goddessWidth)/2, (static_cast<float>(windowHeight) - goddessHeight)/2 });
+                    ImGui::Begin(
+                        Localisation::get(applicationSettings.language, Localisation::MenuBar_Other_Goddess),
+                        &isGoddessOpen,
+                        ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
+                    );
+                    {
+                        render_goddess();
                     }
                     ImGui::End();
                 }

@@ -20,6 +20,8 @@ public:
 
         MenuBar_Settings,
         MenuBar_Settings_Application,
+        MenuBar_Other,
+        MenuBar_Other_Goddess,
 
         Popup_Settings_Tabs_Appearance_Title,
         Popup_Settings_Tabs_Appearance_Theme,
@@ -77,6 +79,8 @@ inline std::map<std::string, std::map<int, std::string>> Localisation::data = {
             { Localisation::Save_Apply, "Save & Apply" },
             { Localisation::MenuBar_Settings, "Settings" },
             { Localisation::MenuBar_Settings_Application, "Application Settings..." },
+            { Localisation::MenuBar_Other, "Other" },
+            { Localisation::MenuBar_Other_Goddess, "Goddess" },
             { Localisation::Popup_Settings_Tabs_Appearance_Title, "Appearance" },
             { Localisation::Popup_Settings_Tabs_Appearance_Theme, "Theme" },
             { Localisation::Popup_Settings_Tabs_Appearance_Theme_Dark, "Dark" },
@@ -117,6 +121,8 @@ inline std::map<std::string, std::map<int, std::string>> Localisation::data = {
             { Localisation::Save_Apply, "Salvar" },
             { Localisation::MenuBar_Settings, "Configurações" },
             { Localisation::MenuBar_Settings_Application, "Configurações da Aplicação..." },
+            { Localisation::MenuBar_Other, "Outros" },
+            { Localisation::MenuBar_Other_Goddess, "Deusa" },
             { Localisation::Popup_Settings_Tabs_Appearance_Title, "Aparência" },
             { Localisation::Popup_Settings_Tabs_Appearance_Theme, "Tema" },
             { Localisation::Popup_Settings_Tabs_Appearance_Theme_Dark, "Escuro" },
