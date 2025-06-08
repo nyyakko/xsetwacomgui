@@ -104,9 +104,7 @@ void render_application_settings_popup(ApplicationSettings& settings)
 
         if (ImGui::BeginTabItem(Localisation::get(settings.language, Localisation::Popup_Settings_Tabs_Language_Title)))
         {
-            // ImGui::AlignTextToFramePadding();
             ImGui::Text("%s", Localisation::get(settings.language, Localisation::Popup_Settings_Tabs_Language_Language));
-            // ImGui::SameLine();
             static char const* languages[] = {
                 "en_us",
                 "pt_br"
