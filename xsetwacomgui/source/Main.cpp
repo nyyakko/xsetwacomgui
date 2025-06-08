@@ -1,4 +1,3 @@
-#include <algorithm>
 #define IMGUI_DEFINE_MATH_OPERATORS
 
 #include <spdlog/spdlog.h>
@@ -15,18 +14,17 @@
 #include <imgui/imgui_impl_opengl3.hpp>
 #include <libwacom/Device.hpp>
 #include <liberror/Try.hpp>
+#include <GL/gl.h>
 #include <GLFW/glfw3.h>
-#include <raylib.h>
 #include <fplus/fplus.hpp>
 
 #include <filesystem>
 #include <cstdlib>
 #include <span>
 #include <ranges>
+#include <algorithm>
 
 #define LOCALISATION(LANGUAGE, VALUE) Localisation::the()[LANGUAGE][VALUE].data()
-
-static constexpr auto FPS = 60;
 
 void show_help()
 {
@@ -565,17 +563,26 @@ int main(int argc, char const** argv)
         {
             spdlog::error("Failed to load application settings");
         }
+
+        set_scale(applicationSettings.scale);
     }
 
-    set_scale(applicationSettings.scale);
+    if (!glfwInit())
+    {
+        spdlog::error("Failed to initialize glfw");
+        return EXIT_FAILURE;
+    }
 
-    InitWindow(static_cast<int>(800_scaled), static_cast<int>(815_scaled), NAME);
-    SetTargetFPS(FPS);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-    auto const window = static_cast<GLFWwindow*>(GetWindowHandle());
+    auto window = glfwCreateWindow(static_cast<int>(800_scaled), static_cast<int>(815_scaled), NAME, nullptr, nullptr);
+
+    glfwMakeContextCurrent(window);
+
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 130");
 
@@ -586,11 +593,14 @@ int main(int argc, char const** argv)
 
     auto* font = io.Fonts->AddFontFromFileTTF(HOME"/resources/fonts/iosevka.ttf", 20_scaled, nullptr, io.Fonts->GetGlyphRangesDefault());
 
-    while (!WindowShouldClose())
+    while (!glfwWindowShouldClose(window))
     {
-        BeginDrawing();
+        glClear(GL_COLOR_BUFFER_BIT);
 
-        ClearBackground(BLACK);
+        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        {
+            break;
+        }
 
         if (applicationSettings.theme == ApplicationSettings::Theme::DARK)
         {
@@ -601,7 +611,6 @@ int main(int argc, char const** argv)
             ImGui::StyleColorsLight();
         }
 
-        glfwPollEvents();
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
@@ -660,14 +669,16 @@ int main(int argc, char const** argv)
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-        EndDrawing();
+        glfwSwapBuffers(window);
+        glfwPollEvents();
     }
 
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
+    glfwDestroyWindow(window);
 
-    CloseWindow();
+    glfwTerminate();
 
     return EXIT_SUCCESS;
 }
