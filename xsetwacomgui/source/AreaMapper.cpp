@@ -4,12 +4,13 @@
 static auto constexpr MAPPER_GRAB_RADIUS = 6;
 
 #define MAPPER_BACKGROUD_COLOR   ImColor(ImGui::GetStyle().Colors[ImGuiCol_FrameBg])
-#define MAPPER_GRID_COLOR        ImColor(ImGui::GetStyle().Colors[ImGuiCol_FrameBg])
+#define MAPPER_GRID_COLOR        ImColor(ImGui::GetStyle().Colors[ImGuiCol_FrameBgHovered])
 #define MAPPER_GRAB_COLOR        ImColor(ImGui::GetStyle().Colors[ImGuiCol_SliderGrab])
 #define MAPPER_GRAB_ACTIVE_COLOR ImColor(ImGui::GetStyle().Colors[ImGuiCol_SliderGrabActive])
 
 static void area_mapper_render_grid(ImDrawList* drawList, ImRect frame, ImVec2 size)
 {
+
     for (size_t i = 0; i <= static_cast<size_t>(size.x); i += static_cast<size_t>(size.x / 4))
         drawList->AddLine({ frame.Min.x + static_cast<float>(i), frame.Min.y }, { frame.Min.x + static_cast<float>(i), frame.Max.y }, MAPPER_GRID_COLOR);
     for (size_t i = 0; i <= static_cast<size_t>(size.y); i += static_cast<size_t>(size.y / 4))
@@ -99,10 +100,10 @@ bool area_mapper(char const* label, ImVec2 anchors[4], ImVec2 size, ImRect* outP
         ImGuiStyle& style = ImGui::GetStyle();
         ImDrawList* drawList = ImGui::GetWindowDrawList();
 
-        ImGui::RenderFrame(frame.Min, frame.Max, ImColor(10, 10, 10), true, style.FrameRounding);
+        ImGui::RenderFrame(frame.Min, frame.Max, ImColor(ImGui::GetStyle().Colors[ImGuiCol_MenuBarBg]), true, style.FrameRounding);
 
-        area_mapper_render_grid(drawList, frame, size);
         area_mapper_render_region(style, frame, anchors);
+        area_mapper_render_grid(drawList, frame, size);
         changed = area_mapper_render_grabbers(drawList, frame, size, label, anchors, forceFullArea, forceAspectRatio);
     }
 
