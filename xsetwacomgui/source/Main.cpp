@@ -28,31 +28,6 @@
 #include <ranges>
 #include <algorithm>
 
-void show_help()
-{
-    fmt::println("A graphical xsetwacom wrapper for ease of use.");
-    fmt::println("Usage:");
-    fmt::println("  xsetwacomgui [OPTION...]");
-    fmt::println("");
-    fmt::println("  --no-gui        Launches the program without the UI. This is intended for");
-    fmt::println("                  loading saved device settings on system boot.");
-}
-
-liberror::Result<void> apply_settings_to_device(libwacom::Device const& device, Monitor const& monitor, DeviceSettings const& settings)
-{
-    TRY(libwacom::set_stylus_output_from_display_area(device.id, {
-        monitor.offsetX + settings.monitorArea.offsetX,
-        monitor.offsetY + settings.monitorArea.offsetY,
-        settings.monitorArea.width,
-        settings.monitorArea.height,
-    }));
-
-    TRY(libwacom::set_stylus_area(device.id, settings.deviceArea));
-    TRY(libwacom::set_stylus_pressure_curve(device.id, settings.devicePressure));
-
-    return {};
-}
-
 void render_application_settings_popup(ApplicationSettings& settings)
 {
     if (ImGui::BeginTabBar("##Tabs_2"))
@@ -158,6 +133,19 @@ struct Context
     bool hasChangedMonitor = false;
     bool hasChangedMonitorArea = false;
 };
+
+liberror::Result<void> set_settings_to_device(libwacom::Device const& device, Monitor const& monitor, DeviceSettings const& settings)
+{
+    TRY(libwacom::set_stylus_area(device.id, settings.deviceArea));
+    TRY(libwacom::set_stylus_pressure_curve(device.id, settings.devicePressure));
+    TRY(libwacom::set_stylus_output_from_display_area(device.id, {
+        monitor.offsetX + settings.monitorArea.offsetX,
+        monitor.offsetY + settings.monitorArea.offsetY,
+        settings.monitorArea.width,
+        settings.monitorArea.height,
+    }));
+    return {};
+}
 
 void render_region_mappers(Context& context, DeviceSettings& settings, std::vector<libwacom::Device>& devices, std::vector<Monitor>& monitors)
 {
@@ -486,7 +474,7 @@ liberror::Result<void> render_window(DeviceSettings& deviceSettings, std::vector
             ImGui::PushToast(Localisation::get(applicationSettings.language, Localisation::Toast_Success), Localisation::get(applicationSettings.language, Localisation::Toast_Device_Settings_Saved));
         }
 
-        TRY(apply_settings_to_device(context.device, context.monitor, deviceSettings));
+        TRY(set_settings_to_device(context.device, context.monitor, deviceSettings));
     }
     ImGui::SetCursorPos(previousCursorPosition);
 
@@ -516,17 +504,20 @@ int main(int argc, char const** argv)
         .monitorForceAspectRatio = false
     };
 
-    if (!std::filesystem::exists(SETTINGS_PATH))
+    if (!(std::filesystem::exists(SETTINGS_PATH) || std::filesystem::create_directory(SETTINGS_PATH)))
     {
-        if (!std::filesystem::create_directory(SETTINGS_PATH))
-        {
-            spdlog::error("Failed to create settings directory");
-        }
+        spdlog::error("Failed to create settings directory");
+        return EXIT_FAILURE;
     }
 
     if (std::find(arguments.begin(), arguments.end(), "--help") != arguments.end())
     {
-        show_help();
+        fmt::println("A graphical xsetwacom wrapper for ease of use.");
+        fmt::println("Usage:");
+        fmt::println("  xsetwacomgui [OPTION...]");
+        fmt::println("");
+        fmt::println("  --no-gui        Launches the program without the UI. This is intended for");
+        fmt::println("                  loading saved device settings on system boot.");
         return EXIT_SUCCESS;
     }
 
@@ -552,7 +543,7 @@ int main(int argc, char const** argv)
         auto device  = devices.front();
         auto monitor = fplus::find_first_by([] (Monitor const& monitor) { return monitor.primary; }, monitors).get_with_default({});
 
-        MUST(apply_settings_to_device(device, monitor, deviceSettings));
+        MUST(set_settings_to_device(device, monitor, deviceSettings));
 
         fmt::println("Device settings loaded successfully");
 
