@@ -1,3 +1,4 @@
+#include <fplus/search.hpp>
 #define IMGUI_DEFINE_MATH_OPERATORS
 
 #include <spdlog/spdlog.h>
@@ -28,6 +29,32 @@
 #include <ranges>
 #include <algorithm>
 
+std::vector<std::pair<std::string, std::filesystem::path>> get_available_fonts()
+{
+    std::vector<std::pair<std::string, std::filesystem::path>> fonts {};
+
+    auto home = getenv("XDG_CONFIG_HOME");
+    if (home == nullptr) home = getenv("HOME");
+    assert(home != nullptr && "Why are you homeless?");
+
+    for (auto const& fontHome : std::array {
+        std::filesystem::path(home) / ".fonts",
+        std::filesystem::path(home) / ".local/share/fonts",
+        std::filesystem::path("/usr/share/fonts"),
+        std::filesystem::path("/usr/local/share/fonts"),
+    })
+    {
+        if (!std::filesystem::exists(fontHome)) continue;
+
+        for (auto const& entry : std::filesystem::recursive_directory_iterator(fontHome))
+        {
+            if (entry.path().extension() == ".ttf") fonts.push_back({ entry.path().filename(), entry.path() });
+        }
+    }
+
+    return fonts;
+}
+
 void render_application_settings_popup(ApplicationSettings& settings)
 {
     if (ImGui::BeginTabBar("##Tabs_2"))
@@ -55,6 +82,19 @@ void render_application_settings_popup(ApplicationSettings& settings)
             {
                 scale = ImClamp(scale, 1.0f, 10.f);
                 settings.scale = scale;
+            }
+
+            ImGui::Text("%s", Localisation::get(settings.language, Localisation::Popup_Settings_Tabs_Appearance_Font));
+            static auto fonts = get_available_fonts();
+            static auto fontsData = fplus::transform([] (auto const& font) { return font.first.data(); }, fonts );
+            static int fontIndex = static_cast<int>(
+                std::distance(fonts.begin(), std::ranges::find(fonts, std::filesystem::path(settings.font), &decltype(fonts)::value_type::second))
+            );
+            auto hasChangedUIFont = ImGui::Combo("##Font", &fontIndex, fontsData.data(), static_cast<int>(fontsData.size()));
+
+            if (hasChangedUIFont)
+            {
+                settings.font = fonts.at(static_cast<size_t>(fontIndex)).second;
             }
 
             ImGui::EndTabItem();
@@ -553,7 +593,8 @@ int main(int argc, char const** argv)
     ApplicationSettings applicationSettings {
         .scale = 1.0,
         .theme = ApplicationSettings::Theme::DARK,
-        .language = "en_us"
+        .language = "en_us",
+        .font = "local",
     };
 
     if (!std::filesystem::exists(APPLICATION_SETTINGS_FILE))
@@ -565,6 +606,7 @@ int main(int argc, char const** argv)
         if (!load_application_settings(applicationSettings))
         {
             spdlog::error("Failed to load application settings");
+            return EXIT_FAILURE;
         }
 
         set_scale(applicationSettings.scale);
@@ -594,7 +636,15 @@ int main(int argc, char const** argv)
     io.IniFilename = nullptr;
     io.LogFilename = nullptr;
 
-    auto* font = io.Fonts->AddFontFromFileTTF(HOME"/resources/fonts/iosevka.ttf", 20_scaled, nullptr, io.Fonts->GetGlyphRangesDefault());
+    ImFont* font = nullptr;
+    if (applicationSettings.font == "local")
+    {
+        font = io.Fonts->AddFontFromFileTTF(HOME"/resources/fonts/iosevka.ttf", 20_scaled, nullptr, io.Fonts->GetGlyphRangesDefault());
+    }
+    else
+    {
+        font = io.Fonts->AddFontFromFileTTF(applicationSettings.font.data(), 20_scaled, nullptr, io.Fonts->GetGlyphRangesDefault());
+    }
 
     while (!glfwWindowShouldClose(window))
     {

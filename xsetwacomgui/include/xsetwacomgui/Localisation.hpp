@@ -30,6 +30,7 @@ public:
         Popup_Settings_Tabs_Appearance_Scale,
         Popup_Settings_Tabs_Language_Title,
         Popup_Settings_Tabs_Language_Language,
+        Popup_Settings_Tabs_Appearance_Font,
 
         Tabs_Tablet_Title,
         Tabs_Tablet_Device,
@@ -88,6 +89,7 @@ inline std::map<std::string, std::map<int, std::string>> Localisation::data = {
             { Localisation::Popup_Settings_Tabs_Appearance_Scale, "Scale" },
             { Localisation::Popup_Settings_Tabs_Language_Title, "Language" },
             { Localisation::Popup_Settings_Tabs_Language_Language, "Language" },
+            { Localisation::Popup_Settings_Tabs_Appearance_Font, "Font" },
             { Localisation::Tabs_Tablet_Title, "Tablet Settings" },
             { Localisation::Tabs_Tablet_Device, "Device" },
             { Localisation::Tabs_Tablet_PressureCurve, "Pressure Curve" },
@@ -130,6 +132,7 @@ inline std::map<std::string, std::map<int, std::string>> Localisation::data = {
             { Localisation::Popup_Settings_Tabs_Appearance_Scale, "Escala" },
             { Localisation::Popup_Settings_Tabs_Language_Title, "Língua" },
             { Localisation::Popup_Settings_Tabs_Language_Language, "Língua" },
+            { Localisation::Popup_Settings_Tabs_Appearance_Font, "Fonte" },
             { Localisation::Tabs_Tablet_Title, "Configurações do Tablet" },
             { Localisation::Tabs_Tablet_Device, "Tablet" },
             { Localisation::Tabs_Tablet_PressureCurve, "Curva de Pressão" },

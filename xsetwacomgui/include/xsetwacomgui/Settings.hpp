@@ -34,6 +34,7 @@ struct ApplicationSettings
     float scale;
     Theme theme;
     std::string language;
+    std::string font;
 };
 
 bool load_application_settings(ApplicationSettings& settings);
