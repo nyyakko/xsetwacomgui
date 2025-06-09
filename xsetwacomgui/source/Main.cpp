@@ -1,5 +1,3 @@
-#include <fplus/search.hpp>
-#include <spdlog/fmt/bundled/base.h>
 #define IMGUI_DEFINE_MATH_OPERATORS
 
 #include <spdlog/spdlog.h>
