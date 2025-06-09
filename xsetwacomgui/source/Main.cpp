@@ -1,4 +1,5 @@
 #include <fplus/search.hpp>
+#include <spdlog/fmt/bundled/base.h>
 #define IMGUI_DEFINE_MATH_OPERATORS
 
 #include <spdlog/spdlog.h>
@@ -31,7 +32,9 @@
 
 std::vector<std::pair<std::string, std::filesystem::path>> get_available_fonts()
 {
-    std::vector<std::pair<std::string, std::filesystem::path>> fonts {};
+    std::vector<std::pair<std::string, std::filesystem::path>> fonts {
+        { "default", "default" }
+    };
 
     auto home = getenv("XDG_CONFIG_HOME");
     if (home == nullptr) home = getenv("HOME");
@@ -77,7 +80,7 @@ void render_application_settings_popup(ApplicationSettings& settings)
             ImGui::Text("%s", Localisation::get(settings.language, Localisation::Popup_Settings_Tabs_Appearance_Font));
             static auto fonts = get_available_fonts();
             static auto fontsData = fplus::transform([] (auto const& font) { return font.first.data(); }, fonts );
-            static int fontIndex = static_cast<int>(
+            static auto fontIndex = settings.font == "default" ? 0 : static_cast<int>(
                 std::distance(fonts.begin(), std::ranges::find(fonts, std::filesystem::path(settings.font), &decltype(fonts)::value_type::second))
             );
             auto hasChangedUIFont = ImGui::Combo("##Font", &fontIndex, fontsData.data(), static_cast<int>(fontsData.size()));
@@ -599,7 +602,7 @@ int main(int argc, char const** argv)
         .scale = 1.0,
         .theme = ApplicationSettings::Theme::DARK,
         .language = "en_us",
-        .font = "local",
+        .font = "default",
     };
 
     if (!std::filesystem::exists(APPLICATION_SETTINGS_FILE))
@@ -642,11 +645,7 @@ int main(int argc, char const** argv)
     io.LogFilename = nullptr;
 
     ImFont* font = nullptr;
-    if (applicationSettings.font == "local")
-    {
-        font = io.Fonts->AddFontFromFileTTF(HOME"/resources/fonts/iosevka.ttf", 20_scaled, nullptr, io.Fonts->GetGlyphRangesDefault());
-    }
-    else
+    if (applicationSettings.font != "default")
     {
         font = io.Fonts->AddFontFromFileTTF(applicationSettings.font.data(), 20_scaled, nullptr, io.Fonts->GetGlyphRangesDefault());
     }

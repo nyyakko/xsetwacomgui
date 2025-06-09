@@ -101,10 +101,10 @@ bool load_application_settings(ApplicationSettings& settings)
     {
         auto json = nlohmann::json::parse(content.str());
 
-        settings.scale    = json["interface"]["scale"].get<float>();
-        settings.theme    = ApplicationSettings::Theme::from_string((json["interface"]["theme"].get<std::string>()));
-        settings.font     = json["interface"]["font"].get<std::string>();
-        settings.language = json["general"]["language"].get<std::string>();
+        settings.theme    = ApplicationSettings::Theme::from_string((json["appearance"]["theme"].get<std::string>()));
+        settings.font     = json["appearance"]["font"].get<std::string>();
+        settings.scale    = json["display"]["scale"].get<float>();
+        settings.language = json["language"]["language"].get<std::string>();
     }
     catch (std::exception const& error)
     {
@@ -118,14 +118,18 @@ bool save_application_settings(ApplicationSettings& settings)
 {
     nlohmann::ordered_json json {
         {
-            "interface", {
-                { "scale", settings.scale },
+            "appearance", {
                 { "theme", settings.theme.to_string() },
                 { "font", settings.font },
             }
         },
         {
-            "general", {
+            "display", {
+                { "scale", settings.scale },
+            }
+        },
+        {
+            "language", {
                 { "language", settings.language },
             }
         }
