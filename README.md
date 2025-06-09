@@ -6,4 +6,5 @@ This is a frontend for the `xsetwacom` utility.
 
 # Building
 
-You can compile the project either with the `build.py` script or with cmake as usual.
+``python configure.py && python build.py``
+
