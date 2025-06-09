@@ -1,6 +1,7 @@
 #include "Monitor.hpp"
 
 #include <liberror/Try.hpp>
+#include <fmt/format.h>
 
 #include <cstdlib>
 #include <regex>
