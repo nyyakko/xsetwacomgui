@@ -1,3 +1,4 @@
+#include "Environment.hpp"
 #define IMGUI_DEFINE_MATH_OPERATORS
 
 #include <spdlog/spdlog.h>
@@ -34,12 +35,9 @@ std::vector<std::pair<std::string, std::filesystem::path>> get_available_fonts()
         { "default", "default" }
     };
 
-    auto home = getenv("HOME");
-    assert(home != nullptr && "Why are you homeless?");
-
     for (auto const& fontHome : std::array {
-        std::filesystem::path(home) / ".fonts",
-        std::filesystem::path(home) / ".local/share/fonts",
+        get_home_path() / ".fonts",
+        get_home_path() / ".local/share/fonts",
         std::filesystem::path("/usr/share/fonts"),
         std::filesystem::path("/usr/local/share/fonts"),
     })

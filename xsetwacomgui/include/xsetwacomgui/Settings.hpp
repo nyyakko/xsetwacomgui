@@ -1,15 +1,13 @@
 #pragma once
 
-#include <filesystem>
+#include "Environment.hpp"
 
 #include <imgui/imgui_internal.hpp>
 #include <libwacom/Device.hpp>
 
-#define SETTINGS_PATH get_settings_base_path() / NAME
+#define SETTINGS_PATH get_settings_path() / NAME
 #define DEVICE_SETTINGS_FILE SETTINGS_PATH / "device.json"
 #define APPLICATION_SETTINGS_FILE SETTINGS_PATH / "application.json"
-
-std::filesystem::path get_settings_base_path();
 
 struct DeviceSettings
 {

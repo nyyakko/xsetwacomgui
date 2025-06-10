@@ -6,15 +6,6 @@
 #include <sstream>
 #include <cstdlib>
 
-std::filesystem::path get_settings_base_path()
-{
-    auto configHome = getenv("XDG_CONFIG_HOME");
-    if (configHome) return std::filesystem::path(configHome);
-    auto home = getenv("HOME");
-    assert(home != nullptr && "Why are you homeless?");
-    return std::filesystem::path(home) / ".config";
-}
-
 bool load_device_settings(DeviceSettings& settings)
 {
     std::ifstream stream(DEVICE_SETTINGS_FILE);
