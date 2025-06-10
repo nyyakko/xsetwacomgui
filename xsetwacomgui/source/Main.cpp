@@ -1,3 +1,4 @@
+#include <type_traits>
 #define IMGUI_DEFINE_MATH_OPERATORS
 
 #include <spdlog/spdlog.h>
@@ -455,7 +456,7 @@ liberror::Result<void> render_window(DeviceSettings& deviceSettings, std::vector
     static Context context = [&] () {
         libwacom::Device device = devices.empty() ? libwacom::Device {} : devices.front();
         libwacom::Area deviceDefaultArea = devices.empty() ? libwacom::Area {} : MUST(libwacom::get_stylus_default_area(device.id));
-        Monitor monitor = fplus::find_first_by([] (Monitor const& monitor) { return monitor.primary; }, monitors).get_with_default({});
+        Monitor monitor = *std::ranges::find_if(monitors, &Monitor::primary);
         libwacom::Area monitorDefaultArea = monitors.empty() ? libwacom::Area {} : libwacom::Area { 0, 0, monitor.width, monitor.height };
         return Context { device, deviceDefaultArea, monitor, monitorDefaultArea };
     }();
@@ -587,7 +588,7 @@ int main(int argc, char const** argv)
         }
 
         auto device  = devices.front();
-        auto monitor = fplus::find_first_by([] (Monitor const& monitor) { return monitor.primary; }, monitors).get_with_default({});
+        auto monitor = *std::ranges::find_if(monitors, &Monitor::primary);
 
         MUST(set_settings_to_device(device, monitor, deviceSettings));
 
