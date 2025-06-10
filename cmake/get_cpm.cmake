@@ -1,4 +1,4 @@
-set(CPM_VERSION v0.40.2)
+set(CPM_VERSION v0.42.0)
 
 file(
     DOWNLOAD
