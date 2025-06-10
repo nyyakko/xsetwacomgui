@@ -193,7 +193,7 @@ liberror::Result<void> set_settings_to_device(libwacom::Device const& device, Mo
     return {};
 }
 
-void render_region_mappers(Context& context, DeviceSettings& settings, std::vector<libwacom::Device>& devices, std::vector<Monitor>& monitors)
+void render_region_mappers(Context& context, DeviceSettings& deviceSettings, std::vector<libwacom::Device>& devices, std::vector<Monitor>& monitors, ApplicationSettings& applicationSettings)
 {
     auto [cursorPosX, cursorPosY] = ImGui::GetCursorPos();
     ImDrawList* drawList = ImGui::GetWindowDrawList();
@@ -202,10 +202,10 @@ void render_region_mappers(Context& context, DeviceSettings& settings, std::vect
 
     if (!monitors.empty())
     {
-        monitorAreaAnchors[0] = { settings.monitorArea.offsetX / context.monitorDefaultArea.width, settings.monitorArea.offsetY / context.monitorDefaultArea.height };
-        monitorAreaAnchors[1] = { settings.monitorArea.offsetX / context.monitorDefaultArea.width, (settings.monitorArea.height + settings.monitorArea.offsetY) / context.monitorDefaultArea.height };
-        monitorAreaAnchors[2] = { (settings.monitorArea.width + settings.monitorArea.offsetX) / context.monitorDefaultArea.width, settings.monitorArea.offsetY / context.monitorDefaultArea.height };
-        monitorAreaAnchors[3] = { (settings.monitorArea.width + settings.monitorArea.offsetX) / context.monitorDefaultArea.width, (settings.monitorArea.height + settings.monitorArea.offsetY) / context.monitorDefaultArea.height };
+        monitorAreaAnchors[0] = { deviceSettings.monitorArea.offsetX / context.monitorDefaultArea.width, deviceSettings.monitorArea.offsetY / context.monitorDefaultArea.height };
+        monitorAreaAnchors[1] = { deviceSettings.monitorArea.offsetX / context.monitorDefaultArea.width, (deviceSettings.monitorArea.height + deviceSettings.monitorArea.offsetY) / context.monitorDefaultArea.height };
+        monitorAreaAnchors[2] = { (deviceSettings.monitorArea.width + deviceSettings.monitorArea.offsetX) / context.monitorDefaultArea.width, deviceSettings.monitorArea.offsetY / context.monitorDefaultArea.height };
+        monitorAreaAnchors[3] = { (deviceSettings.monitorArea.width + deviceSettings.monitorArea.offsetX) / context.monitorDefaultArea.width, (deviceSettings.monitorArea.height + deviceSettings.monitorArea.offsetY) / context.monitorDefaultArea.height };
     }
     else
     {
@@ -218,12 +218,12 @@ void render_region_mappers(Context& context, DeviceSettings& settings, std::vect
     static const ImVec2 monitorMapperSize { 20 * 16_scaled, 20 * 9_scaled };
     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - monitorMapperSize.x)/2);
     static ImRect monitorMapperPosition {};
-    context.hasChangedMonitorArea |= area_mapper("Monitor", monitorAreaAnchors, monitorMapperSize, &monitorMapperPosition, settings.monitorForceFullArea, settings.monitorForceAspectRatio);
+    context.hasChangedMonitorArea |= area_mapper(Localisation::get(applicationSettings.language, Localisation::Tabs_Monitor_Monitor), monitorAreaAnchors, monitorMapperSize, &monitorMapperPosition, deviceSettings.monitorForceFullArea, deviceSettings.monitorForceAspectRatio);
     ImGui::SetCursorPosX(cursorPosX);
 
     if (context.hasChangedMonitorArea)
     {
-        settings.monitorArea = {
+        deviceSettings.monitorArea = {
             .offsetX = monitorAreaAnchors[0].x * context.monitorDefaultArea.width,
             .offsetY = monitorAreaAnchors[0].y * context.monitorDefaultArea.height,
             .width   = (monitorAreaAnchors[2].x - monitorAreaAnchors[0].x) * context.monitorDefaultArea.width,
@@ -231,19 +231,19 @@ void render_region_mappers(Context& context, DeviceSettings& settings, std::vect
         };
     }
 
-    if (context.hasChangedMonitorArea && settings.monitorForceFullArea)
+    if (context.hasChangedMonitorArea && deviceSettings.monitorForceFullArea)
     {
-        settings.monitorArea = context.monitorDefaultArea;
+        deviceSettings.monitorArea = context.monitorDefaultArea;
     }
 
     static ImVec2 deviceAreaAnchors[4] { { -1, -1 }, { -1, -1 }, { -1, -1 }, { -1, -1 } };
 
     if (!devices.empty())
     {
-        deviceAreaAnchors[0] = { settings.deviceArea.offsetX / context.deviceDefaultArea.width, settings.deviceArea.offsetY / context.deviceDefaultArea.height };
-        deviceAreaAnchors[1] = { settings.deviceArea.offsetX / context.deviceDefaultArea.width, (settings.deviceArea.height + settings.deviceArea.offsetY) / context.deviceDefaultArea.height };
-        deviceAreaAnchors[2] = { (settings.deviceArea.width + settings.deviceArea.offsetX) / context.deviceDefaultArea.width, settings.deviceArea.offsetY / context.deviceDefaultArea.height };
-        deviceAreaAnchors[3] = { (settings.deviceArea.width + settings.deviceArea.offsetX) / context.deviceDefaultArea.width, (settings.deviceArea.height + settings.deviceArea.offsetY) / context.deviceDefaultArea.height };
+        deviceAreaAnchors[0] = { deviceSettings.deviceArea.offsetX / context.deviceDefaultArea.width, deviceSettings.deviceArea.offsetY / context.deviceDefaultArea.height };
+        deviceAreaAnchors[1] = { deviceSettings.deviceArea.offsetX / context.deviceDefaultArea.width, (deviceSettings.deviceArea.height + deviceSettings.deviceArea.offsetY) / context.deviceDefaultArea.height };
+        deviceAreaAnchors[2] = { (deviceSettings.deviceArea.width + deviceSettings.deviceArea.offsetX) / context.deviceDefaultArea.width, deviceSettings.deviceArea.offsetY / context.deviceDefaultArea.height };
+        deviceAreaAnchors[3] = { (deviceSettings.deviceArea.width + deviceSettings.deviceArea.offsetX) / context.deviceDefaultArea.width, (deviceSettings.deviceArea.height + deviceSettings.deviceArea.offsetY) / context.deviceDefaultArea.height };
     }
     else
     {
@@ -256,12 +256,12 @@ void render_region_mappers(Context& context, DeviceSettings& settings, std::vect
     static const ImVec2 deviceMapperSize { 15 * 16_scaled, 15 * 9_scaled };
     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - deviceMapperSize.x)/2);
     static ImRect deviceMapperPosition {};
-    context.hasChangedDeviceArea |= area_mapper("Tablet", deviceAreaAnchors, deviceMapperSize, &deviceMapperPosition, settings.deviceForceFullArea, settings.deviceForceAspectRatio);
+    context.hasChangedDeviceArea |= area_mapper(Localisation::get(applicationSettings.language, Localisation::Tabs_Tablet_Device), deviceAreaAnchors, deviceMapperSize, &deviceMapperPosition, deviceSettings.deviceForceFullArea, deviceSettings.deviceForceAspectRatio);
     ImGui::SetCursorPosX(cursorPosX);
 
     if (context.hasChangedDeviceArea)
     {
-        settings.deviceArea = {
+        deviceSettings.deviceArea = {
             .offsetX = deviceAreaAnchors[0].x * context.deviceDefaultArea.width,
             .offsetY = deviceAreaAnchors[0].y * context.deviceDefaultArea.height,
             .width   = (deviceAreaAnchors[2].x - deviceAreaAnchors[0].x) * context.deviceDefaultArea.width,
@@ -269,9 +269,9 @@ void render_region_mappers(Context& context, DeviceSettings& settings, std::vect
         };
     }
 
-    if (context.hasChangedDeviceArea && settings.deviceForceFullArea)
+    if (context.hasChangedDeviceArea && deviceSettings.deviceForceFullArea)
     {
-        settings.deviceArea = context.deviceDefaultArea;
+        deviceSettings.deviceArea = context.deviceDefaultArea;
     }
 
     for (auto [monitorAnchor, deviceAnchor] : fplus::zip(std::span<ImVec2>(monitorAreaAnchors, 4), std::span<ImVec2>(deviceAreaAnchors, 4)))
@@ -490,7 +490,7 @@ liberror::Result<void> render_window(DeviceSettings& deviceSettings, std::vector
 
     ImGui::BeginGroup();
     {
-        render_region_mappers(context, deviceSettings, devices, monitors);
+        render_region_mappers(context, deviceSettings, devices, monitors, applicationSettings);
     }
     ImGui::EndGroup();
 
