@@ -191,7 +191,7 @@ liberror::Result<void> set_settings_to_device(libwacom::Device const& device, Mo
     return {};
 }
 
-void render_region_mappers(Context& context, DeviceSettings& deviceSettings, std::vector<libwacom::Device>& devices, std::vector<Monitor>& monitors, ApplicationSettings& applicationSettings)
+void render_region_mappers(Context& context, DeviceSettings& deviceSettings, std::vector<libwacom::Device> const& devices, std::vector<Monitor> const& monitors, ApplicationSettings const& applicationSettings)
 {
     auto [cursorPosX, cursorPosY] = ImGui::GetCursorPos();
     ImDrawList* drawList = ImGui::GetWindowDrawList();
@@ -280,7 +280,7 @@ void render_region_mappers(Context& context, DeviceSettings& deviceSettings, std
     }
 }
 
-liberror::Result<void> render_tablet_settings_tab(Context& context, DeviceSettings& deviceSettings, std::vector<libwacom::Device>& devices, ApplicationSettings& applicationSettings)
+liberror::Result<void> render_tablet_settings_tab(Context& context, DeviceSettings& deviceSettings, std::vector<libwacom::Device> const& devices, ApplicationSettings const& applicationSettings)
 {
     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - (250_scaled + 300_scaled + ImGui::GetStyle().WindowPadding.x))/2);
 
@@ -378,7 +378,7 @@ liberror::Result<void> render_tablet_settings_tab(Context& context, DeviceSettin
     return {};
 }
 
-liberror::Result<void> render_monitor_settings_tab(Context& context, DeviceSettings& deviceSettings, std::vector<Monitor>& monitors, ApplicationSettings& applicationSettings)
+liberror::Result<void> render_monitor_settings_tab(Context& context, DeviceSettings& deviceSettings, std::vector<Monitor> const& monitors, ApplicationSettings const& applicationSettings)
 {
     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - (300_scaled + ImGui::GetStyle().WindowPadding.x))/2);
 
@@ -448,7 +448,7 @@ liberror::Result<void> render_monitor_settings_tab(Context& context, DeviceSetti
     return {};
 }
 
-liberror::Result<void> render_window(DeviceSettings& deviceSettings, std::vector<libwacom::Device>& devices, std::vector<Monitor>& monitors, ApplicationSettings& applicationSettings)
+liberror::Result<void> render_window(DeviceSettings& deviceSettings, std::vector<libwacom::Device> const& devices, std::vector<Monitor> const& monitors, ApplicationSettings const& applicationSettings)
 {
     static Context context = [&] () {
         libwacom::Device device = devices.empty() ? libwacom::Device {} : devices.front();
