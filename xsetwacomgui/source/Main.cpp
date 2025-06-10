@@ -36,8 +36,8 @@ std::vector<std::pair<std::string, std::filesystem::path>> get_available_fonts()
     };
 
     for (auto const& fontHome : std::array {
-        get_home_path() / ".fonts",
-        get_home_path() / ".local/share/fonts",
+        get_system_home_path() / ".fonts",
+        get_system_home_path() / ".local/share/fonts",
         std::filesystem::path("/usr/share/fonts"),
         std::filesystem::path("/usr/local/share/fonts"),
     })
@@ -143,7 +143,7 @@ void render_goddess()
 {
     static auto width = 0, height = 0;
     static auto channels = 0;
-    static auto image = stbi_load(HOME"/resources/images/jahy.png", &width, &height, &channels, STBI_rgb_alpha);
+    static auto image = stbi_load((DATA_PATH / "resources/images/jahy.png").c_str(), &width, &height, &channels, STBI_rgb_alpha);
     static GLuint imageTexture;
 
     if (image != nullptr)

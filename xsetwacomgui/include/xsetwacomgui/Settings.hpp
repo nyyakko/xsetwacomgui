@@ -5,7 +5,6 @@
 #include <imgui/imgui_internal.hpp>
 #include <libwacom/Device.hpp>
 
-#define SETTINGS_PATH get_settings_path() / NAME
 #define DEVICE_SETTINGS_FILE SETTINGS_PATH / "device.json"
 #define APPLICATION_SETTINGS_FILE SETTINGS_PATH / "application.json"
 

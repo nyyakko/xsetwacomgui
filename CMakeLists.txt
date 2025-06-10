@@ -22,6 +22,7 @@ CPMAddPackage(NAME LibError GITHUB_REPOSITORY nyyakko/LibError GIT_TAG master OP
 CPMAddPackage(NAME LibWacom GITHUB_REPOSITORY nyyakko/LibWacom GIT_TAG master OPTIONS "ENABLE_CPPCHECK OFF")
 
 include(cmake/static_analyzers.cmake)
+include(GNUInstallDirs)
 
 set(xsetwacomgui_CompilerOptions ${xsetwacomgui_CompilerOptions} -Wno-gnu-statement-expression-from-macro-expansion)
 # set(xsetwacomgui_LinkerOptions ${xsetwacomgui_LinkerOptions})
