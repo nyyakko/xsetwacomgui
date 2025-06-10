@@ -1,12 +1,12 @@
-#include "Environment.hpp"
 #define IMGUI_DEFINE_MATH_OPERATORS
 
 #include <spdlog/spdlog.h>
 
-#include "Scaling.hpp"
-#include "Localisation.hpp"
 #include "AreaMapper.hpp"
+#include "Environment.hpp"
+#include "Localisation.hpp"
 #include "Monitor.hpp"
+#include "Scaling.hpp"
 #include "Settings.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
