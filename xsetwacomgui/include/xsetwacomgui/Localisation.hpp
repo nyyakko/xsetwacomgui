@@ -160,7 +160,7 @@ inline std::map<std::string, std::map<int, std::string>> Localisation::data = {
             { Localisation::Toast_Device_Settings_Missing, "Não foi possível encontrar configurações para o dispositivo conectado, obtendo informações diretamente do xsetwacom" },
         }
     },
-{
+    {
         "ru_ru", {
             { Localisation::Toast_Success, "Успех" },
             { Localisation::Toast_Warning, "Внимание" },

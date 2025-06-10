@@ -108,7 +108,8 @@ void render_application_settings_popup(ApplicationSettings& settings)
             ImGui::Text("%s", Localisation::get(settings.language, Localisation::Popup_Settings_Tabs_Language_Language));
             static char const* languages[] = {
                 "en_us",
-                "pt_br"
+                "pt_br",
+                "ru_ru",
             };
             static int languageIndex = static_cast<int>(
                 std::distance(&languages[0], std::ranges::find(&languages[0], &languages[std::size(languages)], settings.language))
