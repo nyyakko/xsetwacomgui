@@ -27,7 +27,7 @@ set(xsetwacomgui_CompilerOptions ${xsetwacomgui_CompilerOptions} -Wno-gnu-statem
 # set(xsetwacomgui_LinkerOptions ${xsetwacomgui_LinkerOptions})
 
 set(xsetwacomgui_ExternalLibraries
-    GL
+    OpenGL::GL
     glfw
     imgui::imgui
     LibError::LibError

@@ -1,4 +1,3 @@
-#include <type_traits>
 #define IMGUI_DEFINE_MATH_OPERATORS
 
 #include <spdlog/spdlog.h>
@@ -35,8 +34,7 @@ std::vector<std::pair<std::string, std::filesystem::path>> get_available_fonts()
         { "default", "default" }
     };
 
-    auto home = getenv("XDG_CONFIG_HOME");
-    if (home == nullptr) home = getenv("HOME");
+    auto home = getenv("HOME");
     assert(home != nullptr && "Why are you homeless?");
 
     for (auto const& fontHome : std::array {
