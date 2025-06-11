@@ -2,12 +2,12 @@
 
 #include <spdlog/spdlog.h>
 
-#include "AreaMapper.hpp"
 #include "Environment.hpp"
 #include "Localisation.hpp"
 #include "Monitor.hpp"
 #include "Scaling.hpp"
 #include "Settings.hpp"
+#include "Widgets.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "external/stb_image/stb_image.h"
