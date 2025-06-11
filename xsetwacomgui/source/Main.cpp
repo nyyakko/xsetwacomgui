@@ -53,74 +53,86 @@ std::vector<std::pair<std::string, std::filesystem::path>> get_available_fonts()
     return fonts;
 }
 
-void render_application_settings_popup(ApplicationSettings& settings)
+void render_settings_popup_appearance_tab(ApplicationSettings& settings)
+{
+    ImGui::Text("%s", Localisation::get(settings.language, Localisation::Popup_Settings_Tabs_Appearance_Theme));
+    char const* themes[] = {
+        Localisation::get(settings.language, Localisation::Popup_Settings_Tabs_Appearance_Theme_Dark),
+        Localisation::get(settings.language, Localisation::Popup_Settings_Tabs_Appearance_Theme_Light)
+    };
+    static int themeIndex = static_cast<int>(settings.theme);
+    auto hasChangedUITheme = ImGui::Combo("##Theme", &themeIndex, themes, std::size(themes));
+
+    if (hasChangedUITheme)
+    {
+        settings.theme = ApplicationSettings::Theme::from_int(themeIndex);
+    }
+
+    ImGui::Text("%s", Localisation::get(settings.language, Localisation::Popup_Settings_Tabs_Appearance_Font));
+    static auto fonts = get_available_fonts();
+    static auto fontsData = fplus::transform([] (auto const& font) { return font.first.data(); }, fonts );
+    static auto fontIndex = settings.font == "default" ? 0 : static_cast<int>(
+        std::distance(fonts.begin(), std::ranges::find(fonts, std::filesystem::path(settings.font), &decltype(fonts)::value_type::second))
+    );
+    auto hasChangedUIFont = ImGui::Combo("##Font", &fontIndex, fontsData.data(), static_cast<int>(fontsData.size()));
+
+    if (hasChangedUIFont)
+    {
+        settings.font = fonts.at(static_cast<size_t>(fontIndex)).second;
+    }
+}
+
+void render_settings_popup_display_tab(ApplicationSettings& settings)
+{
+    ImGui::Text("%s", Localisation::get(settings.language, Localisation::Popup_Settings_Tabs_Display_Scale));
+    static float scale = settings.scale;
+    auto hasChangedUIScale = ImGui::InputFloat("##UiScale", &scale, 0.1f);
+
+    if (hasChangedUIScale)
+    {
+        scale = ImClamp(scale, 1.0f, 10.f);
+        settings.scale = scale;
+    }
+}
+
+void render_settings_popup_language_tab(ApplicationSettings& settings)
+{
+    ImGui::Text("%s", Localisation::get(settings.language, Localisation::Popup_Settings_Tabs_Language_Language));
+    static char const* languages[] = {
+        "en_us",
+        "pt_br",
+        "ru_ru",
+    };
+    static int languageIndex = static_cast<int>(
+        std::distance(&languages[0], std::ranges::find(&languages[0], &languages[std::size(languages)], settings.language))
+    );
+    auto hasChangedUILanguage = ImGui::Combo("##Language", &languageIndex, languages, std::size(languages));
+
+    if (hasChangedUILanguage)
+    {
+        settings.language = languages[languageIndex];
+    }
+}
+
+void render_settings_popup(ApplicationSettings& settings)
 {
     if (ImGui::BeginTabBar("##Tabs_2"))
     {
         if (ImGui::BeginTabItem(Localisation::get(settings.language, Localisation::Popup_Settings_Tabs_Appearance_Title)))
         {
-            ImGui::Text("%s", Localisation::get(settings.language, Localisation::Popup_Settings_Tabs_Appearance_Theme));
-            char const* themes[] = {
-                Localisation::get(settings.language, Localisation::Popup_Settings_Tabs_Appearance_Theme_Dark),
-                Localisation::get(settings.language, Localisation::Popup_Settings_Tabs_Appearance_Theme_Light)
-            };
-            static int themeIndex = static_cast<int>(settings.theme);
-            auto hasChangedUITheme = ImGui::Combo("##Theme", &themeIndex, themes, std::size(themes));
-
-            if (hasChangedUITheme)
-            {
-                settings.theme = ApplicationSettings::Theme::from_int(themeIndex);
-            }
-
-            ImGui::Text("%s", Localisation::get(settings.language, Localisation::Popup_Settings_Tabs_Appearance_Font));
-            static auto fonts = get_available_fonts();
-            static auto fontsData = fplus::transform([] (auto const& font) { return font.first.data(); }, fonts );
-            static auto fontIndex = settings.font == "default" ? 0 : static_cast<int>(
-                std::distance(fonts.begin(), std::ranges::find(fonts, std::filesystem::path(settings.font), &decltype(fonts)::value_type::second))
-            );
-            auto hasChangedUIFont = ImGui::Combo("##Font", &fontIndex, fontsData.data(), static_cast<int>(fontsData.size()));
-
-            if (hasChangedUIFont)
-            {
-                settings.font = fonts.at(static_cast<size_t>(fontIndex)).second;
-            }
-
+            render_settings_popup_appearance_tab(settings);
             ImGui::EndTabItem();
         }
 
         if (ImGui::BeginTabItem(Localisation::get(settings.language, Localisation::Popup_Settings_Tabs_Display_Title)))
         {
-            ImGui::Text("%s", Localisation::get(settings.language, Localisation::Popup_Settings_Tabs_Display_Scale));
-            static float scale = settings.scale;
-            auto hasChangedUIScale = ImGui::InputFloat("##UiScale", &scale, 0.1f);
-
-            if (hasChangedUIScale)
-            {
-                scale = ImClamp(scale, 1.0f, 10.f);
-                settings.scale = scale;
-            }
-
+            render_settings_popup_display_tab(settings);
             ImGui::EndTabItem();
         }
 
         if (ImGui::BeginTabItem(Localisation::get(settings.language, Localisation::Popup_Settings_Tabs_Language_Title)))
         {
-            ImGui::Text("%s", Localisation::get(settings.language, Localisation::Popup_Settings_Tabs_Language_Language));
-            static char const* languages[] = {
-                "en_us",
-                "pt_br",
-                "ru_ru",
-            };
-            static int languageIndex = static_cast<int>(
-                std::distance(&languages[0], std::ranges::find(&languages[0], &languages[std::size(languages)], settings.language))
-            );
-            auto hasChangedUILanguage = ImGui::Combo("##Language", &languageIndex, languages, std::size(languages));
-
-            if (hasChangedUILanguage)
-            {
-                settings.language = languages[languageIndex];
-            }
-
+            render_settings_popup_language_tab(settings);
             ImGui::EndTabItem();
         }
 
@@ -716,7 +728,7 @@ int main(int argc, char const** argv)
                         ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
                     );
                     {
-                        render_application_settings_popup(applicationSettings);
+                        render_settings_popup(applicationSettings);
                     }
                     ImGui::End();
                 }
