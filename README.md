@@ -8,7 +8,8 @@ This is a frontend for the `xsetwacom` utility.
 
 ``python configure.py && python build.py``
 
-to build a release version, 
+to build and install the release version, 
 
 ``python configure.py release && python build.py``
+``python install.py``
 
