@@ -151,7 +151,7 @@ void render_settings_popup(ApplicationSettings& settings)
     ImGui::SetCursorPos(previousCursorPosition);
 }
 
-void render_goddess()
+void render_goddess_popup()
 {
     static auto width = 0, height = 0;
     static auto channels = 0;
@@ -744,7 +744,7 @@ int main(int argc, char const** argv)
                         ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
                     );
                     {
-                        render_goddess();
+                        render_goddess_popup();
                     }
                     ImGui::End();
                 }
