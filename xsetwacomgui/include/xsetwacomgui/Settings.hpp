@@ -5,8 +5,8 @@
 #include <imgui/imgui_internal.hpp>
 #include <libwacom/Device.hpp>
 
-#define DEVICE_SETTINGS_FILE SETTINGS_PATH / "device.json"
-#define APPLICATION_SETTINGS_FILE SETTINGS_PATH / "application.json"
+inline std::filesystem::path DEVICE_SETTINGS_FILE = get_application_config_path() / "device.json";
+inline std::filesystem::path APPLICATION_SETTINGS_FILE = get_application_config_path() / "application.json";
 
 struct DeviceSettings
 {

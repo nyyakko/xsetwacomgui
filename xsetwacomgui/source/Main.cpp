@@ -155,7 +155,7 @@ void render_goddess_popup()
 {
     static auto width = 0, height = 0;
     static auto channels = 0;
-    static auto image = stbi_load((DATA_PATH / "resources/images/jahy.png").c_str(), &width, &height, &channels, STBI_rgb_alpha);
+    static auto image = stbi_load((get_application_data_path() / "resources/images/jahy.png").c_str(), &width, &height, &channels, STBI_rgb_alpha);
     static GLuint imageTexture;
 
     if (image != nullptr)
@@ -560,7 +560,7 @@ int main(int argc, char const** argv)
         .monitorForceAspectRatio = false
     };
 
-    if (!(std::filesystem::exists(SETTINGS_PATH) || std::filesystem::create_directory(SETTINGS_PATH)))
+    if (!(std::filesystem::exists(get_application_config_path()) || std::filesystem::create_directory(get_application_config_path())))
     {
         spdlog::error("Failed to create settings directory");
         return EXIT_FAILURE;
