@@ -11,6 +11,7 @@ static auto constexpr MAPPER_GRAB_RADIUS = 6;
 
 static bool area_mapper_render_grabbers(ImDrawList* const drawList, ImRect frame, ImVec2 size, ImVec2 anchors[4], char const* label, bool fullArea = false, bool = false)
 {
+    // FIXME: implement force proportion logic
     bool changed = false;
 
     for (size_t i = 0; i < 4; i += 1)
