@@ -1,3 +1,4 @@
+#include <fplus/container_common.hpp>
 #define IMGUI_DEFINE_MATH_OPERATORS
 
 #include <spdlog/spdlog.h>
@@ -537,15 +538,10 @@ liberror::Result<void> render_window(DeviceSettings& deviceSettings, std::vector
     return {};
 }
 
-int main(int argc, char const** argv)
+liberror::Result<void> safe_main(std::vector<std::string_view> const& arguments)
 {
-    auto arguments =
-        std::span<char const*>(argv, size_t(argc))
-            | std::views::transform([] (auto arg) { return std::string_view(arg); });
-
-    std::vector<Monitor> monitors = MUST(get_available_monitors());
-
-    std::vector<libwacom::Device> devices = MUST(libwacom::get_available_devices());
+    std::vector<Monitor> monitors = TRY(get_available_monitors());
+    std::vector<libwacom::Device> devices = TRY(libwacom::get_available_devices());
     devices = fplus::keep_if([] (auto&& device) { return device.kind == libwacom::Device::Kind::STYLUS; }, devices);
 
     DeviceSettings deviceSettings {
@@ -562,8 +558,7 @@ int main(int argc, char const** argv)
 
     if (!(std::filesystem::exists(get_application_config_path()) || std::filesystem::create_directory(get_application_config_path())))
     {
-        spdlog::error("Failed to create settings directory");
-        return EXIT_FAILURE;
+        return liberror::make_error("Failed to create settings directory");
     }
 
     if (std::find(arguments.begin(), arguments.end(), "--help") != arguments.end())
@@ -574,36 +569,34 @@ int main(int argc, char const** argv)
         fmt::println("");
         fmt::println("  --no-gui        Launches the program without the UI. This is intended for");
         fmt::println("                  loading saved device settings on system boot.");
-        return EXIT_SUCCESS;
+        return {};
     }
 
     if (std::find(arguments.begin(), arguments.end(), "--no-gui") != arguments.end())
     {
         if (!std::filesystem::exists(DEVICE_SETTINGS_FILE))
         {
-            spdlog::error("Device settings could not be found");
-            return EXIT_FAILURE;
+            return liberror::make_error("Device settings could not be found");
         }
 
         if (!load_device_settings(deviceSettings))
         {
-            spdlog::error("Failed to load device settings");
-            return EXIT_FAILURE;
+            return liberror::make_error("Failed to load device settings");
         }
 
         if (devices.empty() || monitors.empty())
         {
-            return EXIT_SUCCESS;
+            return liberror::make_error("Failed to load devices");
         }
 
         auto device  = devices.front();
         auto monitor = *std::ranges::find_if(monitors, &Monitor::primary);
 
-        MUST(set_settings_to_device(device, monitor, deviceSettings));
+        TRY(set_settings_to_device(device, monitor, deviceSettings));
 
         fmt::println("Device settings loaded successfully");
 
-        return EXIT_SUCCESS;
+        return {};
     }
 
     ApplicationSettings applicationSettings {
@@ -615,14 +608,16 @@ int main(int argc, char const** argv)
 
     if (!std::filesystem::exists(APPLICATION_SETTINGS_FILE))
     {
-        save_application_settings(applicationSettings);
+        if (!save_application_settings(applicationSettings))
+        {
+            return liberror::make_error("Failed to save application settings");
+        }
     }
     else
     {
         if (!load_application_settings(applicationSettings))
         {
-            spdlog::error("Failed to load application settings");
-            return EXIT_FAILURE;
+            return liberror::make_error("Failed to load application settings");
         }
 
         set_scale(applicationSettings.scale);
@@ -630,8 +625,7 @@ int main(int argc, char const** argv)
 
     if (!glfwInit())
     {
-        spdlog::error("Failed to initialize glfw");
-        return EXIT_FAILURE;
+        return liberror::make_error("Failed to initialize glfw");
     }
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -755,7 +749,7 @@ int main(int argc, char const** argv)
 
                 ImGui::BeginDisabled(devices.empty());
                 {
-                    MUST(render_window(deviceSettings, devices, monitors, applicationSettings));
+                    TRY(render_window(deviceSettings, devices, monitors, applicationSettings));
                 }
                 ImGui::EndDisabled();
             }
@@ -775,6 +769,23 @@ int main(int argc, char const** argv)
     glfwDestroyWindow(window);
 
     glfwTerminate();
+
+    return {};
+}
+
+int main(int argc, char const** argv)
+{
+    auto arguments =
+        std::span<char const*>(argv, size_t(argc))
+            | std::views::transform([] (auto&& argument) { return std::string_view(argument); });
+
+    auto result = safe_main({ arguments.begin(), arguments.end() });
+
+    if (!result.has_value())
+    {
+        spdlog::error("{}", result.error().message());
+        return EXIT_FAILURE;
+    }
 
     return EXIT_SUCCESS;
 }
