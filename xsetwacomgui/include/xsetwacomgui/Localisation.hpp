@@ -2,14 +2,17 @@
 
 #include "Settings.hpp"
 
+#include <liberror/Result.hpp>
+
 #include <map>
 #include <string>
 
 class Localisation
 {
 private:
-    static std::map<ApplicationSettings::Language, std::map<int, std::string>> data;
+    std::map<ApplicationSettings::Language, std::map<int, std::string>> data;
 
+    using LocalisedMessage = int;
 public:
     enum
     {
@@ -67,143 +70,6 @@ public:
         return localisation.data;
     }
 
-    static char const* get(ApplicationSettings::Language language, auto id)
-    {
-        return the()[language][id].data();
-    }
+    static liberror::Result<char const*> get(ApplicationSettings::Language language, LocalisedMessage id);
 };
 
-inline std::map<ApplicationSettings::Language, std::map<int, std::string>> Localisation::data = {
-    {
-        ApplicationSettings::Language::EN_US, {
-            { Localisation::Toast_Success, "Success" },
-            { Localisation::Toast_Warning, "Warning" },
-            { Localisation::Toast_Error, "Error" },
-            { Localisation::Save, "Save" },
-            { Localisation::Save_Apply, "Save & Apply" },
-            { Localisation::MenuBar_Settings, "Settings" },
-            { Localisation::MenuBar_Settings_Application, "Application Settings..." },
-            { Localisation::MenuBar_Other, "Other" },
-            { Localisation::MenuBar_Other_Goddess, "Goddess" },
-            { Localisation::Popup_Settings_Tabs_Appearance_Title, "Appearance" },
-            { Localisation::Popup_Settings_Tabs_Appearance_Theme, "Theme" },
-            { Localisation::Popup_Settings_Tabs_Appearance_Theme_Dark, "Dark" },
-            { Localisation::Popup_Settings_Tabs_Appearance_Theme_Light, "Light" },
-            { Localisation::Popup_Settings_Tabs_Display_Title, "Display" },
-            { Localisation::Popup_Settings_Tabs_Display_Scale, "Scale" },
-            { Localisation::Popup_Settings_Tabs_Language_Title, "Language" },
-            { Localisation::Popup_Settings_Tabs_Language_Language, "Language" },
-            { Localisation::Popup_Settings_Tabs_Appearance_Font, "Font" },
-            { Localisation::Tabs_Tablet_Title, "Tablet Settings" },
-            { Localisation::Tabs_Tablet_Device, "Device" },
-            { Localisation::Tabs_Tablet_PressureCurve, "Pressure Curve" },
-            { Localisation::Tabs_Tablet_Width, "Width" },
-            { Localisation::Tabs_Tablet_Height, "Height" },
-            { Localisation::Tabs_Tablet_OffsetX, "Offset X" },
-            { Localisation::Tabs_Tablet_OffsetY, "Offset Y" },
-            { Localisation::Tabs_Tablet_FullArea, "Full Area" },
-            { Localisation::Tabs_Tablet_ForceProportions, "Force Proportions" },
-            { Localisation::Tabs_Monitor_Title, "Monitor Settings" },
-            { Localisation::Tabs_Monitor_Monitor, "Monitor" },
-            { Localisation::Tabs_Monitor_Width, "Width" },
-            { Localisation::Tabs_Monitor_Height, "Height" },
-            { Localisation::Tabs_Monitor_OffsetX, "Offset X" },
-            { Localisation::Tabs_Monitor_OffsetY, "Offset Y" },
-            { Localisation::Tabs_Monitor_FullArea, "Full Area" },
-            { Localisation::Tabs_Monitor_ForceProportions, "Force Proportions" },
-            { Localisation::Toast_Devices_Missing, "No devices were found" },
-            { Localisation::Toast_Application_Settings_Saved, "Successfully saved application settings" },
-            { Localisation::Toast_Device_Settings_Saved, "Successfully saved device settings" },
-            { Localisation::Toast_Device_Settings_Load_Failed, "Failed to load device settings" },
-            { Localisation::Toast_Device_Settings_Missing, "No saved device settings could be found, reading directly from xsetwacom instead" },
-        }
-    },
-    {
-        ApplicationSettings::Language::PT_BR, {
-            { Localisation::Toast_Success, "Sucesso" },
-            { Localisation::Toast_Warning, "Aviso" },
-            { Localisation::Toast_Error, "Erro" },
-            { Localisation::Save, "Salvar" },
-            { Localisation::Save_Apply, "Salvar" },
-            { Localisation::MenuBar_Settings, "Configurações" },
-            { Localisation::MenuBar_Settings_Application, "Configurações da Aplicação..." },
-            { Localisation::MenuBar_Other, "Outros" },
-            { Localisation::MenuBar_Other_Goddess, "Deusa" },
-            { Localisation::Popup_Settings_Tabs_Appearance_Title, "Aparência" },
-            { Localisation::Popup_Settings_Tabs_Appearance_Theme, "Tema" },
-            { Localisation::Popup_Settings_Tabs_Appearance_Theme_Dark, "Escuro" },
-            { Localisation::Popup_Settings_Tabs_Appearance_Theme_Light, "Claro" },
-            { Localisation::Popup_Settings_Tabs_Display_Title, "Display" },
-            { Localisation::Popup_Settings_Tabs_Display_Scale, "Escala" },
-            { Localisation::Popup_Settings_Tabs_Language_Title, "Língua" },
-            { Localisation::Popup_Settings_Tabs_Language_Language, "Língua" },
-            { Localisation::Popup_Settings_Tabs_Appearance_Font, "Fonte" },
-            { Localisation::Tabs_Tablet_Title, "Configurações do Tablet" },
-            { Localisation::Tabs_Tablet_Device, "Tablet" },
-            { Localisation::Tabs_Tablet_PressureCurve, "Curva de Pressão" },
-            { Localisation::Tabs_Tablet_Width, "Largura" },
-            { Localisation::Tabs_Tablet_Height, "Altura" },
-            { Localisation::Tabs_Tablet_OffsetX, "Offset X" },
-            { Localisation::Tabs_Tablet_OffsetY, "Offset Y" },
-            { Localisation::Tabs_Tablet_FullArea, "Área Completa" },
-            { Localisation::Tabs_Tablet_ForceProportions, "Forçar Proporções" },
-            { Localisation::Tabs_Monitor_Title, "Configurações do Monitor" },
-            { Localisation::Tabs_Monitor_Monitor, "Monitor" },
-            { Localisation::Tabs_Monitor_Width, "Largura" },
-            { Localisation::Tabs_Monitor_Height, "Altura" },
-            { Localisation::Tabs_Monitor_OffsetX, "Offset X" },
-            { Localisation::Tabs_Monitor_OffsetY, "Offset Y" },
-            { Localisation::Tabs_Monitor_FullArea, "Área Completa" },
-            { Localisation::Tabs_Monitor_ForceProportions, "Forçar Proporções" },
-            { Localisation::Toast_Devices_Missing, "Nenhum dispositivo encontrado" },
-            { Localisation::Toast_Application_Settings_Saved, "As configurações da aplicação foram salvas com sucesso" },
-            { Localisation::Toast_Device_Settings_Saved, "As configurações do tablet foram salvas com sucesso" },
-            { Localisation::Toast_Device_Settings_Load_Failed, "Falha ao carregar configurações do tablet" },
-            { Localisation::Toast_Device_Settings_Missing, "Não foi possível encontrar configurações para o dispositivo conectado, obtendo informações diretamente do xsetwacom" },
-        }
-    },
-    {
-        ApplicationSettings::Language::RU_RU, {
-            { Localisation::Toast_Success, "Успех" },
-            { Localisation::Toast_Warning, "Внимание" },
-            { Localisation::Toast_Error, "Ошибка" },
-            { Localisation::Save, "Сохранить" },
-            { Localisation::Save_Apply, "Сохранить и применить" },
-            { Localisation::MenuBar_Settings, "Настройки" },
-            { Localisation::MenuBar_Settings_Application, "Настройки приложения..." },
-            { Localisation::MenuBar_Other, "Прочее" },
-            { Localisation::MenuBar_Other_Goddess, "Богиня" },
-            { Localisation::Popup_Settings_Tabs_Appearance_Title, "Внешний вид" },
-            { Localisation::Popup_Settings_Tabs_Appearance_Theme, "Тема" },
-            { Localisation::Popup_Settings_Tabs_Appearance_Theme_Dark, "Тёмная" },
-            { Localisation::Popup_Settings_Tabs_Appearance_Theme_Light, "Светлая" },
-            { Localisation::Popup_Settings_Tabs_Display_Title, "Отображение" },
-            { Localisation::Popup_Settings_Tabs_Display_Scale, "Пропорции" },
-            { Localisation::Popup_Settings_Tabs_Language_Title, "Язык" },
-            { Localisation::Popup_Settings_Tabs_Language_Language, "Язык" },
-            { Localisation::Popup_Settings_Tabs_Appearance_Font, "Шрифт" },
-            { Localisation::Tabs_Tablet_Title, "Настройки планшета" },
-            { Localisation::Tabs_Tablet_Device, "Устройство" },
-            { Localisation::Tabs_Tablet_PressureCurve, "Кривая давления" },
-            { Localisation::Tabs_Tablet_Width, "Ширина" },
-            { Localisation::Tabs_Tablet_Height, "Высота" },
-            { Localisation::Tabs_Tablet_OffsetX, "Смещение по X" },
-            { Localisation::Tabs_Tablet_OffsetY, "Смещение по Y" },
-            { Localisation::Tabs_Tablet_FullArea, "Вся зона" },
-            { Localisation::Tabs_Tablet_ForceProportions, "Принудительные пропорции" },
-            { Localisation::Tabs_Monitor_Title, "Монитор" },
-            { Localisation::Tabs_Monitor_Monitor, "Монитор" },
-            { Localisation::Tabs_Monitor_Width, "Ширина" },
-            { Localisation::Tabs_Monitor_Height, "Высота" },
-            { Localisation::Tabs_Monitor_OffsetX, "Смещение пр X" },
-            { Localisation::Tabs_Monitor_OffsetY, "Смещение по Y" },
-            { Localisation::Tabs_Monitor_FullArea, "Вся зона" },
-            { Localisation::Tabs_Monitor_ForceProportions, "Принудительные пропорции" },
-            { Localisation::Toast_Devices_Missing, "Устройства не найдены" },
-            { Localisation::Toast_Application_Settings_Saved, "Настройки приложения сохранены" },
-            { Localisation::Toast_Device_Settings_Saved, "Настройки устройства сохранены" },
-            { Localisation::Toast_Device_Settings_Load_Failed, "Не удалось сохранить настройки устройства" },
-            { Localisation::Toast_Device_Settings_Missing, "Не найдены сохранённые настройки, будут использованы параметры напрямую из xsetwacom" },
-        }
-    }
-};
