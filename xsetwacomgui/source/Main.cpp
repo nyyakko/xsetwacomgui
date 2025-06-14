@@ -511,11 +511,7 @@ liberror::Result<void> render_window(DeviceSettings& deviceSettings, std::vector
             deviceSettings.devicePressure = MUST(libwacom::get_stylus_pressure_curve(context.device.id));
             deviceSettings.monitorName = context.monitor.name;
             deviceSettings.monitorArea = context.monitorDefaultArea;
-
-            if (save_device_settings(deviceSettings))
-            {
-                ImGui::PushToast(TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Success)), TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Device_Settings_Saved)));
-            }
+            save_device_settings(deviceSettings);
         }
     }
 
