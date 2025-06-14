@@ -1,4 +1,3 @@
-#include <fplus/container_common.hpp>
 #define IMGUI_DEFINE_MATH_OPERATORS
 
 #include <spdlog/spdlog.h>
@@ -29,6 +28,7 @@
 #include <span>
 #include <ranges>
 #include <algorithm>
+#include <array>
 
 std::vector<std::pair<std::string, std::filesystem::path>> get_available_fonts()
 {
@@ -101,15 +101,22 @@ void render_settings_popup_display_tab(ApplicationSettings& settings)
 void render_settings_popup_language_tab(ApplicationSettings& settings)
 {
     ImGui::Text("%s", Localisation::get(settings.language, Localisation::Popup_Settings_Tabs_Language_Language));
-    static char const* languages[] = { "en_us", "pt_br", "ru_ru", };
+
+    static constexpr char const* languages[] {
+        ApplicationSettings::Language::EN_US,
+        ApplicationSettings::Language::PT_BR,
+        ApplicationSettings::Language::RU_RU,
+    };
+
     static int languageIndex = static_cast<int>(
-        std::distance(&languages[0], std::ranges::find(&languages[0], &languages[std::size(languages)], settings.language))
+        std::distance(&languages[0], std::ranges::find(&languages[0], &languages[std::size(languages)], settings.language.to_string()))
     );
+
     auto hasChangedUILanguage = ImGui::Combo("##Language", &languageIndex, languages, std::size(languages));
 
     if (hasChangedUILanguage)
     {
-        settings.language = languages[languageIndex];
+        settings.language = ApplicationSettings::Language::from_string(languages[languageIndex]);
     }
 }
 
@@ -492,8 +499,13 @@ liberror::Result<void> render_window(DeviceSettings& deviceSettings, std::vector
             deviceSettings.deviceName = context.device.name;
             deviceSettings.deviceArea = MUST(libwacom::get_stylus_area(context.device.id));
             deviceSettings.devicePressure = MUST(libwacom::get_stylus_pressure_curve(context.device.id));
-            deviceSettings.monitorArea = context.monitorDefaultArea;
             deviceSettings.monitorName = context.monitor.name;
+            deviceSettings.monitorArea = context.monitorDefaultArea;
+
+            if (save_device_settings(deviceSettings))
+            {
+                ImGui::PushToast(Localisation::get(applicationSettings.language, Localisation::Toast_Success), Localisation::get(applicationSettings.language, Localisation::Toast_Device_Settings_Saved));
+            }
         }
     }
 
@@ -600,7 +612,7 @@ liberror::Result<void> safe_main(std::vector<std::string_view> const& arguments)
     ApplicationSettings applicationSettings {
         .scale = 1.0,
         .theme = ApplicationSettings::Theme::DARK,
-        .language = "en_us",
+        .language = ApplicationSettings::Language::EN_US,
         .font = "default",
     };
 

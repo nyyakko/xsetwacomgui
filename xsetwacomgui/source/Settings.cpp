@@ -96,7 +96,7 @@ bool load_application_settings(ApplicationSettings& settings)
         settings.theme    = ApplicationSettings::Theme::from_string((json["appearance"]["theme"].get<std::string>()));
         settings.font     = json["appearance"]["font"].get<std::string>();
         settings.scale    = json["display"]["scale"].get<float>();
-        settings.language = json["language"]["language"].get<std::string>();
+        settings.language = ApplicationSettings::Language::from_string(json["language"]["language"].get<std::string>());
     }
     catch (std::exception const& error)
     {
@@ -122,7 +122,7 @@ bool save_application_settings(ApplicationSettings& settings)
         },
         {
             "language", {
-                { "language", settings.language },
+                { "language", settings.language.to_string() },
             }
         }
     };

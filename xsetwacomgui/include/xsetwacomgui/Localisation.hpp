@@ -1,12 +1,14 @@
 #pragma once
 
+#include "Settings.hpp"
+
 #include <map>
 #include <string>
 
 class Localisation
 {
 private:
-    static std::map<std::string, std::map<int, std::string>> data;
+    static std::map<ApplicationSettings::Language, std::map<int, std::string>> data;
 
 public:
     enum
@@ -65,15 +67,15 @@ public:
         return localisation.data;
     }
 
-    static char const* get(std::string_view language, auto id)
+    static char const* get(ApplicationSettings::Language language, auto id)
     {
-        return the()[language.data()][id].data();
+        return the()[language][id].data();
     }
 };
 
-inline std::map<std::string, std::map<int, std::string>> Localisation::data = {
+inline std::map<ApplicationSettings::Language, std::map<int, std::string>> Localisation::data = {
     {
-        "en_us", {
+        ApplicationSettings::Language::EN_US, {
             { Localisation::Toast_Success, "Success" },
             { Localisation::Toast_Warning, "Warning" },
             { Localisation::Toast_Error, "Error" },
@@ -117,7 +119,7 @@ inline std::map<std::string, std::map<int, std::string>> Localisation::data = {
         }
     },
     {
-        "pt_br", {
+        ApplicationSettings::Language::PT_BR, {
             { Localisation::Toast_Success, "Sucesso" },
             { Localisation::Toast_Warning, "Aviso" },
             { Localisation::Toast_Error, "Erro" },
@@ -161,7 +163,7 @@ inline std::map<std::string, std::map<int, std::string>> Localisation::data = {
         }
     },
     {
-        "ru_ru", {
+        ApplicationSettings::Language::RU_RU, {
             { Localisation::Toast_Success, "Успех" },
             { Localisation::Toast_Warning, "Внимание" },
             { Localisation::Toast_Error, "Ошибка" },
