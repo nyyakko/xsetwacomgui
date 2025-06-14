@@ -36,12 +36,14 @@ std::vector<std::pair<std::string, std::filesystem::path>> get_available_fonts()
         { "default", "default" }
     };
 
-    for (auto const& fontHome : std::array {
+    static std::array paths {
         get_system_home_path() / ".fonts",
         get_system_home_path() / ".local/share/fonts",
         std::filesystem::path("/usr/share/fonts"),
         std::filesystem::path("/usr/local/share/fonts"),
-    })
+    };
+
+    for (auto const& fontHome : paths)
     {
         if (!std::filesystem::exists(fontHome)) continue;
 
@@ -72,7 +74,7 @@ void render_settings_popup_appearance_tab(ApplicationSettings& settings)
     ImGui::Text("%s", Localisation::get(settings.language, Localisation::Popup_Settings_Tabs_Appearance_Font));
     static auto fonts = get_available_fonts();
     static auto fontsData = fplus::transform([] (auto const& font) { return font.first.data(); }, fonts );
-    static auto fontIndex = settings.font == "default" ? 0 : static_cast<int>(
+    static auto fontIndex = static_cast<int>(
         std::distance(fonts.begin(), std::ranges::find(fonts, std::filesystem::path(settings.font), &decltype(fonts)::value_type::second))
     );
     auto hasChangedUIFont = ImGui::Combo("##Font", &fontIndex, fontsData.data(), static_cast<int>(fontsData.size()));
@@ -99,11 +101,7 @@ void render_settings_popup_display_tab(ApplicationSettings& settings)
 void render_settings_popup_language_tab(ApplicationSettings& settings)
 {
     ImGui::Text("%s", Localisation::get(settings.language, Localisation::Popup_Settings_Tabs_Language_Language));
-    static char const* languages[] = {
-        "en_us",
-        "pt_br",
-        "ru_ru",
-    };
+    static char const* languages[] = { "en_us", "pt_br", "ru_ru", };
     static int languageIndex = static_cast<int>(
         std::distance(&languages[0], std::ranges::find(&languages[0], &languages[std::size(languages)], settings.language))
     );
@@ -196,8 +194,8 @@ liberror::Result<void> set_settings_to_device(libwacom::Device const& device, Mo
     TRY(libwacom::set_stylus_area(device.id, settings.deviceArea));
     TRY(libwacom::set_stylus_pressure_curve(device.id, settings.devicePressure));
     TRY(libwacom::set_stylus_output_from_display_area(device.id, {
-        monitor.offsetX + settings.monitorArea.offsetX,
-        monitor.offsetY + settings.monitorArea.offsetY,
+        settings.monitorArea.offsetX + monitor.offsetX,
+        settings.monitorArea.offsetY + monitor.offsetY,
         settings.monitorArea.width,
         settings.monitorArea.height,
     }));
@@ -206,10 +204,10 @@ liberror::Result<void> set_settings_to_device(libwacom::Device const& device, Mo
 
 void render_region_mappers(Context& context, DeviceSettings& deviceSettings, std::vector<libwacom::Device> const& devices, std::vector<Monitor> const& monitors, ApplicationSettings const& applicationSettings)
 {
-    auto [cursorPosX, cursorPosY] = ImGui::GetCursorPos();
+    auto [cursorX, cursorY] = ImGui::GetCursorPos();
     ImDrawList* drawList = ImGui::GetWindowDrawList();
 
-    static ImVec2 monitorAreaAnchors[4] { { 0, 0 }, { 0, 1 }, { 1, 0 }, { 1, 1 } };
+    static ImVec2 monitorAreaAnchors[4] { { -1, -1 }, { -1, -1 }, { -1, -1 }, { -1, -1 } };
 
     if (!monitors.empty())
     {
@@ -230,7 +228,7 @@ void render_region_mappers(Context& context, DeviceSettings& deviceSettings, std
     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - monitorMapperSize.x)/2);
     static ImRect monitorMapperPosition {};
     context.hasChangedMonitorArea |= area_mapper(Localisation::get(applicationSettings.language, Localisation::Tabs_Monitor_Monitor), monitorAreaAnchors, monitorMapperSize, &monitorMapperPosition, deviceSettings.monitorForceFullArea, deviceSettings.monitorForceAspectRatio);
-    ImGui::SetCursorPosX(cursorPosX);
+    ImGui::SetCursorPosX(cursorX);
 
     if (context.hasChangedMonitorArea)
     {
@@ -268,7 +266,7 @@ void render_region_mappers(Context& context, DeviceSettings& deviceSettings, std
     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - deviceMapperSize.x)/2);
     static ImRect deviceMapperPosition {};
     context.hasChangedDeviceArea |= area_mapper(Localisation::get(applicationSettings.language, Localisation::Tabs_Tablet_Device), deviceAreaAnchors, deviceMapperSize, &deviceMapperPosition, deviceSettings.deviceForceFullArea, deviceSettings.deviceForceAspectRatio);
-    ImGui::SetCursorPosX(cursorPosX);
+    ImGui::SetCursorPosX(cursorX);
 
     if (context.hasChangedDeviceArea)
     {
