@@ -649,9 +649,25 @@ liberror::Result<void> safe_main(std::vector<std::string_view> const& arguments)
     io.LogFilename = nullptr;
 
     ImFont* font = nullptr;
+
+    ImVector<ImWchar> ranges {};
+    ImFontGlyphRangesBuilder rangeBuilder {};
+
+    static const ImWchar rangesData[] =
+    {
+        0x0020, 0x00FF, // Basic Latin + Latin Supplement
+        0x0400, 0x052F, // Cyrillic + Cyrillic Supplement
+        0x2DE0, 0x2DFF, // Cyrillic Extended-A
+        0xA640, 0xA69F, // Cyrillic Extended-B
+        0,
+    };
+
+    rangeBuilder.AddRanges(rangesData);
+    rangeBuilder.BuildRanges(&ranges);
+
     if (applicationSettings.font != "default")
     {
-        font = io.Fonts->AddFontFromFileTTF(applicationSettings.font.data(), 20_scaled, nullptr, io.Fonts->GetGlyphRangesDefault());
+        font = io.Fonts->AddFontFromFileTTF(applicationSettings.font.data(), 20_scaled, nullptr, ranges.Data);
     }
 
     while (!glfwWindowShouldClose(window))
