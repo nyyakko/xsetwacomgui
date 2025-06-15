@@ -26,7 +26,7 @@ bool save_device_settings(DeviceSettings const& settings);
 
 struct ApplicationSettings
 {
-    ENUM_CLASS(Theme, DARK, WHITE)
+    ENUM_CLASS(Theme, DARK, LIGHT)
     ENUM_CLASS(Language, EN_US, PT_BR, RU_RU)
 
     float scale;
