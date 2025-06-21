@@ -388,8 +388,6 @@ liberror::Result<void> render_tablet_settings_tab(Context& context, DeviceSettin
         ImGui::BeginDisabled();
         ImGui::Checkbox(TRY(Localisation::get(applicationSettings.language, Localisation::Tabs_Tablet_ForceProportions)), &deviceSettings.deviceForceAspectRatio);
         ImGui::EndDisabled();
-
-        // ImGui::Checkbox(TRY(Localisation::get(applicationSettings.language, Localisation::Tabs_Tablet_ForceProportions)), &deviceSettings.deviceForceAspectRatio);
     }
     ImGui::EndGroup();
     ImGui::SameLine();
