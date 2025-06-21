@@ -5,7 +5,7 @@ configuration, `xsetwacomgui` gives a way to do that. You just need to invoke \
 the following command on boot:
 
 ```bash
-xsetwacomgui --no-gui
+xsetwacomgui config --load
 ```
 
 which will load the saved configuration.
