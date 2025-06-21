@@ -581,14 +581,12 @@ liberror::Result<void> render_window(DeviceSettings& deviceSettings, std::vector
 
 liberror::Result<void> safe_main(std::span<char const*> const& arguments)
 {
-    argparse::ArgumentParser parser(NAME);
-
+    argparse::ArgumentParser parser(NAME, "", argparse::default_arguments::help);
     parser.add_description("A graphical xsetwacom wrapper for ease of use.");
 
-    argparse::ArgumentParser configCommand("config");
-
+    argparse::ArgumentParser configCommand("config", "", argparse::default_arguments::help);
+    configCommand.add_description("manages device related configuration");
     configCommand.add_argument("--load").help("loads the tablet configuration without loading the UI").flag();
-
     parser.add_subparser(configCommand);
 
     try
