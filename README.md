@@ -15,6 +15,8 @@ Before building, make sure you have the following depencies installed on your sy
 * xrandr
 * xsetwacom
 
+You will also need a ``[C++23 compiler](https://github.com/llvm/llvm-project/releases)`` and ``[cmake](https://cmake.org/)`` installed.
+
 ```bash
 python configure.py && python build.py
 ```
