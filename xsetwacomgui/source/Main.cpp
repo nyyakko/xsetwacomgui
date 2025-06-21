@@ -1,4 +1,3 @@
-#include <mutex>
 #define IMGUI_DEFINE_MATH_OPERATORS
 
 #include <spdlog/spdlog.h>
@@ -25,6 +24,7 @@
 #include <GLFW/glfw3.h>
 #include <fplus/fplus.hpp>
 
+#include <mutex>
 #include <filesystem>
 #include <cstdlib>
 #include <span>
