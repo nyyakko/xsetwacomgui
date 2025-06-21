@@ -16,3 +16,7 @@ to build and install the release version,
 python configure.py release && python build.py
 python install.py
 ```
+
+## Documentation
+
+For cli documentation, read the docs available at the [documentation](documentation/) folder.
