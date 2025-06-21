@@ -126,39 +126,21 @@ RECENT REVISION HISTORY:
   of the credits.
 */
 
-#if defined(__clang__) && !(defined(__GNUG__) || defined(__GNUC__))
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wall"
-    #pragma clang diagnostic ignored "-Wextra"
-    #pragma clang diagnostic ignored "-Wshadow"
-    #pragma clang diagnostic ignored "-Wnon-virtual-dtor"
-    #pragma clang diagnostic ignored "-Wold-style-cast"
-    #pragma clang diagnostic ignored "-Wcast-align"
-    #pragma clang diagnostic ignored "-Wunused"
-    #pragma clang diagnostic ignored "-Woverloaded-virtual"
-    #pragma clang diagnostic ignored "-Wpedantic"
-    #pragma clang diagnostic ignored "-Wconversion"
-    #pragma clang diagnostic ignored "-Wsign-conversion"
-    #pragma clang diagnostic ignored "-Wnull-dereference"
-    #pragma clang diagnostic ignored "-Wdouble-promotion"
-    #pragma clang diagnostic ignored "-Wimplicit-fallthrough"
-#elif defined(__GNUG__) || defined(__GNUC__)
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wall"
-    #pragma GCC diagnostic ignored "-Wextra"
-    #pragma GCC diagnostic ignored "-Wshadow"
-    #pragma GCC diagnostic ignored "-Wnon-virtual-dtor"
-    #pragma GCC diagnostic ignored "-Wold-style-cast"
-    #pragma GCC diagnostic ignored "-Wcast-align"
-    #pragma GCC diagnostic ignored "-Wunused"
-    #pragma GCC diagnostic ignored "-Woverloaded-virtual"
-    #pragma GCC diagnostic ignored "-Wpedantic"
-    #pragma GCC diagnostic ignored "-Wconversion"
-    #pragma GCC diagnostic ignored "-Wsign-conversion"
-    #pragma GCC diagnostic ignored "-Wnull-dereference"
-    #pragma GCC diagnostic ignored "-Wdouble-promotion"
-    #pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
-#endif
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wall"
+#pragma GCC diagnostic ignored "-Wextra"
+#pragma GCC diagnostic ignored "-Wshadow"
+#pragma GCC diagnostic ignored "-Wnon-virtual-dtor"
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#pragma GCC diagnostic ignored "-Wcast-align"
+#pragma GCC diagnostic ignored "-Wunused"
+#pragma GCC diagnostic ignored "-Woverloaded-virtual"
+#pragma GCC diagnostic ignored "-Wpedantic"
+#pragma GCC diagnostic ignored "-Wconversion"
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#pragma GCC diagnostic ignored "-Wdouble-promotion"
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
 
 #ifndef STBI_INCLUDE_STB_IMAGE_H
 #define STBI_INCLUDE_STB_IMAGE_H
@@ -8021,8 +8003,4 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ------------------------------------------------------------------------------
 */
 
-#if defined(__clang__) && !(defined(__GNUG__) || defined(__GNUC__))
-    #pragma clang diagnostic pop
-#elif defined (__GNUG__) || defined (__GNUC__)
-    #pragma GCC diagnostic pop
-#endif
+#pragma GCC diagnostic pop
