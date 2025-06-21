@@ -515,9 +515,17 @@ liberror::Result<void> render_window(DeviceSettings& deviceSettings, std::vector
     {
         if (std::filesystem::exists(DEVICE_SETTINGS_FILE))
         {
-            if (!load_device_settings(deviceSettings))
+            auto result = load_device_settings(deviceSettings);
+
+            if (!result.has_value())
             {
                 ImGui::PushToast(TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Warning)), TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Device_Settings_Load_Failed)));
+                deviceSettings.deviceName = context.device.name;
+                deviceSettings.deviceArea = MUST(libwacom::get_stylus_area(context.device.id));
+                deviceSettings.devicePressure = MUST(libwacom::get_stylus_pressure_curve(context.device.id));
+                deviceSettings.monitorName = context.monitor.name;
+                deviceSettings.monitorArea = context.monitorDefaultArea;
+                spdlog::error("{}", result.error().message());
             }
         }
         else
@@ -657,8 +665,10 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
     }
     else
     {
-        if (!load_application_settings(applicationSettings))
+        auto result = load_application_settings(applicationSettings);
+        if (!result.has_value())
         {
+            spdlog::error("{}", result.error().message());
             return liberror::make_error("Failed to load application settings");
         }
 

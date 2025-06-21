@@ -6,7 +6,7 @@
 #include <sstream>
 #include <cstdlib>
 
-bool load_device_settings(DeviceSettings& settings)
+liberror::Result<bool> load_device_settings(DeviceSettings& settings)
 {
     std::ifstream stream(DEVICE_SETTINGS_FILE);
     std::stringstream content;
@@ -37,7 +37,7 @@ bool load_device_settings(DeviceSettings& settings)
     }
     catch (std::exception const& error)
     {
-        return false;
+        return liberror::make_error(error.what());
     }
 
     return !(stream.bad() || stream.fail());
@@ -85,7 +85,7 @@ bool save_device_settings(DeviceSettings const& settings)
     return !(stream.bad() || stream.fail());
 }
 
-bool load_application_settings(ApplicationSettings& settings)
+liberror::Result<bool> load_application_settings(ApplicationSettings& settings)
 {
     std::ifstream stream(APPLICATION_SETTINGS_FILE);
     std::stringstream content;
@@ -102,7 +102,7 @@ bool load_application_settings(ApplicationSettings& settings)
     }
     catch (std::exception const& error)
     {
-        return false;
+        return liberror::make_error(error.what());
     }
 
     return !(stream.bad() || stream.fail());

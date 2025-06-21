@@ -8,8 +8,7 @@
 inline std::filesystem::path DEVICE_SETTINGS_FILE = get_application_config_path() / "device.json";
 inline std::filesystem::path APPLICATION_SETTINGS_FILE = get_application_config_path() / "application.json";
 
-struct DeviceSettings
-{
+struct DeviceSettings {
     std::string deviceName;
     libwacom::Handedness deviceHandedness;
     libwacom::Area deviceArea;
@@ -22,7 +21,7 @@ struct DeviceSettings
     bool monitorForceAspectRatio;
 };
 
-bool load_device_settings(DeviceSettings& settings);
+liberror::Result<bool> load_device_settings(DeviceSettings& settings);
 bool save_device_settings(DeviceSettings const& settings);
 
 struct ApplicationSettings
@@ -36,5 +35,5 @@ struct ApplicationSettings
     std::string font;
 };
 
-bool load_application_settings(ApplicationSettings& settings);
+liberror::Result<bool> load_application_settings(ApplicationSettings& settings);
 bool save_application_settings(ApplicationSettings& settings);
