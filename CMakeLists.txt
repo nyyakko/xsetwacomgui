@@ -20,6 +20,7 @@ CPMAddPackage(URI "gh:nyyakko/imgui#master"          EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:nyyakko/LibEnum#master"        EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:nyyakko/LibError#master"       EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:nyyakko/LibWacom#master"       EXCLUDE_FROM_ALL YES)
+CPMAddPackage(URI "gh:p-ranav/argparse@3.2"          EXCLUDE_FROM_ALL YES)
 
 include(cmake/static_analyzers.cmake)
 include(GNUInstallDirs)
@@ -38,6 +39,7 @@ set(xsetwacomgui_ExternalLibraries
     nlohmann_json::nlohmann_json
     spdlog::spdlog
     fmt::fmt
+    argparse::argparse
 )
 
 add_subdirectory(xsetwacomgui)

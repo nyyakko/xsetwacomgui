@@ -12,6 +12,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "external/stb_image/stb_image.h"
 
+#include <argparse/argparse.hpp>
 #include <imgui/extensions/imgui_toast.hpp>
 #include <imgui/extensions/imgui_bezier.hpp>
 #include <imgui/imgui.hpp>
@@ -26,7 +27,6 @@
 #include <filesystem>
 #include <cstdlib>
 #include <span>
-#include <ranges>
 #include <algorithm>
 #include <array>
 
@@ -571,8 +571,27 @@ liberror::Result<void> render_window(DeviceSettings& deviceSettings, std::vector
     return {};
 }
 
-liberror::Result<void> safe_main(std::vector<std::string_view> const& arguments)
+liberror::Result<void> safe_main(std::span<char const*> const& arguments)
 {
+    argparse::ArgumentParser parser(NAME);
+
+    parser.add_description("A graphical xsetwacom wrapper for ease of use.");
+
+    argparse::ArgumentParser configCommand("config");
+
+    configCommand.add_argument("--load").help("loads the tablet configuration without loading the UI").flag();
+
+    parser.add_subparser(configCommand);
+
+    try
+    {
+        parser.parse_args(static_cast<int>(arguments.size()), arguments.data());
+    }
+    catch (std::exception const& exception)
+    {
+        return liberror::make_error(exception.what());
+    }
+
     std::vector<Monitor> monitors = TRY(get_available_monitors());
     std::vector<libwacom::Device> devices = TRY(libwacom::get_available_devices());
     devices = fplus::keep_if([] (auto&& device) { return device.kind == libwacom::Device::Kind::STYLUS; }, devices);
@@ -595,18 +614,7 @@ liberror::Result<void> safe_main(std::vector<std::string_view> const& arguments)
         return liberror::make_error("Failed to create settings directory");
     }
 
-    if (std::find(arguments.begin(), arguments.end(), "--help") != arguments.end())
-    {
-        fmt::println("A graphical xsetwacom wrapper for ease of use.");
-        fmt::println("Usage:");
-        fmt::println("  xsetwacomgui [OPTION...]");
-        fmt::println("");
-        fmt::println("  --no-gui        Launches the program without the UI. This is intended for");
-        fmt::println("                  loading saved device settings on system boot.");
-        return {};
-    }
-
-    if (std::find(arguments.begin(), arguments.end(), "--no-gui") != arguments.end())
+    if (configCommand["--load"] != false)
     {
         if (!std::filesystem::exists(DEVICE_SETTINGS_FILE))
         {
@@ -825,11 +833,7 @@ liberror::Result<void> safe_main(std::vector<std::string_view> const& arguments)
 
 int main(int argc, char const** argv)
 {
-    auto arguments =
-        std::span<char const*>(argv, size_t(argc))
-            | std::views::transform([] (auto&& argument) { return std::string_view(argument); });
-
-    auto result = safe_main({ arguments.begin(), arguments.end() });
+    auto result = safe_main(std::span<char const*>(argv, size_t(argc)));
 
     if (!result.has_value())
     {
