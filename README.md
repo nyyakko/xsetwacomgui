@@ -6,6 +6,15 @@ This is a frontend for the `xsetwacom` utility.
 
 # Building
 
+## Dependencies
+
+Before building, make sure you have the following depencies installed on your system:
+
+* opengl development package
+* glfw development package
+* xrandr
+* xsetwacom
+
 ```bash
 python configure.py && python build.py
 ```
