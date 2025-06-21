@@ -1,3 +1,4 @@
+#include <mutex>
 #define IMGUI_DEFINE_MATH_OPERATORS
 
 #include <spdlog/spdlog.h>
@@ -495,6 +496,13 @@ liberror::Result<void> render_monitor_settings_tab(Context& context, DeviceSetti
 
 liberror::Result<void> render_window(DeviceSettings& deviceSettings, std::vector<libwacom::Device> const& devices, std::vector<Monitor> const& monitors, ApplicationSettings const& applicationSettings)
 {
+#ifdef DEBUG
+    static std::once_flag debugWarningFlag {};
+    std::call_once(debugWarningFlag, [&] () {
+        ImGui::PushToast("Debug", "You are running a debug build!");
+    });
+#endif
+
     static Context context = [&] () {
         libwacom::Device device = devices.empty() ? libwacom::Device {} : devices.front();
         libwacom::Area deviceDefaultArea = devices.empty() ? libwacom::Area {} : MUST(libwacom::get_stylus_default_area(device.id));
