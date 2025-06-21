@@ -40,6 +40,9 @@ public:
 
         Tabs_Tablet_Title,
         Tabs_Tablet_Device,
+        Tabs_Tablet_Orientation,
+        Tabs_Tablet_Orientation_Left,
+        Tabs_Tablet_Orientation_Right,
         Tabs_Tablet_PressureCurve,
         Tabs_Tablet_Width,
         Tabs_Tablet_Height,
@@ -47,7 +50,6 @@ public:
         Tabs_Tablet_OffsetY,
         Tabs_Tablet_FullArea,
         Tabs_Tablet_ForceProportions,
-        Toast_Devices_Missing,
 
         Tabs_Monitor_Title,
         Tabs_Monitor_Monitor,
@@ -62,6 +64,7 @@ public:
         Toast_Device_Settings_Saved,
         Toast_Device_Settings_Load_Failed,
         Toast_Device_Settings_Missing,
+        Toast_Devices_Missing,
     };
 
     static auto& the()

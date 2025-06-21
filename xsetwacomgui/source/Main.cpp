@@ -198,6 +198,7 @@ struct Context
     libwacom::Area monitorDefaultArea;
 
     bool hasChangedDevice = false;
+    bool hasChangedDeviceHandedness = false;
     bool hasChangedDeviceArea = false;
     bool hasChangedDevicePressure = false;
     bool hasChangedMonitor = false;
@@ -214,6 +215,7 @@ liberror::Result<void> set_settings_to_device(libwacom::Device const& device, Mo
         settings.monitorArea.width,
         settings.monitorArea.height,
     }));
+    TRY(libwacom::set_stylus_handedness(device.id, settings.deviceHandedness));
     return {};
 }
 
@@ -367,10 +369,27 @@ liberror::Result<void> render_tablet_settings_tab(Context& context, DeviceSettin
             ImGui::EndGroup();
         }
 
+        ImGui::AlignTextToFramePadding();
+        ImGui::Text("%s", TRY(Localisation::get(applicationSettings.language, Localisation::Tabs_Tablet_Orientation)));
+        char const* orientations[] = {
+            TRY(Localisation::get(applicationSettings.language, Localisation::Tabs_Tablet_Orientation_Left)),
+            TRY(Localisation::get(applicationSettings.language, Localisation::Tabs_Tablet_Orientation_Right)),
+        };
+        ImGui::SetNextItemWidth(150_scaled);
+        static int orientationIndex = static_cast<int>(deviceSettings.deviceHandedness.to_int());
+        context.hasChangedDeviceHandedness = ImGui::Combo("##Orientations", &orientationIndex, orientations, std::size(orientations));
+
+        if (context.hasChangedDeviceHandedness)
+        {
+            deviceSettings.deviceHandedness = libwacom::Handedness::from_int(orientationIndex);
+        }
+
         context.hasChangedDeviceArea |= ImGui::Checkbox(TRY(Localisation::get(applicationSettings.language, Localisation::Tabs_Tablet_FullArea)), &deviceSettings.deviceForceFullArea);
         ImGui::BeginDisabled();
         ImGui::Checkbox(TRY(Localisation::get(applicationSettings.language, Localisation::Tabs_Tablet_ForceProportions)), &deviceSettings.deviceForceAspectRatio);
         ImGui::EndDisabled();
+
+        // ImGui::Checkbox(TRY(Localisation::get(applicationSettings.language, Localisation::Tabs_Tablet_ForceProportions)), &deviceSettings.deviceForceAspectRatio);
     }
     ImGui::EndGroup();
     ImGui::SameLine();
@@ -562,6 +581,7 @@ liberror::Result<void> safe_main(std::vector<std::string_view> const& arguments)
 
     DeviceSettings deviceSettings {
         .deviceName = "INVALID",
+        .deviceHandedness = libwacom::Handedness::RIGHT,
         .deviceArea = { -1, -1, -1, -1 },
         .devicePressure = { -1, -1, -1, -1 },
         .deviceForceFullArea = false,

@@ -11,6 +11,7 @@ inline std::filesystem::path APPLICATION_SETTINGS_FILE = get_application_config_
 struct DeviceSettings
 {
     std::string deviceName;
+    libwacom::Handedness deviceHandedness;
     libwacom::Area deviceArea;
     libwacom::Pressure devicePressure;
     bool deviceForceFullArea;

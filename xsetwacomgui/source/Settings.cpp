@@ -25,6 +25,7 @@ bool load_device_settings(DeviceSettings& settings)
         settings.deviceName              = json["deviceName"].get<std::string>();
         settings.deviceForceFullArea     = json["deviceForceFullArea"].get<bool>();
         settings.deviceForceAspectRatio  = json["deviceForceAspectRatio"].get<bool>();
+        settings.deviceHandedness        = libwacom::Handedness::from_string(json["deviceHandedness"].get<std::string>());
         settings.deviceArea.offsetX      = json["deviceArea"]["offsetX"].get<float>();
         settings.deviceArea.offsetY      = json["deviceArea"]["offsetY"].get<float>();
         settings.deviceArea.width        = json["deviceArea"]["width"].get<float>();
@@ -46,6 +47,7 @@ bool save_device_settings(DeviceSettings const& settings)
 {
     nlohmann::ordered_json json {
         { "deviceName", settings.deviceName },
+        { "deviceHandedness", settings.deviceHandedness.to_string() },
         {
             "deviceArea", {
                 { "offsetX", settings.deviceArea.offsetX },
