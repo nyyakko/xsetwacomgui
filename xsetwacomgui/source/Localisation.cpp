@@ -15,7 +15,7 @@ liberror::Result<char const*> Localisation::get(ApplicationSettings::Language la
     {
         auto languageLowercase = std::string_view(language.to_string()) | std::views::transform(tolower);
         std::ifstream stream(
-            get_application_data_path() / "resources/languages" / fmt::format("{}.json", std::string(languageLowercase.begin(), languageLowercase.end()))
+            get_application_data_path() / "languages" / fmt::format("{}.json", std::string(languageLowercase.begin(), languageLowercase.end()))
         );
         std::stringstream content;
         content << stream.rdbuf();

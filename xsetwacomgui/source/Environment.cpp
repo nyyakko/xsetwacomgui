@@ -21,7 +21,7 @@ std::filesystem::path get_application_config_path()
 std::filesystem::path get_application_data_path()
 {
 #if DEBUG
-    return std::filesystem::path(HOME);
+    return std::filesystem::path(HOME) / "resources";
 #else
     auto dataHome = getenv("XDG_DATA_HOME");
     if (dataHome) return std::filesystem::path(dataHome) / NAME;
