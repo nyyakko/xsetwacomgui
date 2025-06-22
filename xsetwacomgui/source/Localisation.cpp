@@ -69,6 +69,7 @@ liberror::Result<char const*> Localisation::get(ApplicationSettings::Language la
                 { Localisation::Toast_Devices_Missing, json["toastDevicesMissing"].get<std::string>() },
                 { Localisation::Toast_Application_Settings_Saved, json["toastApplicationSettingsSaved"].get<std::string>() },
                 { Localisation::Toast_Device_Settings_Saved, json["toastDeviceSettingsSaved"].get<std::string>() },
+                { Localisation::Toast_Device_Settings_Overwritten, json["toastDeviceSettingsOverwritten"].get<std::string>() },
                 { Localisation::Toast_Device_Settings_Load_Failed, json["toastDeviceSettingsLoadFailed"].get<std::string>() },
                 { Localisation::Toast_Device_Settings_Missing, json["toastDeviceSettingsMissing"].get<std::string>() },
             };

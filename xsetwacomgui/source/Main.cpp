@@ -544,7 +544,7 @@ liberror::Result<void> render_window(ApplicationSettings const& applicationSetti
             ImGui::SetCursorPosY(popupHeight - (25_scaled + ImGui::GetStyle().WindowPadding.y));
             if (ImGui::Button(TRY(Localisation::get(applicationSettings.language, Localisation::Popup_Outdated_Device_Settings_Overwrite)), { 0, 25_scaled }))
             {
-                ImGui::PushToast(TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Success)), "The saved device settings were successfully overwritten.");
+                ImGui::PushToast(TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Success)), TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Device_Settings_Overwritten)));
                 save_device_settings(deviceSettings);
                 context.handleOutdatedDeviceSettings = false;
             }
@@ -578,11 +578,10 @@ liberror::Result<void> render_window(ApplicationSettings const& applicationSetti
                 {
                     case SettingsError::Type::WRITE_FAILURE: break;
                     case SettingsError::Type::READ_FAILURE: {
-                        spdlog::error("An error occurred while trying to read the saved device settings.");
+                        ImGui::PushToast(TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Warning)), TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Device_Settings_Load_Failed)));
                         break;
                     }
                     case SettingsError::Type::OUTDATED_SCHEMA: {
-                        spdlog::warn("The device settings currently saved is outdated, prompting the user to decide what to do.");
                         context.handleOutdatedDeviceSettings = true;
                         break;
                     }
