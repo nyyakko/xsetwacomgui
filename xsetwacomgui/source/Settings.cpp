@@ -103,7 +103,7 @@ void migrate_device_settings(DeviceSettings const& settings)
     save_device_settings(settings);
 
     popen(fmt::format("xdg-open {}", get_application_config_path().string()).data(), "r");
-    pclose(popen(fmt::format("git diff {} {} >> {}/conflict.diff", oldSettingsSchema.string(), newSettingsSchema.string(), get_application_config_path().string()).data(), "r"));
+    pclose(popen(fmt::format("git diff {} {} > {}/conflict.diff", oldSettingsSchema.string(), newSettingsSchema.string(), get_application_config_path().string()).data(), "r"));
 }
 
 liberror::Result<void, SettingsError> load_application_settings(ApplicationSettings& settings)
@@ -174,5 +174,5 @@ void migrate_application_settings(ApplicationSettings const& settings)
     save_application_settings(settings);
 
     popen(fmt::format("xdg-open {}", get_application_config_path().string()).data(), "r");
-    pclose(popen(fmt::format("git diff {} {} >> {}/conflict.diff", oldSettingsSchema.string(), newSettingsSchema.string(), get_application_config_path().string()).data(), "r"));
+    pclose(popen(fmt::format("git diff {} {} > {}/conflict.diff", oldSettingsSchema.string(), newSettingsSchema.string(), get_application_config_path().string()).data(), "r"));
 }
