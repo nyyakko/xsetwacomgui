@@ -34,7 +34,7 @@
 std::vector<std::pair<std::string, std::filesystem::path>> get_available_fonts()
 {
     std::vector<std::pair<std::string, std::filesystem::path>> fonts {
-        { "default", "default" }
+        { "Default", "Default" }
     };
 
     static std::array paths {
@@ -193,10 +193,7 @@ void render_goddess_popup()
 struct Context
 {
     libwacom::Device device;
-    libwacom::Area deviceDefaultArea;
-
     Monitor monitor;
-    libwacom::Area monitorDefaultArea;
 
     bool hasChangedDevice = false;
     bool hasChangedDeviceHandedness = false;
@@ -206,17 +203,17 @@ struct Context
     bool hasChangedMonitorArea = false;
 };
 
-liberror::Result<void> set_settings_to_device(libwacom::Device const& device, Monitor const& monitor, DeviceSettings const& settings)
+liberror::Result<void> set_settings_to_device(Context const& context, DeviceSettings const& settings)
 {
-    TRY(libwacom::set_stylus_area(device.id, settings.deviceArea));
-    TRY(libwacom::set_stylus_pressure_curve(device.id, settings.devicePressure));
-    TRY(libwacom::set_stylus_output_from_display_area(device.id, {
-        settings.monitorArea.offsetX + monitor.offsetX,
-        settings.monitorArea.offsetY + monitor.offsetY,
+    TRY(libwacom::set_stylus_area(context.device.id, settings.deviceArea));
+    TRY(libwacom::set_stylus_handedness(context.device.id, settings.deviceHandedness));
+    TRY(libwacom::set_stylus_pressure_curve(context.device.id, settings.devicePressure));
+    TRY(libwacom::set_stylus_output_from_display_area(context.device.id, {
+        settings.monitorArea.offsetX + context.monitor.offsetX,
+        settings.monitorArea.offsetY + context.monitor.offsetY,
         settings.monitorArea.width,
         settings.monitorArea.height,
     }));
-    TRY(libwacom::set_stylus_handedness(device.id, settings.deviceHandedness));
     return {};
 }
 
@@ -226,13 +223,19 @@ liberror::Result<void> render_region_mappers(Context& context, DeviceSettings& d
     ImDrawList* drawList = ImGui::GetWindowDrawList();
 
     static ImVec2 monitorAreaAnchors[4] { { -1, -1 }, { -1, -1 }, { -1, -1 }, { -1, -1 } };
+    static libwacom::Area monitorDefaultArea = monitors.empty() ? libwacom::Area {} : libwacom::Area { 0, 0, context.monitor.width, context.monitor.height };
+
+    if (context.hasChangedMonitor)
+    {
+        monitorDefaultArea = libwacom::Area { 0, 0, context.monitor.width, context.monitor.height };
+    }
 
     if (!monitors.empty())
     {
-        monitorAreaAnchors[0] = { deviceSettings.monitorArea.offsetX / context.monitorDefaultArea.width, deviceSettings.monitorArea.offsetY / context.monitorDefaultArea.height };
-        monitorAreaAnchors[1] = { deviceSettings.monitorArea.offsetX / context.monitorDefaultArea.width, (deviceSettings.monitorArea.height + deviceSettings.monitorArea.offsetY) / context.monitorDefaultArea.height };
-        monitorAreaAnchors[2] = { (deviceSettings.monitorArea.width + deviceSettings.monitorArea.offsetX) / context.monitorDefaultArea.width, deviceSettings.monitorArea.offsetY / context.monitorDefaultArea.height };
-        monitorAreaAnchors[3] = { (deviceSettings.monitorArea.width + deviceSettings.monitorArea.offsetX) / context.monitorDefaultArea.width, (deviceSettings.monitorArea.height + deviceSettings.monitorArea.offsetY) / context.monitorDefaultArea.height };
+        monitorAreaAnchors[0] = { deviceSettings.monitorArea.offsetX / monitorDefaultArea.width, deviceSettings.monitorArea.offsetY / monitorDefaultArea.height };
+        monitorAreaAnchors[1] = { deviceSettings.monitorArea.offsetX / monitorDefaultArea.width, (deviceSettings.monitorArea.height + deviceSettings.monitorArea.offsetY) / monitorDefaultArea.height };
+        monitorAreaAnchors[2] = { (deviceSettings.monitorArea.width + deviceSettings.monitorArea.offsetX) / monitorDefaultArea.width, deviceSettings.monitorArea.offsetY / monitorDefaultArea.height };
+        monitorAreaAnchors[3] = { (deviceSettings.monitorArea.width + deviceSettings.monitorArea.offsetX) / monitorDefaultArea.width, (deviceSettings.monitorArea.height + deviceSettings.monitorArea.offsetY) / monitorDefaultArea.height };
     }
     else
     {
@@ -251,26 +254,32 @@ liberror::Result<void> render_region_mappers(Context& context, DeviceSettings& d
     if (context.hasChangedMonitorArea)
     {
         deviceSettings.monitorArea = {
-            .offsetX = monitorAreaAnchors[0].x * context.monitorDefaultArea.width,
-            .offsetY = monitorAreaAnchors[0].y * context.monitorDefaultArea.height,
-            .width   = (monitorAreaAnchors[2].x - monitorAreaAnchors[0].x) * context.monitorDefaultArea.width,
-            .height  = (monitorAreaAnchors[3].y - monitorAreaAnchors[2].y) * context.monitorDefaultArea.height
+            .offsetX = monitorAreaAnchors[0].x * monitorDefaultArea.width,
+            .offsetY = monitorAreaAnchors[0].y * monitorDefaultArea.height,
+            .width   = (monitorAreaAnchors[2].x - monitorAreaAnchors[0].x) * monitorDefaultArea.width,
+            .height  = (monitorAreaAnchors[3].y - monitorAreaAnchors[2].y) * monitorDefaultArea.height
         };
     }
 
     if (context.hasChangedMonitorArea && deviceSettings.monitorForceFullArea)
     {
-        deviceSettings.monitorArea = context.monitorDefaultArea;
+        deviceSettings.monitorArea = monitorDefaultArea;
     }
 
     static ImVec2 deviceAreaAnchors[4] { { -1, -1 }, { -1, -1 }, { -1, -1 }, { -1, -1 } };
+    static libwacom::Area deviceDefaultArea = devices.empty() ? libwacom::Area {} : TRY(libwacom::get_stylus_default_area(context.device.id));
+
+    if (context.hasChangedDevice)
+    {
+        deviceDefaultArea = TRY(libwacom::get_stylus_default_area(context.device.id));
+    }
 
     if (!devices.empty())
     {
-        deviceAreaAnchors[0] = { deviceSettings.deviceArea.offsetX / context.deviceDefaultArea.width, deviceSettings.deviceArea.offsetY / context.deviceDefaultArea.height };
-        deviceAreaAnchors[1] = { deviceSettings.deviceArea.offsetX / context.deviceDefaultArea.width, (deviceSettings.deviceArea.height + deviceSettings.deviceArea.offsetY) / context.deviceDefaultArea.height };
-        deviceAreaAnchors[2] = { (deviceSettings.deviceArea.width + deviceSettings.deviceArea.offsetX) / context.deviceDefaultArea.width, deviceSettings.deviceArea.offsetY / context.deviceDefaultArea.height };
-        deviceAreaAnchors[3] = { (deviceSettings.deviceArea.width + deviceSettings.deviceArea.offsetX) / context.deviceDefaultArea.width, (deviceSettings.deviceArea.height + deviceSettings.deviceArea.offsetY) / context.deviceDefaultArea.height };
+        deviceAreaAnchors[0] = { deviceSettings.deviceArea.offsetX / deviceDefaultArea.width, deviceSettings.deviceArea.offsetY / deviceDefaultArea.height };
+        deviceAreaAnchors[1] = { deviceSettings.deviceArea.offsetX / deviceDefaultArea.width, (deviceSettings.deviceArea.height + deviceSettings.deviceArea.offsetY) / deviceDefaultArea.height };
+        deviceAreaAnchors[2] = { (deviceSettings.deviceArea.width + deviceSettings.deviceArea.offsetX) / deviceDefaultArea.width, deviceSettings.deviceArea.offsetY / deviceDefaultArea.height };
+        deviceAreaAnchors[3] = { (deviceSettings.deviceArea.width + deviceSettings.deviceArea.offsetX) / deviceDefaultArea.width, (deviceSettings.deviceArea.height + deviceSettings.deviceArea.offsetY) / deviceDefaultArea.height };
     }
     else
     {
@@ -289,16 +298,16 @@ liberror::Result<void> render_region_mappers(Context& context, DeviceSettings& d
     if (context.hasChangedDeviceArea)
     {
         deviceSettings.deviceArea = {
-            .offsetX = deviceAreaAnchors[0].x * context.deviceDefaultArea.width,
-            .offsetY = deviceAreaAnchors[0].y * context.deviceDefaultArea.height,
-            .width   = (deviceAreaAnchors[2].x - deviceAreaAnchors[0].x) * context.deviceDefaultArea.width,
-            .height  = (deviceAreaAnchors[3].y - deviceAreaAnchors[2].y) * context.deviceDefaultArea.height
+            .offsetX = deviceAreaAnchors[0].x * deviceDefaultArea.width,
+            .offsetY = deviceAreaAnchors[0].y * deviceDefaultArea.height,
+            .width   = (deviceAreaAnchors[2].x - deviceAreaAnchors[0].x) * deviceDefaultArea.width,
+            .height  = (deviceAreaAnchors[3].y - deviceAreaAnchors[2].y) * deviceDefaultArea.height
         };
     }
 
     if (context.hasChangedDeviceArea && deviceSettings.deviceForceFullArea)
     {
-        deviceSettings.deviceArea = context.deviceDefaultArea;
+        deviceSettings.deviceArea = deviceDefaultArea;
     }
 
     for (auto [monitorAnchor, deviceAnchor] : fplus::zip(std::span<ImVec2>(monitorAreaAnchors, 4), std::span<ImVec2>(deviceAreaAnchors, 4)))
@@ -327,8 +336,7 @@ liberror::Result<void> render_tablet_settings_tab(Context& context, DeviceSettin
         if (context.hasChangedDevice)
         {
             context.device = devices.at(static_cast<size_t>(deviceIndex));
-            context.deviceDefaultArea = TRY(libwacom::get_stylus_default_area(context.device.id));
-            deviceSettings.deviceArea = context.deviceDefaultArea;
+            deviceSettings.deviceArea = TRY(libwacom::get_stylus_default_area(context.device.id));
         }
 
         {
@@ -441,8 +449,7 @@ liberror::Result<void> render_monitor_settings_tab(Context& context, DeviceSetti
         if (context.hasChangedMonitor)
         {
             context.monitor = monitors.at(static_cast<size_t>(monitorIndex));
-            context.monitorDefaultArea = libwacom::Area { 0, 0, context.monitor.width, context.monitor.height };
-            deviceSettings.monitorArea = context.monitorDefaultArea;
+            deviceSettings.monitorArea = libwacom::Area { 0, 0, context.monitor.width, context.monitor.height };
         }
 
         {
@@ -494,7 +501,7 @@ liberror::Result<void> render_monitor_settings_tab(Context& context, DeviceSetti
     return {};
 }
 
-liberror::Result<void> render_window(DeviceSettings& deviceSettings, std::vector<libwacom::Device> const& devices, std::vector<Monitor> const& monitors, ApplicationSettings const& applicationSettings)
+liberror::Result<void> render_window(ApplicationSettings const& applicationSettings, DeviceSettings& deviceSettings, std::vector<libwacom::Device> const& devices, std::vector<Monitor> const& monitors)
 {
 #ifdef DEBUG
     static std::once_flag debugWarningFlag {};
@@ -505,10 +512,8 @@ liberror::Result<void> render_window(DeviceSettings& deviceSettings, std::vector
 
     static Context context = [&] () {
         libwacom::Device device = devices.empty() ? libwacom::Device {} : devices.front();
-        libwacom::Area deviceDefaultArea = devices.empty() ? libwacom::Area {} : MUST(libwacom::get_stylus_default_area(device.id));
         Monitor monitor = *std::ranges::find_if(monitors, &Monitor::primary);
-        libwacom::Area monitorDefaultArea = monitors.empty() ? libwacom::Area {} : libwacom::Area { 0, 0, monitor.width, monitor.height };
-        return Context { device, deviceDefaultArea, monitor, monitorDefaultArea };
+        return Context { device, monitor };
     }();
 
     if (devices.empty() && deviceSettings.devicePressure.minX == -1 && deviceSettings.devicePressure.minY == -1 && deviceSettings.deviceArea.width == -1 && deviceSettings.deviceArea.height == -1)
@@ -516,7 +521,6 @@ liberror::Result<void> render_window(DeviceSettings& deviceSettings, std::vector
         ImGui::PushToast(TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Warning)), TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Devices_Missing)));
         deviceSettings.deviceArea = { 0, 0, 0, 0 };
         deviceSettings.devicePressure = { 0, 0, 1, 1 };
-        deviceSettings.monitorArea = context.monitorDefaultArea;
     }
 
     if (!devices.empty() && deviceSettings.devicePressure.minX == -1 && deviceSettings.devicePressure.minY == -1 && deviceSettings.deviceArea.width == -1 && deviceSettings.deviceArea.height == -1)
@@ -532,7 +536,7 @@ liberror::Result<void> render_window(DeviceSettings& deviceSettings, std::vector
                 deviceSettings.deviceArea = MUST(libwacom::get_stylus_area(context.device.id));
                 deviceSettings.devicePressure = MUST(libwacom::get_stylus_pressure_curve(context.device.id));
                 deviceSettings.monitorName = context.monitor.name;
-                deviceSettings.monitorArea = context.monitorDefaultArea;
+                deviceSettings.monitorArea = libwacom::Area { 0, 0, context.monitor.width, context.monitor.height };
                 spdlog::error("{}", result.error().message());
             }
         }
@@ -543,7 +547,7 @@ liberror::Result<void> render_window(DeviceSettings& deviceSettings, std::vector
             deviceSettings.deviceArea = MUST(libwacom::get_stylus_area(context.device.id));
             deviceSettings.devicePressure = MUST(libwacom::get_stylus_pressure_curve(context.device.id));
             deviceSettings.monitorName = context.monitor.name;
-            deviceSettings.monitorArea = context.monitorDefaultArea;
+            deviceSettings.monitorArea = libwacom::Area { 0, 0, context.monitor.width, context.monitor.height };
             save_device_settings(deviceSettings);
         }
     }
@@ -580,7 +584,7 @@ liberror::Result<void> render_window(DeviceSettings& deviceSettings, std::vector
             ImGui::PushToast(TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Success)), TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Device_Settings_Saved)));
         }
 
-        TRY(set_settings_to_device(context.device, context.monitor, deviceSettings));
+        TRY(set_settings_to_device(context, deviceSettings));
     }
     ImGui::SetCursorPos(previousCursorPosition);
 
@@ -610,19 +614,6 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
     std::vector<libwacom::Device> devices = TRY(libwacom::get_available_devices());
     devices = fplus::keep_if([] (auto&& device) { return device.kind == libwacom::Device::Kind::STYLUS; }, devices);
 
-    DeviceSettings deviceSettings {
-        .deviceName = "INVALID",
-        .deviceHandedness = libwacom::Handedness::RIGHT,
-        .deviceArea = { -1, -1, -1, -1 },
-        .devicePressure = { -1, -1, -1, -1 },
-        .deviceForceFullArea = false,
-        .deviceForceAspectRatio = false,
-        .monitorName = "INVALID",
-        .monitorArea = { -1, -1, -1, -1 },
-        .monitorForceFullArea = false,
-        .monitorForceAspectRatio = false
-    };
-
     if (!(std::filesystem::exists(get_application_config_path()) || std::filesystem::create_directory(get_application_config_path())))
     {
         return liberror::make_error("Failed to create settings directory");
@@ -634,6 +625,8 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
         {
             return liberror::make_error("Device settings could not be found");
         }
+
+        DeviceSettings deviceSettings {};
 
         if (!load_device_settings(deviceSettings))
         {
@@ -647,8 +640,7 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
 
         auto device  = devices.front();
         auto monitor = *std::ranges::find_if(monitors, &Monitor::primary);
-
-        TRY(set_settings_to_device(device, monitor, deviceSettings));
+        TRY(set_settings_to_device({ device, monitor }, deviceSettings));
 
         fmt::println("Device settings loaded successfully");
 
@@ -659,7 +651,20 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
         .scale = 1.0,
         .theme = ApplicationSettings::Theme::DARK,
         .language = ApplicationSettings::Language::EN_US,
-        .font = "default",
+        .font = "Default",
+    };
+
+    DeviceSettings deviceSettings {
+        .deviceName = "INVALID",
+        .deviceHandedness = libwacom::Handedness::RIGHT,
+        .deviceArea = { -1, -1, -1, -1 },
+        .devicePressure = { -1, -1, -1, -1 },
+        .deviceForceFullArea = false,
+        .deviceForceAspectRatio = false,
+        .monitorName = "INVALID",
+        .monitorArea = { -1, -1, -1, -1 },
+        .monitorForceFullArea = false,
+        .monitorForceAspectRatio = false
     };
 
     if (!std::filesystem::exists(APPLICATION_SETTINGS_FILE))
@@ -725,7 +730,7 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
     rangeBuilder.AddRanges(rangesData);
     rangeBuilder.BuildRanges(&ranges);
 
-    if (applicationSettings.font != "default")
+    if (applicationSettings.font != "Default")
     {
         font = io.Fonts->AddFontFromFileTTF(applicationSettings.font.data(), 20_scaled, nullptr, ranges.Data);
     }
@@ -823,7 +828,7 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
 
                 ImGui::BeginDisabled(devices.empty());
                 {
-                    TRY(render_window(deviceSettings, devices, monitors, applicationSettings));
+                    TRY(render_window(applicationSettings, deviceSettings, devices, monitors));
                 }
                 ImGui::EndDisabled();
             }
