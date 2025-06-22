@@ -31,7 +31,7 @@ python configure.py release && python build.py
 python install.py
 ```
 
-## Documentation
+# Documentation
 
 For cli documentation, read the docs available at the [documentation](documentation/) folder.
 
