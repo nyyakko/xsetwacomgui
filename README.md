@@ -6,6 +6,9 @@ This is a frontend for the `xsetwacom` utility.
 
 # Building
 
+> [!WARNING]
+> Unless you're willing to contribute, make sure to always clone from the `stable` branch!
+
 ## Dependencies
 
 Before building, make sure you have the following depencies installed on your system:
@@ -31,3 +34,7 @@ python install.py
 ## Documentation
 
 For cli documentation, read the docs available at the [documentation](documentation/) folder.
+
+# Contributing
+
+Just try to follow the general styling of the code and make sure to fork from the `devel` branch.
