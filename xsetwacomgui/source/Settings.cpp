@@ -1,12 +1,15 @@
 #include "Settings.hpp"
+#include "Environment.hpp"
 
+#include <filesystem>
+#include <liberror/Result.hpp>
 #include <nlohmann/json.hpp>
 
 #include <fstream>
 #include <sstream>
 #include <cstdlib>
 
-liberror::Result<bool> load_device_settings(DeviceSettings& settings)
+liberror::Result<void, SettingsError> load_device_settings(DeviceSettings& settings)
 {
     std::ifstream stream(DEVICE_SETTINGS_FILE);
     std::stringstream content;
@@ -15,6 +18,12 @@ liberror::Result<bool> load_device_settings(DeviceSettings& settings)
     try
     {
         auto json = nlohmann::json::parse(content.str());
+
+        if (json["version"].is_null() || json["version"].get<std::string>() != DeviceSettings::SCHEMA_VERSION)
+        {
+            return liberror::make_error<SettingsError>(SettingsError::Type::OUTDATED_SCHEMA);
+        }
+
         settings.monitorName             = json["monitorName"].get<std::string>();
         settings.monitorForceFullArea    = json["monitorForceFullArea"].get<bool>();
         settings.monitorForceAspectRatio = json["monitorForceAspectRatio"].get<bool>();
@@ -37,15 +46,16 @@ liberror::Result<bool> load_device_settings(DeviceSettings& settings)
     }
     catch (std::exception const& error)
     {
-        return liberror::make_error(error.what());
+        return liberror::make_error<SettingsError>(SettingsError::Type::READ_FAILURE);
     }
 
-    return !(stream.bad() || stream.fail());
+    return {};
 }
 
-bool save_device_settings(DeviceSettings const& settings)
+void save_device_settings(DeviceSettings const& settings)
 {
     nlohmann::ordered_json json {
+        { "version", DeviceSettings::SCHEMA_VERSION },
         { "deviceName", settings.deviceName },
         { "deviceHandedness", settings.deviceHandedness.to_string() },
         {
@@ -81,19 +91,38 @@ bool save_device_settings(DeviceSettings const& settings)
 
     std::ofstream stream(DEVICE_SETTINGS_FILE);
     stream << std::setw(4) << json;
-
-    return !(stream.bad() || stream.fail());
 }
 
-liberror::Result<bool> load_application_settings(ApplicationSettings& settings)
+void migrate_device_settings(DeviceSettings const& settings)
+{
+    static auto newSettingsSchema = get_application_config_path() / "device.json";
+    static auto oldSettingsSchema = get_application_config_path() / "device.old.json";
+
+    std::filesystem::rename(DEVICE_SETTINGS_FILE, oldSettingsSchema);
+
+    save_device_settings(settings);
+
+    popen(fmt::format("xdg-open {}", get_application_config_path().string()).data(), "r");
+    pclose(popen(fmt::format("git diff {} {} >> {}/conflict.diff", oldSettingsSchema.string(), newSettingsSchema.string(), get_application_config_path().string()).data(), "r"));
+}
+
+liberror::Result<void, SettingsError> load_application_settings(ApplicationSettings& settings)
 {
     std::ifstream stream(APPLICATION_SETTINGS_FILE);
     std::stringstream content;
     content << stream.rdbuf();
 
+    auto previousSettings = settings;
+
     try
     {
         auto json = nlohmann::json::parse(content.str());
+
+        if (json["version"].is_null() || json["version"].get<std::string>() != ApplicationSettings::SCHEMA_VERSION)
+        {
+            settings = previousSettings;
+            return liberror::make_error<SettingsError>(SettingsError::Type::OUTDATED_SCHEMA);
+        }
 
         settings.theme    = ApplicationSettings::Theme::from_string((json["appearance"]["theme"].get<std::string>()));
         settings.font     = json["appearance"]["font"].get<std::string>();
@@ -102,15 +131,17 @@ liberror::Result<bool> load_application_settings(ApplicationSettings& settings)
     }
     catch (std::exception const& error)
     {
-        return liberror::make_error(error.what());
+        settings = previousSettings;
+        return liberror::make_error<SettingsError>(SettingsError::Type::READ_FAILURE);
     }
 
-    return !(stream.bad() || stream.fail());
+    return {};
 }
 
-bool save_application_settings(ApplicationSettings& settings)
+void save_application_settings(ApplicationSettings const& settings)
 {
     nlohmann::ordered_json json {
+        { "version", ApplicationSettings::SCHEMA_VERSION },
         {
             "appearance", {
                 { "theme", settings.theme.to_string() },
@@ -131,6 +162,17 @@ bool save_application_settings(ApplicationSettings& settings)
 
     std::ofstream stream(APPLICATION_SETTINGS_FILE);
     stream << std::setw(4) << json;
+}
 
-    return !(stream.bad() || stream.fail());
+void migrate_application_settings(ApplicationSettings const& settings)
+{
+    static auto newSettingsSchema = get_application_config_path() / "application.json";
+    static auto oldSettingsSchema = get_application_config_path() / "application.old.json";
+
+    std::filesystem::rename(APPLICATION_SETTINGS_FILE, oldSettingsSchema);
+
+    save_application_settings(settings);
+
+    popen(fmt::format("xdg-open {}", get_application_config_path().string()).data(), "r");
+    pclose(popen(fmt::format("git diff {} {} >> {}/conflict.diff", oldSettingsSchema.string(), newSettingsSchema.string(), get_application_config_path().string()).data(), "r"));
 }

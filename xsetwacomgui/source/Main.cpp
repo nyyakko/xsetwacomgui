@@ -23,6 +23,7 @@
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
 #include <fplus/fplus.hpp>
+#include <scn/scan.h>
 
 #include <mutex>
 #include <filesystem>
@@ -156,10 +157,7 @@ liberror::Result<void> render_settings_popup(ApplicationSettings& settings)
     ImGui::SetCursorPosY(ImGui::GetWindowHeight() - (25_scaled + ImGui::GetStyle().WindowPadding.x));
     if (ImGui::Button(TRY(Localisation::get(settings.language, Localisation::Save)), { 100_scaled, 25_scaled }))
     {
-        if (save_application_settings(settings))
-        {
-            ImGui::PushToast(TRY(Localisation::get(settings.language, Localisation::Toast_Success)), TRY(Localisation::get(settings.language, Localisation::Toast_Application_Settings_Saved)));
-        }
+        save_application_settings(settings);
     }
     ImGui::SetCursorPos(previousCursorPosition);
 
@@ -194,6 +192,8 @@ struct Context
 {
     libwacom::Device device;
     Monitor monitor;
+
+    bool handleOutdatedDeviceSettings = false;
 
     bool hasChangedDevice = false;
     bool hasChangedDeviceHandedness = false;
@@ -516,6 +516,44 @@ liberror::Result<void> render_window(ApplicationSettings const& applicationSetti
         return Context { device, monitor };
     }();
 
+    if (context.handleOutdatedDeviceSettings)
+    {
+        auto [windowWidth, windowHeight] = ImGui::GetWindowSize();
+
+        float deviceSettingsMigrationWidth = 400_scaled, deviceSettingsMigrationHeight = 150_scaled;
+        ImGui::SetNextWindowSize({ deviceSettingsMigrationWidth, deviceSettingsMigrationHeight });
+        ImGui::SetNextWindowPos({ (static_cast<float>(windowWidth) - deviceSettingsMigrationWidth)/2, (static_cast<float>(windowHeight) - deviceSettingsMigrationHeight)/2 });
+        ImGui::Begin(
+            "Outdated Settings",
+            nullptr,
+            ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
+        );
+        {
+            auto [popupWidth, popupHeight] = ImGui::GetWindowSize();
+
+            ImGui::BeginGroup();
+                ImGui::Text("The currently saved device settings differs from");
+                ImGui::Text("the expected format. How would you like to proceed?");
+            ImGui::EndGroup();
+
+            ImGui::SetCursorPosY(popupHeight - (25_scaled + ImGui::GetStyle().WindowPadding.y));
+            if (ImGui::Button("Overwrite Everyting", { 0, 25_scaled }))
+            {
+                ImGui::PushToast(TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Success)), "The saved device settings were successfully overwritten.");
+                save_device_settings(deviceSettings);
+                context.handleOutdatedDeviceSettings = false;
+            }
+
+            ImGui::SameLine();
+
+            if (ImGui::Button("Migrate Manually", { 0, 25_scaled }))
+            {
+                migrate_device_settings(deviceSettings);
+            }
+        }
+        ImGui::End();
+    }
+
     if (devices.empty() && deviceSettings.devicePressure.minX == -1 && deviceSettings.devicePressure.minY == -1 && deviceSettings.deviceArea.width == -1 && deviceSettings.deviceArea.height == -1)
     {
         ImGui::PushToast(TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Warning)), TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Devices_Missing)));
@@ -531,13 +569,26 @@ liberror::Result<void> render_window(ApplicationSettings const& applicationSetti
 
             if (!result.has_value())
             {
-                ImGui::PushToast(TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Warning)), TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Device_Settings_Load_Failed)));
+                switch (result.error().message())
+                {
+                    case SettingsError::Type::WRITE_FAILURE: break;
+                    case SettingsError::Type::READ_FAILURE: {
+                        spdlog::error("An error occurred while trying to read the saved device settings.");
+                        break;
+                    }
+                    case SettingsError::Type::OUTDATED_SCHEMA: {
+                        spdlog::warn("The device settings currently saved is outdated, prompting the user to decide what to do.");
+                        context.handleOutdatedDeviceSettings = true;
+                        break;
+                    }
+                }
+
+                // some defaults to prevent rendering nonsense
                 deviceSettings.deviceName = context.device.name;
                 deviceSettings.deviceArea = MUST(libwacom::get_stylus_area(context.device.id));
                 deviceSettings.devicePressure = MUST(libwacom::get_stylus_pressure_curve(context.device.id));
                 deviceSettings.monitorName = context.monitor.name;
                 deviceSettings.monitorArea = libwacom::Area { 0, 0, context.monitor.width, context.monitor.height };
-                spdlog::error("{}", result.error().message());
             }
         }
         else
@@ -552,6 +603,7 @@ liberror::Result<void> render_window(ApplicationSettings const& applicationSetti
         }
     }
 
+    ImGui::BeginDisabled(context.handleOutdatedDeviceSettings);
     ImGui::BeginGroup();
     {
         render_region_mappers(context, deviceSettings, devices, monitors, applicationSettings);
@@ -579,14 +631,12 @@ liberror::Result<void> render_window(ApplicationSettings const& applicationSetti
     ImGui::SetCursorPosY(ImGui::GetWindowHeight() - (35_scaled + ImGui::GetStyle().WindowPadding.x));
     if (ImGui::Button(TRY(Localisation::get(applicationSettings.language, Localisation::Save_Apply)), { 200_scaled, 35_scaled }))
     {
-        if (save_device_settings(deviceSettings))
-        {
-            ImGui::PushToast(TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Success)), TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Device_Settings_Saved)));
-        }
-
+        save_device_settings(deviceSettings);
+        ImGui::PushToast(TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Success)), TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Device_Settings_Saved)));
         TRY(set_settings_to_device(context, deviceSettings));
     }
     ImGui::SetCursorPos(previousCursorPosition);
+    ImGui::EndDisabled();
 
     return {};
 }
@@ -669,21 +719,35 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
 
     if (!std::filesystem::exists(APPLICATION_SETTINGS_FILE))
     {
-        if (!save_application_settings(applicationSettings))
-        {
-            return liberror::make_error("Failed to save application settings");
-        }
+        save_application_settings(applicationSettings);
     }
     else
     {
         auto result = load_application_settings(applicationSettings);
         if (!result.has_value())
         {
-            spdlog::error("{}", result.error().message());
-            return liberror::make_error("Failed to load application settings");
-        }
+            fmt::println("The currently saved application settings differs from");
+            fmt::println("the expected format. You can:\n");
 
-        set_scale(applicationSettings.scale);
+            fmt::println("1. Overwrite Everything");
+            fmt::println("2. Migrate Manually\n");
+
+            auto choice = scn::prompt<int>("How would you like to proceed? (choose a value) ", "{}");
+
+            if (choice)
+            {
+                if (choice->value() == 1) save_application_settings(applicationSettings);
+                else if (choice->value() == 2) migrate_application_settings(applicationSettings);
+            }
+
+            fmt::println("Done. Restart the application.");
+
+            return {};
+        }
+        else
+        {
+            set_scale(applicationSettings.scale);
+        }
     }
 
     if (!glfwInit())

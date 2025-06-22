@@ -21,6 +21,7 @@ CPMAddPackage(URI "gh:nyyakko/LibEnum#master"        EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:nyyakko/LibError#master"       EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:nyyakko/LibWacom#master"       EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:p-ranav/argparse@3.2"          EXCLUDE_FROM_ALL YES)
+CPMAddPackage(URI "gh:eliaskosunen/scnlib@4.0.1"     EXCLUDE_FROM_ALL YES)
 
 include(cmake/static_analyzers.cmake)
 include(GNUInstallDirs)
@@ -40,6 +41,7 @@ set(xsetwacomgui_ExternalLibraries
     spdlog::spdlog
     fmt::fmt
     argparse::argparse
+    scn::scn
 )
 
 add_subdirectory(xsetwacomgui)
