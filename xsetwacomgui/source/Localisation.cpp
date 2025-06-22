@@ -42,6 +42,10 @@ liberror::Result<char const*> Localisation::get(ApplicationSettings::Language la
                 { Localisation::Popup_Settings_Tabs_Language_Title, json["popupSettingsTabsLanguageTitle"].get<std::string>() },
                 { Localisation::Popup_Settings_Tabs_Language_Language, json["popupSettingsTabsLanguageLanguage"].get<std::string>() },
                 { Localisation::Popup_Settings_Tabs_Appearance_Font, json["popupSettingsTabsAppearanceFont"].get<std::string>() },
+                { Localisation::Popup_Outdated_Device_Settings_Title, json["popupOutdatedDeviceSettingsTitle"].get<std::string>() },
+                { Localisation::Popup_Outdated_Device_Settings_Text, json["popupOutdatedDeviceSettingsText"].get<std::string>() },
+                { Localisation::Popup_Outdated_Device_Settings_Overwrite, json["popupOutdatedDeviceSettingsOverwrite"].get<std::string>() },
+                { Localisation::Popup_Outdated_Device_Settings_Migrate, json["popupOutdatedDeviceSettingsMigrate"].get<std::string>() },
                 { Localisation::Tabs_Tablet_Title, json["tabsTabletTitle"].get<std::string>() },
                 { Localisation::Tabs_Tablet_Device, json["tabsTabletDevice"].get<std::string>() },
                 { Localisation::Tabs_Tablet_Orientation, json["tabsTabletOrientation"].get<std::string>() },
@@ -65,6 +69,7 @@ liberror::Result<char const*> Localisation::get(ApplicationSettings::Language la
                 { Localisation::Toast_Devices_Missing, json["toastDevicesMissing"].get<std::string>() },
                 { Localisation::Toast_Application_Settings_Saved, json["toastApplicationSettingsSaved"].get<std::string>() },
                 { Localisation::Toast_Device_Settings_Saved, json["toastDeviceSettingsSaved"].get<std::string>() },
+                { Localisation::Toast_Device_Settings_Overwritten, json["toastDeviceSettingsOverwritten"].get<std::string>() },
                 { Localisation::Toast_Device_Settings_Load_Failed, json["toastDeviceSettingsLoadFailed"].get<std::string>() },
                 { Localisation::Toast_Device_Settings_Missing, json["toastDeviceSettingsMissing"].get<std::string>() },
             };

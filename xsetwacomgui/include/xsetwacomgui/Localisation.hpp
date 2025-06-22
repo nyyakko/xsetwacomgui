@@ -38,6 +38,11 @@ public:
         Popup_Settings_Tabs_Language_Title,
         Popup_Settings_Tabs_Language_Language,
 
+        Popup_Outdated_Device_Settings_Title,
+        Popup_Outdated_Device_Settings_Text,
+        Popup_Outdated_Device_Settings_Overwrite,
+        Popup_Outdated_Device_Settings_Migrate,
+
         Tabs_Tablet_Title,
         Tabs_Tablet_Device,
         Tabs_Tablet_Orientation,
@@ -62,6 +67,7 @@ public:
 
         Toast_Application_Settings_Saved,
         Toast_Device_Settings_Saved,
+        Toast_Device_Settings_Overwritten,
         Toast_Device_Settings_Load_Failed,
         Toast_Device_Settings_Missing,
         Toast_Devices_Missing,
