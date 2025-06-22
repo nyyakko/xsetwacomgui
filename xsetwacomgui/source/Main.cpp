@@ -1,3 +1,4 @@
+#include <imgui/extensions/imgui_text.hpp>
 #define IMGUI_DEFINE_MATH_OPERATORS
 
 #include <spdlog/spdlog.h>
@@ -111,7 +112,7 @@ liberror::Result<void> render_settings_popup_language_tab(ApplicationSettings& s
     static constexpr char const* languages[] {
         ApplicationSettings::Language::EN_US,
         ApplicationSettings::Language::PT_BR,
-        ApplicationSettings::Language::RU_RU,
+        // ApplicationSettings::Language::RU_RU,
     };
 
     static int languageIndex = static_cast<int>(
@@ -157,6 +158,7 @@ liberror::Result<void> render_settings_popup(ApplicationSettings& settings)
     ImGui::SetCursorPosY(ImGui::GetWindowHeight() - (25_scaled + ImGui::GetStyle().WindowPadding.x));
     if (ImGui::Button(TRY(Localisation::get(settings.language, Localisation::Save)), { 100_scaled, 25_scaled }))
     {
+        ImGui::PushToast(TRY(Localisation::get(settings.language, Localisation::Toast_Success)), TRY(Localisation::get(settings.language, Localisation::Toast_Application_Settings_Saved)));
         save_application_settings(settings);
     }
     ImGui::SetCursorPos(previousCursorPosition);
@@ -524,7 +526,7 @@ liberror::Result<void> render_window(ApplicationSettings const& applicationSetti
         ImGui::SetNextWindowSize({ deviceSettingsMigrationWidth, deviceSettingsMigrationHeight });
         ImGui::SetNextWindowPos({ (static_cast<float>(windowWidth) - deviceSettingsMigrationWidth)/2, (static_cast<float>(windowHeight) - deviceSettingsMigrationHeight)/2 });
         ImGui::Begin(
-            "Outdated Settings",
+            TRY(Localisation::get(applicationSettings.language, Localisation::Popup_Outdated_Device_Settings_Title)),
             nullptr,
             ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
         );
@@ -532,12 +534,15 @@ liberror::Result<void> render_window(ApplicationSettings const& applicationSetti
             auto [popupWidth, popupHeight] = ImGui::GetWindowSize();
 
             ImGui::BeginGroup();
-                ImGui::Text("The currently saved device settings differs from");
-                ImGui::Text("the expected format. How would you like to proceed?");
+                for (auto messageLine :
+                    ImGui::SplitToWidth(TRY(Localisation::get(applicationSettings.language, Localisation::Popup_Outdated_Device_Settings_Text)), static_cast<int>(popupWidth)))
+                {
+                    ImGui::Text("%s", messageLine.data());
+                }
             ImGui::EndGroup();
 
             ImGui::SetCursorPosY(popupHeight - (25_scaled + ImGui::GetStyle().WindowPadding.y));
-            if (ImGui::Button("Overwrite Everyting", { 0, 25_scaled }))
+            if (ImGui::Button(TRY(Localisation::get(applicationSettings.language, Localisation::Popup_Outdated_Device_Settings_Overwrite)), { 0, 25_scaled }))
             {
                 ImGui::PushToast(TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Success)), "The saved device settings were successfully overwritten.");
                 save_device_settings(deviceSettings);
@@ -546,7 +551,7 @@ liberror::Result<void> render_window(ApplicationSettings const& applicationSetti
 
             ImGui::SameLine();
 
-            if (ImGui::Button("Migrate Manually", { 0, 25_scaled }))
+            if (ImGui::Button(TRY(Localisation::get(applicationSettings.language, Localisation::Popup_Outdated_Device_Settings_Migrate)), { 0, 25_scaled }))
             {
                 migrate_device_settings(deviceSettings);
             }

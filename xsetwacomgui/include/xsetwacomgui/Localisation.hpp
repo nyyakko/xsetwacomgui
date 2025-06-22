@@ -38,6 +38,11 @@ public:
         Popup_Settings_Tabs_Language_Title,
         Popup_Settings_Tabs_Language_Language,
 
+        Popup_Outdated_Device_Settings_Title,
+        Popup_Outdated_Device_Settings_Text,
+        Popup_Outdated_Device_Settings_Overwrite,
+        Popup_Outdated_Device_Settings_Migrate,
+
         Tabs_Tablet_Title,
         Tabs_Tablet_Device,
         Tabs_Tablet_Orientation,
