@@ -54,7 +54,7 @@ std::vector<std::pair<std::string, std::filesystem::path>> get_available_fonts()
 
         for (auto const& entry : std::filesystem::recursive_directory_iterator(fontHome))
         {
-            if (entry.path().extension() == ".ttf") fonts.push_back({ entry.path().filename(), entry.path() });
+            if (entry.path().extension() == ".ttf") fonts.push_back({ entry.path().stem(), entry.path() });
         }
     }
 
