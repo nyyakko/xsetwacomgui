@@ -5,7 +5,6 @@
 #include <poll.h>
 
 #include <ranges>
-#include <algorithm>
 
 liberror::Result<void> USBListener::update()
 {
