@@ -1,3 +1,4 @@
+#include <ranges>
 #define IMGUI_DEFINE_MATH_OPERATORS
 
 #include <spdlog/spdlog.h>
@@ -106,25 +107,40 @@ liberror::Result<void> render_settings_popup_display_tab(ApplicationSettings& se
     return {};
 }
 
+std::vector<ApplicationSettings::Language> get_available_languages()
+{
+    std::vector<ApplicationSettings::Language> languages {};
+
+    for (auto const& entry : std::filesystem::directory_iterator(get_application_data_path() / "languages"))
+    {
+        if (entry.path().extension() == ".json")
+        {
+            auto languageNameUpper = entry.path().stem().string() | std::views::transform(::toupper);
+            languages.push_back(
+                ApplicationSettings::Language::from_string(std::string(languageNameUpper.begin(), languageNameUpper.end()))
+            );
+        }
+    }
+
+    return languages;
+};
+
 liberror::Result<void> render_settings_popup_language_tab(ApplicationSettings& settings)
 {
     ImGui::Text("%s", TRY(Localisation::get(settings.language, Localisation::Popup_Settings_Tabs_Language_Language)));
 
-    static constexpr char const* languages[] {
-        ApplicationSettings::Language::EN_US,
-        ApplicationSettings::Language::PT_BR,
-        // ApplicationSettings::Language::RU_RU,
-    };
+    static auto languages = get_available_languages();
+    static auto languagesData = fplus::transform(std::bind_front(&ApplicationSettings::Language::to_string), languages);
 
     static int languageIndex = static_cast<int>(
-        std::distance(&languages[0], std::ranges::find(&languages[0], &languages[std::size(languages)], settings.language.to_string()))
+        std::distance(languages.begin(), std::ranges::find(languages, settings.language))
     );
 
-    auto hasChangedUILanguage = ImGui::Combo("##Language", &languageIndex, languages, std::size(languages));
+    auto hasChangedUILanguage = ImGui::Combo("##Language", &languageIndex, languagesData.data(), static_cast<int>(languages.size()));
 
     if (hasChangedUILanguage)
     {
-        settings.language = ApplicationSettings::Language::from_string(languages[languageIndex]);
+        settings.language = languages.at(static_cast<size_t>(languageIndex));
     }
 
     return {};
