@@ -24,25 +24,25 @@ liberror::Result<void, SettingsError> load_device_settings(DeviceSettings& setti
             return liberror::make_error<SettingsError>(SettingsError::Type::OUTDATED_SCHEMA);
         }
 
-        settings.monitorName             = json["monitorName"].get<std::string>();
-        settings.monitorForceFullArea    = json["monitorForceFullArea"].get<bool>();
-        settings.monitorForceAspectRatio = json["monitorForceAspectRatio"].get<bool>();
-        settings.monitorArea.offsetX     = json["monitorArea"]["offsetX"].get<float>();
-        settings.monitorArea.offsetY     = json["monitorArea"]["offsetY"].get<float>();
-        settings.monitorArea.width       = json["monitorArea"]["width"].get<float>();
-        settings.monitorArea.height      = json["monitorArea"]["height"].get<float>();
-        settings.deviceName              = json["deviceName"].get<std::string>();
-        settings.deviceForceFullArea     = json["deviceForceFullArea"].get<bool>();
-        settings.deviceForceAspectRatio  = json["deviceForceAspectRatio"].get<bool>();
-        settings.deviceHandedness        = libwacom::Handedness::from_string(json["deviceHandedness"].get<std::string>());
-        settings.deviceArea.offsetX      = json["deviceArea"]["offsetX"].get<float>();
-        settings.deviceArea.offsetY      = json["deviceArea"]["offsetY"].get<float>();
-        settings.deviceArea.width        = json["deviceArea"]["width"].get<float>();
-        settings.deviceArea.height       = json["deviceArea"]["height"].get<float>();
-        settings.devicePressure.minX     = json["devicePressure"]["minX"].get<float>();
-        settings.devicePressure.minY     = json["devicePressure"]["minY"].get<float>();
-        settings.devicePressure.maxX     = json["devicePressure"]["maxX"].get<float>();
-        settings.devicePressure.maxY     = json["devicePressure"]["maxY"].get<float>();
+        settings.monitorName             = json["monitor"]["name"].get<std::string>();
+        settings.monitorForceFullArea    = json["monitor"]["forceFullArea"].get<bool>();
+        settings.monitorForceAspectRatio = json["monitor"]["forceAspectRatio"].get<bool>();
+        settings.monitorArea.offsetX     = json["monitor"]["area"]["offsetX"].get<float>();
+        settings.monitorArea.offsetY     = json["monitor"]["area"]["offsetY"].get<float>();
+        settings.monitorArea.width       = json["monitor"]["area"]["width"].get<float>();
+        settings.monitorArea.height      = json["monitor"]["area"]["height"].get<float>();
+        settings.deviceName              = json["device"]["name"].get<std::string>();
+        settings.deviceHandedness        = libwacom::Handedness::from_string(json["device"]["handedness"].get<std::string>());
+        settings.deviceForceFullArea     = json["device"]["forceFullArea"].get<bool>();
+        settings.deviceForceAspectRatio  = json["device"]["forceAspectRatio"].get<bool>();
+        settings.deviceArea.offsetX      = json["device"]["area"]["offsetX"].get<float>();
+        settings.deviceArea.offsetY      = json["device"]["area"]["offsetY"].get<float>();
+        settings.deviceArea.width        = json["device"]["area"]["width"].get<float>();
+        settings.deviceArea.height       = json["device"]["area"]["height"].get<float>();
+        settings.devicePressure.minX     = json["device"]["pressure"]["minX"].get<float>();
+        settings.devicePressure.minY     = json["device"]["pressure"]["minY"].get<float>();
+        settings.devicePressure.maxX     = json["device"]["pressure"]["maxX"].get<float>();
+        settings.devicePressure.maxY     = json["device"]["pressure"]["maxY"].get<float>();
     }
     catch (std::exception const& error)
     {
@@ -56,37 +56,45 @@ void save_device_settings(DeviceSettings const& settings)
 {
     nlohmann::ordered_json json {
         { "version", DeviceSettings::SCHEMA_VERSION },
-        { "deviceName", settings.deviceName },
-        { "deviceHandedness", settings.deviceHandedness.to_string() },
         {
-            "deviceArea", {
-                { "offsetX", settings.deviceArea.offsetX },
-                { "offsetY", settings.deviceArea.offsetY },
-                { "width", settings.deviceArea.width },
-                { "height", settings.deviceArea.height }
+            "device", {
+                { "name", settings.deviceName },
+                { "handedness", settings.deviceHandedness.to_string() },
+                {
+                    "area", {
+                        { "offsetX", settings.deviceArea.offsetX },
+                        { "offsetY", settings.deviceArea.offsetY },
+                        { "width", settings.deviceArea.width },
+                        { "height", settings.deviceArea.height }
+                    }
+                },
+                {
+                    "pressure", {
+                        { "minX", settings.devicePressure.minX },
+                        { "minY", settings.devicePressure.minY },
+                        { "maxX", settings.devicePressure.maxX },
+                        { "maxY", settings.devicePressure.maxY },
+                    }
+                },
+                { "forceFullArea", settings.deviceForceFullArea },
+                { "forceAspectRatio", settings.deviceForceAspectRatio },
             }
         },
         {
-            "devicePressure", {
-                { "minX", settings.devicePressure.minX },
-                { "minY", settings.devicePressure.minY },
-                { "maxX", settings.devicePressure.maxX },
-                { "maxY", settings.devicePressure.maxY },
+            "monitor", {
+                { "name", settings.monitorName },
+                {
+                    "area", {
+                        { "offsetX", settings.monitorArea.offsetX },
+                        { "offsetY", settings.monitorArea.offsetY },
+                        { "width", settings.monitorArea.width },
+                        { "height", settings.monitorArea.height }
+                    }
+                },
+                { "forceFullArea", settings.monitorForceFullArea },
+                { "forceAspectRatio", settings.monitorForceAspectRatio },
             }
-        },
-        { "deviceForceFullArea", settings.deviceForceFullArea },
-        { "deviceForceAspectRatio", settings.deviceForceAspectRatio },
-        { "monitorName", settings.monitorName },
-        {
-            "monitorArea", {
-                { "offsetX", settings.monitorArea.offsetX },
-                { "offsetY", settings.monitorArea.offsetY },
-                { "width", settings.monitorArea.width },
-                { "height", settings.monitorArea.height }
-            }
-        },
-        { "monitorForceFullArea", settings.monitorForceFullArea },
-        { "monitorForceAspectRatio", settings.monitorForceAspectRatio },
+        }
     };
 
     std::ofstream stream(DEVICE_SETTINGS_FILE);
