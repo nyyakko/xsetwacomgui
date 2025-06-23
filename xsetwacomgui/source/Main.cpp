@@ -1,4 +1,3 @@
-#include <ranges>
 #define IMGUI_DEFINE_MATH_OPERATORS
 
 #include <spdlog/spdlog.h>
@@ -28,12 +27,13 @@
 #include <fplus/fplus.hpp>
 #include <scn/scan.h>
 
-#include <mutex>
-#include <filesystem>
-#include <cstdlib>
-#include <span>
 #include <algorithm>
 #include <array>
+#include <cstdlib>
+#include <filesystem>
+#include <mutex>
+#include <ranges>
+#include <span>
 
 std::vector<std::pair<std::string, std::filesystem::path>> get_available_fonts()
 {
