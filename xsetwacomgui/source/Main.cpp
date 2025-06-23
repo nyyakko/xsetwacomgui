@@ -587,6 +587,7 @@ liberror::Result<void> render_window(ApplicationSettings const& applicationSetti
         ImGui::PushToast(TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Warning)), TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Devices_Missing)));
         deviceSettings.deviceArea = { 0, 0, 0, 0 };
         deviceSettings.devicePressure = { 0, 0, 1, 1 };
+        deviceSettings.monitorArea = { 0, 0, context.monitor.width, context.monitor.height };
     }
 
     if (!devices.empty() && deviceSettings.devicePressure.minX == -1 && deviceSettings.devicePressure.minY == -1 && deviceSettings.deviceArea.width == -1 && deviceSettings.deviceArea.height == -1)
@@ -615,7 +616,7 @@ liberror::Result<void> render_window(ApplicationSettings const& applicationSetti
                 deviceSettings.deviceArea = MUST(libwacom::get_stylus_area(context.device.id));
                 deviceSettings.devicePressure = MUST(libwacom::get_stylus_pressure_curve(context.device.id));
                 deviceSettings.monitorName = context.monitor.name;
-                deviceSettings.monitorArea = libwacom::Area { 0, 0, context.monitor.width, context.monitor.height };
+                deviceSettings.monitorArea = { 0, 0, context.monitor.width, context.monitor.height };
             }
             else
             {
