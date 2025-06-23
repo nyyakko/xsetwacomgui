@@ -819,7 +819,9 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
 
     usbListener.add_listener([&] (std::string_view, USBListener::Event event) -> liberror::Result<void> {
         if (event == USBListener::Event::BIND || event == USBListener::Event::UNBIND)
-            devices = TRY(libwacom::get_available_devices());
+        {
+            devices = fplus::keep_if([] (auto&& device) { return device.kind == libwacom::Device::Kind::STYLUS; }, TRY(libwacom::get_available_devices()));
+        }
         return {};
     });
 
