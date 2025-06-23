@@ -7,6 +7,7 @@ set(xsetwacomgui_SourceFiles ${xsetwacomgui_SourceFiles}
     "${DIR}/Monitor.cpp"
     "${DIR}/Settings.cpp"
     "${DIR}/Widgets.cpp"
+    "${DIR}/USBListener.cpp"
 
     PARENT_SCOPE
 )

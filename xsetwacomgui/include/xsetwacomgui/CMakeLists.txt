@@ -9,6 +9,7 @@ set(xsetwacomgui_HeaderFiles ${xsetwacomgui_HeaderFiles}
     "${DIR}/Scaling.hpp"
     "${DIR}/Settings.hpp"
     "${DIR}/Widgets.hpp"
+    "${DIR}/USBListener.hpp"
 
     PARENT_SCOPE
 )

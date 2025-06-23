@@ -42,6 +42,7 @@ set(xsetwacomgui_ExternalLibraries
     fmt::fmt
     argparse::argparse
     scn::scn
+    udev
 )
 
 add_subdirectory(xsetwacomgui)

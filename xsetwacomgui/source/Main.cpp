@@ -1,8 +1,8 @@
-#include <imgui/extensions/imgui_text.hpp>
 #define IMGUI_DEFINE_MATH_OPERATORS
 
 #include <spdlog/spdlog.h>
 
+#include "USBListener.hpp"
 #include "Environment.hpp"
 #include "Localisation.hpp"
 #include "Monitor.hpp"
@@ -14,6 +14,7 @@
 #include "external/stb_image/stb_image.h"
 
 #include <argparse/argparse.hpp>
+#include <imgui/extensions/imgui_text.hpp>
 #include <imgui/extensions/imgui_toast.hpp>
 #include <imgui/extensions/imgui_bezier.hpp>
 #include <imgui/imgui.hpp>
@@ -814,8 +815,18 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
         font = io.Fonts->AddFontFromFileTTF(applicationSettings.font.data(), 20_scaled, nullptr, ranges.Data);
     }
 
+    USBListener usbListener {};
+
+    usbListener.add_listener([&] (std::string_view, USBListener::Event event) -> liberror::Result<void> {
+        if (event == USBListener::Event::BIND || event == USBListener::Event::UNBIND)
+            devices = TRY(libwacom::get_available_devices());
+        return {};
+    });
+
     while (!glfwWindowShouldClose(window))
     {
+        TRY(usbListener.update());
+
         glClear(GL_COLOR_BUFFER_BIT);
 
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
