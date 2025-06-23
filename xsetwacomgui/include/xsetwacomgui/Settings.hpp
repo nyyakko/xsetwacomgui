@@ -50,7 +50,7 @@ inline std::filesystem::path APPLICATION_SETTINGS_FILE = get_application_config_
 struct DeviceSettings
 {
     // Should be updated every time a change is made
-    static constexpr auto SCHEMA_VERSION = "1.0";
+    static constexpr auto SCHEMA_VERSION = "1.1";
 
     std::string deviceName;
     libwacom::Handedness deviceHandedness;
