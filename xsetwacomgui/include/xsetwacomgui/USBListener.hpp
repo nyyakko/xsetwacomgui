@@ -15,14 +15,8 @@ public:
     )
 
 private:
-    using udev_deleter_t = decltype([] (udev* udev) {
-        udev_unref(udev);
-    });
-
-    using udev_monitor_deleter_t = decltype([] (udev_monitor* monitor) {
-        udev_monitor_unref(monitor);
-    });
-
+    using udev_deleter_t = decltype([] (udev* udev) { udev_unref(udev); });
+    using udev_monitor_deleter_t = decltype([] (udev_monitor* monitor) { udev_monitor_unref(monitor); });
     using listener_t = liberror::Result<void>(std::string_view node, Event event);
 
 public:
