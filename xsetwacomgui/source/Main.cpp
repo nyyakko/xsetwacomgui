@@ -332,12 +332,15 @@ liberror::Result<void> render_tablet_settings_tab(Context& context, DeviceSettin
         ImGui::Text("%s", TRY(Localisation::get(applicationSettings.language, Localisation::Tabs_Tablet_Device)));
         auto deviceNames = fplus::transform([] (libwacom::Device const& device) { return device.name.data(); }, devices);
         ImGui::SetNextItemWidth(300_scaled + ImGui::GetStyle().WindowPadding.x);
-        static int deviceIndex;
+        static int deviceIndex = deviceSettings.deviceName == "INVALID" ? 0 : static_cast<int>(
+            std::distance(devices.begin(), std::ranges::find(devices, deviceSettings.deviceName, &libwacom::Device::name))
+        );
         context.hasChangedDevice = ImGui::Combo("##Device", &deviceIndex, deviceNames.data(), static_cast<int>(deviceNames.size()));
 
         if (context.hasChangedDevice)
         {
             context.device = devices.at(static_cast<size_t>(deviceIndex));
+            deviceSettings.deviceName = context.device.name;
             deviceSettings.deviceArea = TRY(libwacom::get_stylus_default_area(context.device.id));
         }
 
@@ -445,12 +448,15 @@ liberror::Result<void> render_monitor_settings_tab(Context& context, DeviceSetti
         auto monitorNames = fplus::transform([] (Monitor const& monitor) { return fmt::format("{} ({}x{})", monitor.name, monitor.width, monitor.height); }, monitors);
         auto monitorNamesData = fplus::transform([] (std::string const& name) { return name.data(); }, monitorNames);
         ImGui::SetNextItemWidth(300_scaled + ImGui::GetStyle().WindowPadding.x);
-        static int monitorIndex;
+        static int monitorIndex = deviceSettings.monitorName == "INVALID" ? 0 : static_cast<int>(
+            std::distance(monitors.begin(), std::ranges::find(monitors, deviceSettings.monitorName, &Monitor::name))
+        );
         context.hasChangedMonitor = ImGui::Combo("##Monitors", &monitorIndex, monitorNamesData.data(), static_cast<int>(monitorNamesData.size()));
 
         if (context.hasChangedMonitor)
         {
             context.monitor = monitors.at(static_cast<size_t>(monitorIndex));
+            deviceSettings.monitorName = context.monitor.name;
             deviceSettings.monitorArea = libwacom::Area { 0, 0, context.monitor.width, context.monitor.height };
         }
 
@@ -593,6 +599,11 @@ liberror::Result<void> render_window(ApplicationSettings const& applicationSetti
                 deviceSettings.devicePressure = MUST(libwacom::get_stylus_pressure_curve(context.device.id));
                 deviceSettings.monitorName = context.monitor.name;
                 deviceSettings.monitorArea = libwacom::Area { 0, 0, context.monitor.width, context.monitor.height };
+            }
+            else
+            {
+                context.monitor = *std::ranges::find(monitors, deviceSettings.monitorName, &Monitor::name);
+                context.device  = *std::ranges::find(devices, deviceSettings.deviceName, &libwacom::Device::name);
             }
         }
         else
