@@ -219,7 +219,7 @@ liberror::Result<void> set_settings_to_device(Context const& context, DeviceSett
     return {};
 }
 
-liberror::Result<void> render_region_mappers(Context& context, DeviceSettings& deviceSettings, std::vector<libwacom::Device> const& devices, std::vector<Monitor> const& monitors, ApplicationSettings const& applicationSettings)
+liberror::Result<void> render_region_mappers(Context& context, ApplicationSettings const& applicationSettings, DeviceSettings& deviceSettings, std::vector<libwacom::Device> const& devices, std::vector<Monitor> const& monitors)
 {
     auto [cursorX, cursorY] = ImGui::GetCursorPos();
     ImDrawList* drawList = ImGui::GetWindowDrawList();
@@ -322,7 +322,7 @@ liberror::Result<void> render_region_mappers(Context& context, DeviceSettings& d
     return {};
 }
 
-liberror::Result<void> render_tablet_settings_tab(Context& context, DeviceSettings& deviceSettings, std::vector<libwacom::Device> const& devices, ApplicationSettings const& applicationSettings)
+liberror::Result<void> render_tablet_settings_tab(Context& context, ApplicationSettings const& applicationSettings, DeviceSettings& deviceSettings, std::vector<libwacom::Device> const& devices)
 {
     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - (250_scaled + 300_scaled + ImGui::GetStyle().WindowPadding.x))/2);
 
@@ -437,7 +437,7 @@ liberror::Result<void> render_tablet_settings_tab(Context& context, DeviceSettin
     return {};
 }
 
-liberror::Result<void> render_monitor_settings_tab(Context& context, DeviceSettings& deviceSettings, std::vector<Monitor> const& monitors, ApplicationSettings const& applicationSettings)
+liberror::Result<void> render_monitor_settings_tab(Context& context, ApplicationSettings const& applicationSettings, DeviceSettings& deviceSettings, std::vector<Monitor> const& monitors)
 {
     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - (300_scaled + ImGui::GetStyle().WindowPadding.x))/2);
 
@@ -621,7 +621,7 @@ liberror::Result<void> render_window(ApplicationSettings const& applicationSetti
     ImGui::BeginDisabled(context.handleOutdatedDeviceSettings);
     ImGui::BeginGroup();
     {
-        render_region_mappers(context, deviceSettings, devices, monitors, applicationSettings);
+        render_region_mappers(context, applicationSettings, deviceSettings, devices, monitors);
     }
     ImGui::EndGroup();
 
@@ -629,13 +629,13 @@ liberror::Result<void> render_window(ApplicationSettings const& applicationSetti
     {
         if (ImGui::BeginTabItem(TRY(Localisation::get(applicationSettings.language, Localisation::Tabs_Tablet_Title))))
         {
-            TRY(render_tablet_settings_tab(context, deviceSettings, devices, applicationSettings));
+            TRY(render_tablet_settings_tab(context, applicationSettings, deviceSettings, devices));
             ImGui::EndTabItem();
         }
 
         if (ImGui::BeginTabItem(TRY(Localisation::get(applicationSettings.language, Localisation::Tabs_Monitor_Title))))
         {
-            TRY(render_monitor_settings_tab(context, deviceSettings, monitors, applicationSettings));
+            TRY(render_monitor_settings_tab(context, applicationSettings, deviceSettings, monitors));
             ImGui::EndTabItem();
         }
 
