@@ -253,6 +253,21 @@ liberror::Result<void> render_region_mappers(Context& context, std::vector<libwa
     static ImVec2 monitorAreaAnchors[4] { { -1, -1 }, { -1, -1 }, { -1, -1 }, { -1, -1 } };
     static libwacom::Area monitorDefaultArea = monitors.empty() ? libwacom::Area {} : libwacom::Area { 0, 0, context.monitor.width, context.monitor.height };
 
+    if (context.hasChangedMonitorArea && context.tabletSettings.monitor.name != "INVALID")
+    {
+        context.tabletSettings.monitor.area = {
+            .offsetX = monitorAreaAnchors[0].x * monitorDefaultArea.width,
+            .offsetY = monitorAreaAnchors[0].y * monitorDefaultArea.height,
+            .width   = (monitorAreaAnchors[2].x - monitorAreaAnchors[0].x) * monitorDefaultArea.width,
+            .height  = (monitorAreaAnchors[3].y - monitorAreaAnchors[2].y) * monitorDefaultArea.height
+        };
+    }
+
+    if (context.hasChangedMonitorArea && context.tabletSettings.monitor.forceFullArea && context.tabletSettings.monitor.name != "INVALID")
+    {
+        context.tabletSettings.monitor.area = monitorDefaultArea;
+    }
+
     if (context.hasChangedMonitor && context.tabletSettings.monitor.name != "INVALID")
     {
         monitorDefaultArea = libwacom::Area { 0, 0, context.monitor.width, context.monitor.height };
@@ -276,26 +291,26 @@ liberror::Result<void> render_region_mappers(Context& context, std::vector<libwa
     static const ImVec2 monitorMapperSize { 20 * 16_scaled, 20 * 9_scaled };
     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - monitorMapperSize.x)/2);
     static ImRect monitorMapperPosition {};
-    context.hasChangedMonitorArea |= area_mapper(TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Monitor_Monitor)), monitorAreaAnchors, monitorMapperSize, &monitorMapperPosition, context.tabletSettings.monitor.forceFullArea, context.tabletSettings.monitor.forceAspectRatio);
+    context.hasChangedMonitorArea = area_mapper(TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Monitor_Monitor)), monitorAreaAnchors, monitorMapperSize, &monitorMapperPosition, context.tabletSettings.monitor.forceFullArea, context.tabletSettings.monitor.forceAspectRatio);
     ImGui::SetCursorPosX(cursorX);
-
-    if (context.hasChangedMonitorArea && context.tabletSettings.monitor.name != "INVALID")
-    {
-        context.tabletSettings.monitor.area = {
-            .offsetX = monitorAreaAnchors[0].x * monitorDefaultArea.width,
-            .offsetY = monitorAreaAnchors[0].y * monitorDefaultArea.height,
-            .width   = (monitorAreaAnchors[2].x - monitorAreaAnchors[0].x) * monitorDefaultArea.width,
-            .height  = (monitorAreaAnchors[3].y - monitorAreaAnchors[2].y) * monitorDefaultArea.height
-        };
-    }
-
-    if (context.hasChangedMonitorArea && context.tabletSettings.monitor.forceFullArea && context.tabletSettings.monitor.name != "INVALID")
-    {
-        context.tabletSettings.monitor.area = monitorDefaultArea;
-    }
 
     static ImVec2 deviceAreaAnchors[4] { { -1, -1 }, { -1, -1 }, { -1, -1 }, { -1, -1 } };
     static libwacom::Area deviceDefaultArea = devices.empty() ? libwacom::Area {} : TRY(libwacom::get_stylus_default_area(context.device.id));
+
+    if (context.hasChangedDeviceArea && context.tabletSettings.device.name != "INVALID")
+    {
+        context.tabletSettings.device.area = {
+            .offsetX = deviceAreaAnchors[0].x * deviceDefaultArea.width,
+            .offsetY = deviceAreaAnchors[0].y * deviceDefaultArea.height,
+            .width   = (deviceAreaAnchors[2].x - deviceAreaAnchors[0].x) * deviceDefaultArea.width,
+            .height  = (deviceAreaAnchors[3].y - deviceAreaAnchors[2].y) * deviceDefaultArea.height
+        };
+    }
+
+    if (context.hasChangedDeviceArea && context.tabletSettings.device.forceFullArea && context.tabletSettings.device.name != "INVALID")
+    {
+        context.tabletSettings.device.area = deviceDefaultArea;
+    }
 
     if (context.hasChangedDevice && context.tabletSettings.device.name != "INVALID")
     {
@@ -320,23 +335,8 @@ liberror::Result<void> render_region_mappers(Context& context, std::vector<libwa
     static const ImVec2 deviceMapperSize { 15 * 16_scaled, 15 * 9_scaled };
     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - deviceMapperSize.x)/2);
     static ImRect deviceMapperPosition {};
-    context.hasChangedDeviceArea |= area_mapper(TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Tablet_Device)), deviceAreaAnchors, deviceMapperSize, &deviceMapperPosition, context.tabletSettings.device.forceFullArea, context.tabletSettings.device.forceAspectRatio);
+    context.hasChangedDeviceArea = area_mapper(TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Tablet_Device)), deviceAreaAnchors, deviceMapperSize, &deviceMapperPosition, context.tabletSettings.device.forceFullArea, context.tabletSettings.device.forceAspectRatio);
     ImGui::SetCursorPosX(cursorX);
-
-    if (context.hasChangedDeviceArea && context.tabletSettings.device.name != "INVALID")
-    {
-        context.tabletSettings.device.area = {
-            .offsetX = deviceAreaAnchors[0].x * deviceDefaultArea.width,
-            .offsetY = deviceAreaAnchors[0].y * deviceDefaultArea.height,
-            .width   = (deviceAreaAnchors[2].x - deviceAreaAnchors[0].x) * deviceDefaultArea.width,
-            .height  = (deviceAreaAnchors[3].y - deviceAreaAnchors[2].y) * deviceDefaultArea.height
-        };
-    }
-
-    if (context.hasChangedDeviceArea && context.tabletSettings.device.forceFullArea && context.tabletSettings.device.name != "INVALID")
-    {
-        context.tabletSettings.device.area = deviceDefaultArea;
-    }
 
     for (auto [monitorAnchor, deviceAnchor] : fplus::zip(std::span<ImVec2>(monitorAreaAnchors, 4), std::span<ImVec2>(deviceAreaAnchors, 4)))
     {
