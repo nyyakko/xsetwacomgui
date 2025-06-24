@@ -193,7 +193,10 @@ liberror::Result<void> render_settings_popup(Context const& context)
     ImGui::SetCursorPosY(ImGui::GetWindowHeight() - (25_scaled + ImGui::GetStyle().WindowPadding.x));
     if (ImGui::Button(TRY(Localisation::get(context.applicationSettings.language, Localisation::Save)), { 100_scaled, 25_scaled }))
     {
-        ImGui::PushToast(TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Success)), TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Application_Settings_Saved)));
+        ImGui::PushToast(
+            TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Success)),
+            TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Application_Settings_Saved))
+        );
         save_application_settings(context.applicationSettings);
     }
     ImGui::SetCursorPos(previousCursorPosition);
@@ -569,7 +572,10 @@ liberror::Result<void> render_window(Context& context, std::vector<libwacom::Dev
             ImGui::SetCursorPosY(popupHeight - (25_scaled + ImGui::GetStyle().WindowPadding.y));
             if (ImGui::Button(TRY(Localisation::get(context.applicationSettings.language, Localisation::Popup_Outdated_Device_Settings_Overwrite)), { 0, 25_scaled }))
             {
-                ImGui::PushToast(TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Success)), TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Device_Settings_Overwritten)));
+                ImGui::PushToast(
+                    TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Success)),
+                    TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Device_Settings_Overwritten))
+                );
                 save_tablet_settings(context.tabletSettings);
                 context.handleOutdatedDeviceSettings = false;
             }
@@ -586,7 +592,10 @@ liberror::Result<void> render_window(Context& context, std::vector<libwacom::Dev
 
     if (devices.empty() && context.tabletSettings.device.pressure.minX == -1 && context.tabletSettings.device.pressure.minY == -1 && context.tabletSettings.device.area.width == -1 && context.tabletSettings.device.area.height == -1)
     {
-        ImGui::PushToast(TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Warning)), TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Devices_Missing)));
+        ImGui::PushToast(
+            TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Warning)),
+            TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Devices_Missing))
+        );
         context.tabletSettings.device.area = { 0, 0, 0, 0 };
         context.tabletSettings.device.pressure = { 0, 0, 1, 1 };
         context.tabletSettings.monitor.area = { 0, 0, context.monitor.width, context.monitor.height };
@@ -631,7 +640,10 @@ liberror::Result<void> render_window(Context& context, std::vector<libwacom::Dev
         }
         else
         {
-            ImGui::PushToast(TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Warning)), TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Device_Settings_Missing)));
+            ImGui::PushToast(
+                TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Warning)),
+                TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Device_Settings_Missing))
+            );
             context.tabletSettings.device.name = context.device.name;
             context.tabletSettings.device.area = MUST(libwacom::get_stylus_area(context.device.id));
             context.tabletSettings.device.pressure = MUST(libwacom::get_stylus_pressure_curve(context.device.id));
@@ -670,7 +682,10 @@ liberror::Result<void> render_window(Context& context, std::vector<libwacom::Dev
     if (ImGui::Button(TRY(Localisation::get(context.applicationSettings.language, Localisation::Save_Apply)), { 200_scaled, 35_scaled }))
     {
         save_tablet_settings(context.tabletSettings);
-        ImGui::PushToast(TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Success)), TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Device_Settings_Saved)));
+        ImGui::PushToast(
+            TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Success)),
+            TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Device_Settings_Saved))
+        );
         TRY(apply_settings_to_device(context));
     }
     ImGui::SetCursorPos(previousCursorPosition);
