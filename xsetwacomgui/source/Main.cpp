@@ -570,6 +570,23 @@ liberror::Result<void> render_window(Context& context, std::vector<libwacom::Dev
                 }
             ImGui::EndGroup();
 
+            if (context.tabletSettings.device.name == "INVALID" && context.tabletSettings.monitor.name == "INVALID")
+            {
+                context.device = devices.back();
+                context.hasChangedDevice = true;
+                context.monitor = *std::ranges::find_if(monitors, &Monitor::primary);
+                context.hasChangedMonitor = true;
+                context.tabletSettings.device.name = context.device.name;
+                context.tabletSettings.device.area = TRY(libwacom::get_stylus_area(context.device.id));
+                context.tabletSettings.device.pressure = TRY(libwacom::get_stylus_pressure_curve(context.device.id));
+                context.tabletSettings.device.forceFullArea = false;
+                context.tabletSettings.device.forceAspectRatio = false;
+                context.tabletSettings.monitor.name = context.monitor.name;
+                context.tabletSettings.monitor.area = libwacom::Area { 0, 0, context.monitor.width, context.monitor.height };
+                context.tabletSettings.monitor.forceFullArea = false;
+                context.tabletSettings.monitor.forceAspectRatio = false;
+            }
+
             ImGui::SetCursorPosY(popupHeight - (25_scaled + ImGui::GetStyle().WindowPadding.y));
             if (ImGui::Button(TRY(Localisation::get(context.applicationSettings.language, Localisation::Popup_Outdated_Device_Settings_Overwrite)), { 0, 25_scaled }))
             {
@@ -577,6 +594,17 @@ liberror::Result<void> render_window(Context& context, std::vector<libwacom::Dev
                     TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Success)),
                     TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Device_Settings_Overwritten))
                 );
+
+                context.tabletSettings.device.name = context.device.name;
+                context.tabletSettings.device.area = TRY(libwacom::get_stylus_area(context.device.id));
+                context.tabletSettings.device.pressure = TRY(libwacom::get_stylus_pressure_curve(context.device.id));
+                context.tabletSettings.device.forceFullArea = false;
+                context.tabletSettings.device.forceAspectRatio = false;
+                context.tabletSettings.monitor.name = context.monitor.name;
+                context.tabletSettings.monitor.area = libwacom::Area { 0, 0, context.monitor.width, context.monitor.height };
+                context.tabletSettings.monitor.forceFullArea = false;
+                context.tabletSettings.monitor.forceAspectRatio = false;
+
                 save_tablet_settings(context.tabletSettings);
                 context.handleOutdatedDeviceSettings = false;
             }
@@ -876,9 +904,24 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
     usbAction.subscribe([&] (std::string_view, USBAction::Event event) -> liberror::Result<void> {
         if (event != USBAction::Event::UNBIND) return {};
 
+        auto hadMoreThanOneDevice = devices.size() > 1;
         devices = fplus::keep_if([] (auto&& device) { return device.kind == libwacom::Device::Kind::STYLUS; }, TRY(libwacom::get_available_devices()));
+
+        if (hadMoreThanOneDevice) return {};
+
         auto maybeDevice = std::ranges::find(devices, context.tabletSettings.device.name, &libwacom::Device::name);
-        if (maybeDevice == devices.end()) context.device = libwacom::Device {};
+        if (maybeDevice == devices.end())
+        {
+            context.device = libwacom::Device {};
+            context.tabletSettings.device = {
+                .name = "INVALID",
+                .handedness = libwacom::Handedness::RIGHT,
+                .area = { -1, -1, -1, -1 },
+                .pressure = { -1, -1, -1, -1 },
+                .forceFullArea = false,
+                .forceAspectRatio = false
+            };
+        }
 
         return {};
     });
@@ -886,10 +929,10 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
     usbAction.subscribe([&] (std::string_view, USBAction::Event event) -> liberror::Result<void> {
         if (event != USBAction::Event::BIND) return {};
 
-        auto hadDevicesPreviously = !devices.empty();
+        auto hadAtleastOneDevice = !devices.empty();
         devices = fplus::keep_if([] (auto&& device) { return device.kind == libwacom::Device::Kind::STYLUS; }, TRY(libwacom::get_available_devices()));
 
-        if (hadDevicesPreviously) return {};
+        if (hadAtleastOneDevice) return {};
 
         TabletSettings settings {};
         auto result = load_tablet_settings(settings);
