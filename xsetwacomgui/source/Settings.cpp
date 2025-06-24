@@ -15,12 +15,15 @@ liberror::Result<void, SettingsError> load_device_settings(DeviceSettings& setti
     std::stringstream content;
     content << stream.rdbuf();
 
+    auto previousSettings = settings;
+
     try
     {
         auto json = nlohmann::json::parse(content.str());
 
         if (json["version"].is_null() || json["version"].get<std::string>() != DeviceSettings::SCHEMA_VERSION)
         {
+            settings = previousSettings;
             return liberror::make_error<SettingsError>(SettingsError::Type::OUTDATED_SCHEMA);
         }
 
@@ -46,6 +49,7 @@ liberror::Result<void, SettingsError> load_device_settings(DeviceSettings& setti
     }
     catch (std::exception const& error)
     {
+        settings = previousSettings;
         return liberror::make_error<SettingsError>(SettingsError::Type::READ_FAILURE);
     }
 

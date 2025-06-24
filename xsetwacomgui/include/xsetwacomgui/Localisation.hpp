@@ -69,6 +69,7 @@ public:
         Toast_Device_Settings_Saved,
         Toast_Device_Settings_Overwritten,
         Toast_Device_Settings_Load_Failed,
+        Toast_Device_Settings_Load_Success,
         Toast_Device_Settings_Missing,
         Toast_Devices_Missing,
     };
