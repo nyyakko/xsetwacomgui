@@ -54,6 +54,8 @@ struct Context
     bool hasTriedToInitializeDeviceSettings = false;
 };
 
+static constexpr auto USB_ACTION_MAGIC = 3;
+
 std::vector<std::pair<std::string, std::filesystem::path>> get_available_fonts()
 {
     std::vector<std::pair<std::string, std::filesystem::path>> fonts {
@@ -360,7 +362,7 @@ liberror::Result<void> render_tablet_settings_tab(Context& context, std::vector<
             std::distance(devices.begin(), std::ranges::find(devices, context.tabletSettings.device.name, &libwacom::Device::name))
         );
 
-        if ((context.hasChangedDevice & 3) == 0)
+        if ((context.hasChangedDevice & USB_ACTION_MAGIC) == 0)
         {
             deviceIndex = context.tabletSettings.device.name == "INVALID" ? 0 : static_cast<int>(
                 std::distance(devices.begin(), std::ranges::find(devices, context.tabletSettings.device.name, &libwacom::Device::name))
@@ -487,7 +489,7 @@ liberror::Result<void> render_monitor_settings_tab(Context& context, std::vector
             std::distance(monitors.begin(), std::ranges::find(monitors, context.tabletSettings.monitor.name, &Monitor::name))
         );
 
-        if ((context.hasChangedMonitor & 3) == 0)
+        if ((context.hasChangedMonitor & USB_ACTION_MAGIC) == 0)
         {
             monitorIndex = context.tabletSettings.monitor.name == "INVALID" ? 0 : static_cast<int>(
                 std::distance(monitors.begin(), std::ranges::find(monitors, context.tabletSettings.monitor.name, &Monitor::name))
@@ -711,8 +713,8 @@ liberror::Result<void> render_window(Context& context, std::vector<libwacom::Dev
     ImGui::SetCursorPos(previousCursorPosition);
     ImGui::EndDisabled();
 
-    if ((context.hasChangedDevice & 3) == 0) context.hasChangedDevice = false;
-    if ((context.hasChangedMonitor & 3) == 0) context.hasChangedMonitor = false;
+    if ((context.hasChangedDevice & USB_ACTION_MAGIC) == 0) context.hasChangedDevice = false;
+    if ((context.hasChangedMonitor & USB_ACTION_MAGIC) == 0) context.hasChangedMonitor = false;
 
     return {};
 }
@@ -959,9 +961,9 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
             }
 
             context.device = devices.back();
-            context.hasChangedDevice = 0xFF ^ 3;
+            context.hasChangedDevice = 0xFF ^ USB_ACTION_MAGIC;
             context.monitor = *std::ranges::find_if(monitors, &Monitor::primary);
-            context.hasChangedMonitor = 0xFF ^ 3;
+            context.hasChangedMonitor = 0xFF ^ USB_ACTION_MAGIC;
             context.tabletSettings.device.name = context.device.name;
             context.tabletSettings.device.area = TRY(libwacom::get_stylus_area(context.device.id));
             context.tabletSettings.device.pressure = TRY(libwacom::get_stylus_pressure_curve(context.device.id));
@@ -979,10 +981,10 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
                 TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Device_Settings_Load_Success))
             );
             context.device = devices.back();
-            context.hasChangedDevice = 0xFF ^ 3;
+            context.hasChangedDevice = 0xFF ^ USB_ACTION_MAGIC;
             context.tabletSettings = settings;
             context.monitor = *std::ranges::find(monitors, settings.monitor.name, &Monitor::name);
-            context.hasChangedMonitor = 0xFF ^ 3;
+            context.hasChangedMonitor = 0xFF ^ USB_ACTION_MAGIC;
             TRY(apply_settings_to_device(context));
         }
 
