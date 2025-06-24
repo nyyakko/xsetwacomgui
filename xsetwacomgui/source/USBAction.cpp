@@ -6,7 +6,7 @@
 
 #include <ranges>
 
-liberror::Result<void> USBAction::update()
+liberror::Result<void> USBAction::update() const
 {
     pollfd pfd;
 
@@ -38,14 +38,14 @@ liberror::Result<void> USBAction::update()
     return {};
 }
 
-liberror::Result<void> USBAction::notify_all(std::string_view node, Event event)
+liberror::Result<void> USBAction::notify_all(std::string_view node, Event event) const
 {
     for (auto const& listener : listeners)
         TRY(listener(node, event));
     return {};
 }
 
-void USBAction::subscribe(std::function<listener_t> listener)
+void USBAction::subscribe(std::function<listener_t> const& listener)
 {
-    listeners.push_back(std::move(listener));
+    listeners.push_back(listener);
 }

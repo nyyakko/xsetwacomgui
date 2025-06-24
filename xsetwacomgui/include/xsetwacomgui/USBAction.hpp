@@ -29,9 +29,9 @@ public:
         udev_monitor_enable_receiving(monitor.get());
     }
 
-    void subscribe(std::function<listener_t> listener);
-    liberror::Result<void> update();
-    liberror::Result<void> notify_all(std::string_view node, Event event);
+    void subscribe(std::function<listener_t> const& listener);
+    liberror::Result<void> update() const;
+    liberror::Result<void> notify_all(std::string_view node, Event event) const;
 
 private:
     std::unique_ptr<struct udev, udev_deleter_t> udev;
