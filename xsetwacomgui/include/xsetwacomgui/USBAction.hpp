@@ -4,7 +4,7 @@
 #include <liberror/Result.hpp>
 #include <libudev.h>
 
-class USBListener
+class USBAction
 {
 public:
     ENUM_CLASS(Event,
@@ -20,7 +20,7 @@ private:
     using listener_t = liberror::Result<void>(std::string_view node, Event event);
 
 public:
-    USBListener()
+    USBAction()
         : udev(udev_new(), udev_deleter_t{})
         , monitor(udev_monitor_new_from_netlink(udev.get(), "udev"), udev_monitor_deleter_t{})
         , monitorFd(udev_monitor_get_fd(monitor.get()))
@@ -29,8 +29,9 @@ public:
         udev_monitor_enable_receiving(monitor.get());
     }
 
+    void subscribe(std::function<listener_t> listener);
     liberror::Result<void> update();
-    void add_listener(std::function<listener_t> listener);
+    liberror::Result<void> notify_all(std::string_view node, Event event);
 
 private:
     std::unique_ptr<struct udev, udev_deleter_t> udev;

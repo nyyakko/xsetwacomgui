@@ -2,7 +2,7 @@
 
 #include <spdlog/spdlog.h>
 
-#include "USBListener.hpp"
+#include "USBAction.hpp"
 #include "Environment.hpp"
 #include "Localisation.hpp"
 #include "Monitor.hpp"
@@ -871,10 +871,10 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
         return Context { device, monitor, applicationSettings, tabletSettings };
     }();
 
-    USBListener usbListener {};
+    USBAction usbAction {};
 
-    usbListener.add_listener([&] (std::string_view, USBListener::Event event) -> liberror::Result<void> {
-        if (event != USBListener::Event::UNBIND) return {};
+    usbAction.subscribe([&] (std::string_view, USBAction::Event event) -> liberror::Result<void> {
+        if (event != USBAction::Event::UNBIND) return {};
 
         devices = fplus::keep_if([] (auto&& device) { return device.kind == libwacom::Device::Kind::STYLUS; }, TRY(libwacom::get_available_devices()));
         auto maybeDevice = std::ranges::find(devices, context.tabletSettings.device.name, &libwacom::Device::name);
@@ -883,8 +883,8 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
         return {};
     });
 
-    usbListener.add_listener([&] (std::string_view, USBListener::Event event) -> liberror::Result<void> {
-        if (event != USBListener::Event::BIND) return {};
+    usbAction.subscribe([&] (std::string_view, USBAction::Event event) -> liberror::Result<void> {
+        if (event != USBAction::Event::BIND) return {};
 
         auto hadDevicesPreviously = !devices.empty();
         devices = fplus::keep_if([] (auto&& device) { return device.kind == libwacom::Device::Kind::STYLUS; }, TRY(libwacom::get_available_devices()));
@@ -960,7 +960,7 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
                 static bool isApplicationSettingsOpen = false;
                 static bool isGoddessOpen = false;
 
-                TRY(usbListener.update());
+                TRY(usbAction.update());
 
                 if (ImGui::BeginMenuBar())
                 {
