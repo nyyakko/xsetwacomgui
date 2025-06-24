@@ -729,9 +729,9 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
             return liberror::make_error("Device settings could not be found");
         }
 
-        TabletSettings deviceSettings {};
+        TabletSettings tabletSettings {};
 
-        if (!load_tablet_settings(deviceSettings))
+        if (!load_tablet_settings(tabletSettings))
         {
             return liberror::make_error("Failed to load device settings");
         }
@@ -744,14 +744,14 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
         auto device  = devices.front();
         auto monitor = *std::ranges::find_if(monitors, &Monitor::primary);
 
-        TRY(libwacom::set_stylus_area(device.id, deviceSettings.device.area));
-        TRY(libwacom::set_stylus_handedness(device.id, deviceSettings.device.handedness));
-        TRY(libwacom::set_stylus_pressure_curve(device.id, deviceSettings.device.pressure));
+        TRY(libwacom::set_stylus_area(device.id, tabletSettings.device.area));
+        TRY(libwacom::set_stylus_handedness(device.id, tabletSettings.device.handedness));
+        TRY(libwacom::set_stylus_pressure_curve(device.id, tabletSettings.device.pressure));
         TRY(libwacom::set_stylus_output_from_display_area(device.id, {
-            deviceSettings.monitor.area.offsetX + monitor.offsetX,
-            deviceSettings.monitor.area.offsetY + monitor.offsetY,
-            deviceSettings.monitor.area.width,
-            deviceSettings.monitor.area.height,
+            tabletSettings.monitor.area.offsetX + monitor.offsetX,
+            tabletSettings.monitor.area.offsetY + monitor.offsetY,
+            tabletSettings.monitor.area.width,
+            tabletSettings.monitor.area.height,
         }));
 
         fmt::println("Device settings loaded successfully");
