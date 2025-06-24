@@ -873,8 +873,7 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
     ImVector<ImWchar> ranges {};
     ImFontGlyphRangesBuilder rangeBuilder {};
 
-    static const ImWchar rangesData[] =
-    {
+    static const ImWchar rangesData[] = {
         0x0020, 0x00FF, // Basic Latin + Latin Supplement
         0x0400, 0x052F, // Cyrillic + Cyrillic Supplement
         0x2DE0, 0x2DFF, // Cyrillic Extended-A
