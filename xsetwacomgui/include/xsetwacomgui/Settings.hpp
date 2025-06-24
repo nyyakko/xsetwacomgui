@@ -44,29 +44,39 @@ private:
     Type reason;
 };
 
-inline std::filesystem::path DEVICE_SETTINGS_FILE = get_application_config_path() / "device.json";
-inline std::filesystem::path APPLICATION_SETTINGS_FILE = get_application_config_path() / "application.json";
+inline std::filesystem::path DEVICE_SETTINGS_FILE = get_application_config_path() / "tablet_settings.json";
+inline std::filesystem::path APPLICATION_SETTINGS_FILE = get_application_config_path() / "application_settings.json";
 
 struct DeviceSettings
 {
-    // Should be updated every time a change is made
-    static constexpr auto SCHEMA_VERSION = "1.1";
-
-    std::string deviceName;
-    libwacom::Handedness deviceHandedness;
-    libwacom::Area deviceArea;
-    libwacom::Pressure devicePressure;
-    bool deviceForceFullArea;
-    bool deviceForceAspectRatio;
-    std::string monitorName;
-    libwacom::Area monitorArea;
-    bool monitorForceFullArea;
-    bool monitorForceAspectRatio;
+    std::string name;
+    libwacom::Handedness handedness;
+    libwacom::Area area;
+    libwacom::Pressure pressure;
+    bool forceFullArea;
+    bool forceAspectRatio;
 };
 
-liberror::Result<void, SettingsError> load_device_settings(DeviceSettings& settings);
-void save_device_settings(DeviceSettings const& settings);
-void migrate_device_settings(DeviceSettings const& settings);
+struct MonitorSettings
+{
+    std::string name;
+    libwacom::Area area;
+    bool forceFullArea;
+    bool forceAspectRatio;
+};
+
+struct TabletSettings
+{
+    // Should be updated every time a change is made
+    static constexpr auto SCHEMA_VERSION = "1.2";
+
+    DeviceSettings device;
+    MonitorSettings monitor;
+};
+
+liberror::Result<void, SettingsError> load_tablet_settings(TabletSettings& settings);
+void save_tablet_settings(TabletSettings const& settings);
+void migrate_tablet_settings(TabletSettings const& settings);
 
 struct ApplicationSettings
 {

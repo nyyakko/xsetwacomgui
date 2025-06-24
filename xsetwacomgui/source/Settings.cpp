@@ -9,7 +9,7 @@
 #include <sstream>
 #include <cstdlib>
 
-liberror::Result<void, SettingsError> load_device_settings(DeviceSettings& settings)
+liberror::Result<void, SettingsError> load_tablet_settings(TabletSettings& settings)
 {
     std::ifstream stream(DEVICE_SETTINGS_FILE);
     std::stringstream content;
@@ -21,31 +21,31 @@ liberror::Result<void, SettingsError> load_device_settings(DeviceSettings& setti
     {
         auto json = nlohmann::json::parse(content.str());
 
-        if (json["version"].is_null() || json["version"].get<std::string>() != DeviceSettings::SCHEMA_VERSION)
+        if (json["version"].is_null() || json["version"].get<std::string>() != TabletSettings::SCHEMA_VERSION)
         {
             settings = previousSettings;
             return liberror::make_error<SettingsError>(SettingsError::Type::OUTDATED_SCHEMA);
         }
 
-        settings.monitorName             = json["monitor"]["name"].get<std::string>();
-        settings.monitorForceFullArea    = json["monitor"]["forceFullArea"].get<bool>();
-        settings.monitorForceAspectRatio = json["monitor"]["forceAspectRatio"].get<bool>();
-        settings.monitorArea.offsetX     = json["monitor"]["area"]["offsetX"].get<float>();
-        settings.monitorArea.offsetY     = json["monitor"]["area"]["offsetY"].get<float>();
-        settings.monitorArea.width       = json["monitor"]["area"]["width"].get<float>();
-        settings.monitorArea.height      = json["monitor"]["area"]["height"].get<float>();
-        settings.deviceName              = json["device"]["name"].get<std::string>();
-        settings.deviceHandedness        = libwacom::Handedness::from_string(json["device"]["handedness"].get<std::string>());
-        settings.deviceForceFullArea     = json["device"]["forceFullArea"].get<bool>();
-        settings.deviceForceAspectRatio  = json["device"]["forceAspectRatio"].get<bool>();
-        settings.deviceArea.offsetX      = json["device"]["area"]["offsetX"].get<float>();
-        settings.deviceArea.offsetY      = json["device"]["area"]["offsetY"].get<float>();
-        settings.deviceArea.width        = json["device"]["area"]["width"].get<float>();
-        settings.deviceArea.height       = json["device"]["area"]["height"].get<float>();
-        settings.devicePressure.minX     = json["device"]["pressure"]["minX"].get<float>();
-        settings.devicePressure.minY     = json["device"]["pressure"]["minY"].get<float>();
-        settings.devicePressure.maxX     = json["device"]["pressure"]["maxX"].get<float>();
-        settings.devicePressure.maxY     = json["device"]["pressure"]["maxY"].get<float>();
+        settings.monitor.name             = json["monitor"]["name"].get<std::string>();
+        settings.monitor.forceFullArea    = json["monitor"]["forceFullArea"].get<bool>();
+        settings.monitor.forceAspectRatio = json["monitor"]["forceAspectRatio"].get<bool>();
+        settings.monitor.area.offsetX     = json["monitor"]["area"]["offsetX"].get<float>();
+        settings.monitor.area.offsetY     = json["monitor"]["area"]["offsetY"].get<float>();
+        settings.monitor.area.width       = json["monitor"]["area"]["width"].get<float>();
+        settings.monitor.area.height      = json["monitor"]["area"]["height"].get<float>();
+        settings.device.name              = json["device"]["name"].get<std::string>();
+        settings.device.handedness        = libwacom::Handedness::from_string(json["device"]["handedness"].get<std::string>());
+        settings.device.forceFullArea     = json["device"]["forceFullArea"].get<bool>();
+        settings.device.forceAspectRatio  = json["device"]["forceAspectRatio"].get<bool>();
+        settings.device.area.offsetX      = json["device"]["area"]["offsetX"].get<float>();
+        settings.device.area.offsetY      = json["device"]["area"]["offsetY"].get<float>();
+        settings.device.area.width        = json["device"]["area"]["width"].get<float>();
+        settings.device.area.height       = json["device"]["area"]["height"].get<float>();
+        settings.device.pressure.minX     = json["device"]["pressure"]["minX"].get<float>();
+        settings.device.pressure.minY     = json["device"]["pressure"]["minY"].get<float>();
+        settings.device.pressure.maxX     = json["device"]["pressure"]["maxX"].get<float>();
+        settings.device.pressure.maxY     = json["device"]["pressure"]["maxY"].get<float>();
     }
     catch (std::exception const& error)
     {
@@ -56,47 +56,47 @@ liberror::Result<void, SettingsError> load_device_settings(DeviceSettings& setti
     return {};
 }
 
-void save_device_settings(DeviceSettings const& settings)
+void save_tablet_settings(TabletSettings const& settings)
 {
     nlohmann::ordered_json json {
-        { "version", DeviceSettings::SCHEMA_VERSION },
+        { "version", TabletSettings::SCHEMA_VERSION },
         {
             "device", {
-                { "name", settings.deviceName },
-                { "handedness", settings.deviceHandedness.to_string() },
+                { "name", settings.device.name },
+                { "handedness", settings.device.handedness.to_string() },
                 {
                     "area", {
-                        { "offsetX", settings.deviceArea.offsetX },
-                        { "offsetY", settings.deviceArea.offsetY },
-                        { "width", settings.deviceArea.width },
-                        { "height", settings.deviceArea.height }
+                        { "offsetX", settings.device.area.offsetX },
+                        { "offsetY", settings.device.area.offsetY },
+                        { "width", settings.device.area.width },
+                        { "height", settings.device.area.height }
                     }
                 },
                 {
                     "pressure", {
-                        { "minX", settings.devicePressure.minX },
-                        { "minY", settings.devicePressure.minY },
-                        { "maxX", settings.devicePressure.maxX },
-                        { "maxY", settings.devicePressure.maxY },
+                        { "minX", settings.device.pressure.minX },
+                        { "minY", settings.device.pressure.minY },
+                        { "maxX", settings.device.pressure.maxX },
+                        { "maxY", settings.device.pressure.maxY },
                     }
                 },
-                { "forceFullArea", settings.deviceForceFullArea },
-                { "forceAspectRatio", settings.deviceForceAspectRatio },
+                { "forceFullArea", settings.device.forceFullArea },
+                { "forceAspectRatio", settings.device.forceAspectRatio },
             }
         },
         {
             "monitor", {
-                { "name", settings.monitorName },
+                { "name", settings.monitor.name },
                 {
                     "area", {
-                        { "offsetX", settings.monitorArea.offsetX },
-                        { "offsetY", settings.monitorArea.offsetY },
-                        { "width", settings.monitorArea.width },
-                        { "height", settings.monitorArea.height }
+                        { "offsetX", settings.monitor.area.offsetX },
+                        { "offsetY", settings.monitor.area.offsetY },
+                        { "width", settings.monitor.area.width },
+                        { "height", settings.monitor.area.height }
                     }
                 },
-                { "forceFullArea", settings.monitorForceFullArea },
-                { "forceAspectRatio", settings.monitorForceAspectRatio },
+                { "forceFullArea", settings.monitor.forceFullArea },
+                { "forceAspectRatio", settings.monitor.forceAspectRatio },
             }
         }
     };
@@ -105,14 +105,14 @@ void save_device_settings(DeviceSettings const& settings)
     stream << std::setw(4) << json;
 }
 
-void migrate_device_settings(DeviceSettings const& settings)
+void migrate_tablet_settings(TabletSettings const& settings)
 {
-    static auto newSettingsSchema = get_application_config_path() / "device.json";
-    static auto oldSettingsSchema = get_application_config_path() / "device.old.json";
+    static auto newSettingsSchema = get_application_config_path() / "tablet_settings.json";
+    static auto oldSettingsSchema = get_application_config_path() / "tablet_settings.old.json";
 
     std::filesystem::rename(DEVICE_SETTINGS_FILE, oldSettingsSchema);
 
-    save_device_settings(settings);
+    save_tablet_settings(settings);
 
     popen(fmt::format("xdg-open {}", get_application_config_path().string()).data(), "r");
     pclose(popen(fmt::format("git diff {} {} > {}/conflict.diff", oldSettingsSchema.string(), newSettingsSchema.string(), get_application_config_path().string()).data(), "r"));
@@ -178,8 +178,8 @@ void save_application_settings(ApplicationSettings const& settings)
 
 void migrate_application_settings(ApplicationSettings const& settings)
 {
-    static auto newSettingsSchema = get_application_config_path() / "application.json";
-    static auto oldSettingsSchema = get_application_config_path() / "application.old.json";
+    static auto newSettingsSchema = get_application_config_path() / "application_settings.json";
+    static auto oldSettingsSchema = get_application_config_path() / "application_settings.old.json";
 
     std::filesystem::rename(APPLICATION_SETTINGS_FILE, oldSettingsSchema);
 
