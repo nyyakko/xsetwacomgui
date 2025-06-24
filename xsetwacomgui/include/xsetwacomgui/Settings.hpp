@@ -2,6 +2,7 @@
 
 #include "Environment.hpp"
 
+#include <cwchar>
 #include <imgui/imgui_internal.hpp>
 #include <libwacom/Device.hpp>
 #include <libenum/Enum.hpp>
@@ -67,8 +68,13 @@ struct MonitorSettings
 
 struct TabletSettings
 {
+private:
     // Should be updated every time a change is made
     static constexpr auto SCHEMA_VERSION = "1.2";
+
+    friend liberror::Result<void, SettingsError> load_tablet_settings(TabletSettings& settings);
+    friend void save_tablet_settings(TabletSettings const& settings);
+public:
 
     DeviceSettings device;
     MonitorSettings monitor;
@@ -80,9 +86,13 @@ void migrate_tablet_settings(TabletSettings const& settings);
 
 struct ApplicationSettings
 {
+private:
     // Should be updated every time a change is made
     static constexpr auto SCHEMA_VERSION = "1.0";
 
+    friend liberror::Result<void, SettingsError> load_application_settings(ApplicationSettings& settings);
+    friend void save_application_settings(ApplicationSettings const& settings);
+public:
     ENUM_CLASS(Theme, DARK, LIGHT)
     ENUM_CLASS(Language, EN_US, PT_BR, RU_RU)
 
