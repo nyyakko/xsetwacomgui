@@ -578,16 +578,6 @@ liberror::Result<void> render_window(Context& context, std::vector<libwacom::Dev
                     TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Device_Settings_Overwritten))
                 );
 
-                context.tabletSettings.device.name = context.device.name;
-                context.tabletSettings.device.area = TRY(libwacom::get_stylus_area(context.device.id));
-                context.tabletSettings.device.pressure = TRY(libwacom::get_stylus_pressure_curve(context.device.id));
-                context.tabletSettings.device.forceFullArea = false;
-                context.tabletSettings.device.forceAspectRatio = false;
-                context.tabletSettings.monitor.name = context.monitor.name;
-                context.tabletSettings.monitor.area = libwacom::Area { 0, 0, context.monitor.width, context.monitor.height };
-                context.tabletSettings.monitor.forceFullArea = false;
-                context.tabletSettings.monitor.forceAspectRatio = false;
-
                 save_tablet_settings(context.tabletSettings);
                 context.handleOutdatedDeviceSettings = false;
             }
@@ -636,12 +626,15 @@ liberror::Result<void> render_window(Context& context, std::vector<libwacom::Dev
                     }
                 }
 
-                // some defaults to prevent rendering nonsense
                 context.tabletSettings.device.name = context.device.name;
-                context.tabletSettings.device.area = MUST(libwacom::get_stylus_area(context.device.id));
-                context.tabletSettings.device.pressure = MUST(libwacom::get_stylus_pressure_curve(context.device.id));
+                context.tabletSettings.device.area = TRY(libwacom::get_stylus_area(context.device.id));
+                context.tabletSettings.device.pressure = TRY(libwacom::get_stylus_pressure_curve(context.device.id));
+                context.tabletSettings.device.forceFullArea = false;
+                context.tabletSettings.device.forceAspectRatio = false;
                 context.tabletSettings.monitor.name = context.monitor.name;
                 context.tabletSettings.monitor.area = { 0, 0, context.monitor.width, context.monitor.height };
+                context.tabletSettings.monitor.forceFullArea = false;
+                context.tabletSettings.monitor.forceAspectRatio = false;
             }
             else
             {
