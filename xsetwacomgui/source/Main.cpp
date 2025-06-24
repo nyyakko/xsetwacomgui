@@ -51,6 +51,7 @@ struct Context
     bool hasChangedDevicePressure = false;
     bool hasChangedMonitor = false;
     bool hasChangedMonitorArea = false;
+    bool hasTriedToInitializeDeviceSettings = false;
 };
 
 std::vector<std::pair<std::string, std::filesystem::path>> get_available_fonts()
@@ -255,7 +256,7 @@ liberror::Result<void> render_region_mappers(Context& context, std::vector<libwa
         monitorDefaultArea = libwacom::Area { 0, 0, context.monitor.width, context.monitor.height };
     }
 
-    if (!monitors.empty())
+    if (!monitors.empty() && context.tabletSettings.monitor.name != "INVALID")
     {
         monitorAreaAnchors[0] = { context.tabletSettings.monitor.area.offsetX / monitorDefaultArea.width, context.tabletSettings.monitor.area.offsetY / monitorDefaultArea.height };
         monitorAreaAnchors[1] = { context.tabletSettings.monitor.area.offsetX / monitorDefaultArea.width, (context.tabletSettings.monitor.area.height + context.tabletSettings.monitor.area.offsetY) / monitorDefaultArea.height };
@@ -299,7 +300,7 @@ liberror::Result<void> render_region_mappers(Context& context, std::vector<libwa
         deviceDefaultArea = TRY(libwacom::get_stylus_default_area(context.device.id));
     }
 
-    if (!devices.empty())
+    if (!devices.empty() && context.tabletSettings.device.name != "INVALID")
     {
         deviceAreaAnchors[0] = { context.tabletSettings.device.area.offsetX / deviceDefaultArea.width, context.tabletSettings.device.area.offsetY / deviceDefaultArea.height };
         deviceAreaAnchors[1] = { context.tabletSettings.device.area.offsetX / deviceDefaultArea.width, (context.tabletSettings.device.area.height + context.tabletSettings.device.area.offsetY) / deviceDefaultArea.height };
@@ -435,7 +436,7 @@ liberror::Result<void> render_tablet_settings_tab(Context& context, std::vector<
     {
         static float devicePressureAnchors[4] = {};
 
-        if (!devices.empty())
+        if (!devices.empty() && context.tabletSettings.device.name != "INVALID")
         {
             devicePressureAnchors[0] = context.tabletSettings.device.pressure.minX;
             devicePressureAnchors[1] = context.tabletSettings.device.pressure.minY;
@@ -590,19 +591,18 @@ liberror::Result<void> render_window(Context& context, std::vector<libwacom::Dev
         ImGui::End();
     }
 
-    if (devices.empty() && context.tabletSettings.device.pressure.minX == -1 && context.tabletSettings.device.pressure.minY == -1 && context.tabletSettings.device.area.width == -1 && context.tabletSettings.device.area.height == -1)
+    if (devices.empty() && !context.hasTriedToInitializeDeviceSettings)
     {
+        context.hasTriedToInitializeDeviceSettings = true;
         ImGui::PushToast(
             TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Warning)),
             TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Devices_Missing))
         );
-        context.tabletSettings.device.area = { 0, 0, 0, 0 };
-        context.tabletSettings.device.pressure = { 0, 0, 1, 1 };
-        context.tabletSettings.monitor.area = { 0, 0, context.monitor.width, context.monitor.height };
     }
 
-    if (!devices.empty() && context.tabletSettings.device.pressure.minX == -1 && context.tabletSettings.device.pressure.minY == -1 && context.tabletSettings.device.area.width == -1 && context.tabletSettings.device.area.height == -1)
+    if (!(devices.empty() || context.hasTriedToInitializeDeviceSettings))
     {
+        context.hasTriedToInitializeDeviceSettings = true;
         if (std::filesystem::exists(DEVICE_SETTINGS_FILE))
         {
             auto result = load_tablet_settings(context.tabletSettings);
