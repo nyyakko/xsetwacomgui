@@ -570,23 +570,6 @@ liberror::Result<void> render_window(Context& context, std::vector<libwacom::Dev
                 }
             ImGui::EndGroup();
 
-            if (context.tabletSettings.device.name == "INVALID" && context.tabletSettings.monitor.name == "INVALID")
-            {
-                context.device = devices.back();
-                context.hasChangedDevice = true;
-                context.monitor = *std::ranges::find_if(monitors, &Monitor::primary);
-                context.hasChangedMonitor = true;
-                context.tabletSettings.device.name = context.device.name;
-                context.tabletSettings.device.area = TRY(libwacom::get_stylus_area(context.device.id));
-                context.tabletSettings.device.pressure = TRY(libwacom::get_stylus_pressure_curve(context.device.id));
-                context.tabletSettings.device.forceFullArea = false;
-                context.tabletSettings.device.forceAspectRatio = false;
-                context.tabletSettings.monitor.name = context.monitor.name;
-                context.tabletSettings.monitor.area = libwacom::Area { 0, 0, context.monitor.width, context.monitor.height };
-                context.tabletSettings.monitor.forceFullArea = false;
-                context.tabletSettings.monitor.forceAspectRatio = false;
-            }
-
             ImGui::SetCursorPosY(popupHeight - (25_scaled + ImGui::GetStyle().WindowPadding.y));
             if (ImGui::Button(TRY(Localisation::get(context.applicationSettings.language, Localisation::Popup_Outdated_Device_Settings_Overwrite)), { 0, 25_scaled }))
             {
@@ -953,6 +936,20 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
                     break;
                 }
             }
+
+            context.device = devices.back();
+            context.hasChangedDevice = true;
+            context.monitor = *std::ranges::find_if(monitors, &Monitor::primary);
+            context.hasChangedMonitor = true;
+            context.tabletSettings.device.name = context.device.name;
+            context.tabletSettings.device.area = TRY(libwacom::get_stylus_area(context.device.id));
+            context.tabletSettings.device.pressure = TRY(libwacom::get_stylus_pressure_curve(context.device.id));
+            context.tabletSettings.device.forceFullArea = false;
+            context.tabletSettings.device.forceAspectRatio = false;
+            context.tabletSettings.monitor.name = context.monitor.name;
+            context.tabletSettings.monitor.area = libwacom::Area { 0, 0, context.monitor.width, context.monitor.height };
+            context.tabletSettings.monitor.forceFullArea = false;
+            context.tabletSettings.monitor.forceAspectRatio = false;
         }
         else if (devices.back().name == settings.device.name)
         {
