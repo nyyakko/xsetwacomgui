@@ -235,16 +235,6 @@ liberror::Result<void> render_region_mappers(Context& context, std::vector<libwa
     static ImVec2 monitorAreaAnchors[4] { { -1, -1 }, { -1, -1 }, { -1, -1 }, { -1, -1 } };
     static libwacom::Area monitorDefaultArea = monitors.empty() ? libwacom::Area {} : libwacom::Area { 0, 0, context.monitor.width, context.monitor.height };
 
-    if (context.hasChangedMonitorArea && context.tabletSettings.monitor.name != "INVALID")
-    {
-        context.tabletSettings.monitor.area = {
-            .offsetX = monitorAreaAnchors[0].x * monitorDefaultArea.width,
-            .offsetY = monitorAreaAnchors[0].y * monitorDefaultArea.height,
-            .width   = (monitorAreaAnchors[2].x - monitorAreaAnchors[0].x) * monitorDefaultArea.width,
-            .height  = (monitorAreaAnchors[3].y - monitorAreaAnchors[2].y) * monitorDefaultArea.height
-        };
-    }
-
     if (context.hasChangedMonitorArea && context.tabletSettings.monitor.forceFullArea && context.tabletSettings.monitor.name != "INVALID")
     {
         context.tabletSettings.monitor.area = monitorDefaultArea;
@@ -288,18 +278,18 @@ liberror::Result<void> render_region_mappers(Context& context, std::vector<libwa
     context.hasChangedMonitorArea = area_mapper(TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Monitor_Monitor)), monitorAreaAnchors, monitorMapperSize, &monitorMapperPosition, context.tabletSettings.monitor.forceFullArea, context.tabletSettings.monitor.forceAspectRatio);
     ImGui::SetCursorPosX(cursorX);
 
-    static ImVec2 deviceAreaAnchors[4] { { -1, -1 }, { -1, -1 }, { -1, -1 }, { -1, -1 } };
-    static libwacom::Area deviceDefaultArea = devices.empty() ? libwacom::Area {} : TRY(libwacom::get_stylus_default_area(context.device.id));
-
-    if (context.hasChangedDeviceArea && context.tabletSettings.device.name != "INVALID")
+    if (context.hasChangedMonitorArea && context.tabletSettings.monitor.name != "INVALID")
     {
-        context.tabletSettings.device.area = {
-            .offsetX = deviceAreaAnchors[0].x * deviceDefaultArea.width,
-            .offsetY = deviceAreaAnchors[0].y * deviceDefaultArea.height,
-            .width   = (deviceAreaAnchors[2].x - deviceAreaAnchors[0].x) * deviceDefaultArea.width,
-            .height  = (deviceAreaAnchors[3].y - deviceAreaAnchors[2].y) * deviceDefaultArea.height
+        context.tabletSettings.monitor.area = {
+            .offsetX = monitorAreaAnchors[0].x * monitorDefaultArea.width,
+            .offsetY = monitorAreaAnchors[0].y * monitorDefaultArea.height,
+            .width   = (monitorAreaAnchors[2].x - monitorAreaAnchors[0].x) * monitorDefaultArea.width,
+            .height  = (monitorAreaAnchors[3].y - monitorAreaAnchors[2].y) * monitorDefaultArea.height
         };
     }
+
+    static ImVec2 deviceAreaAnchors[4] { { -1, -1 }, { -1, -1 }, { -1, -1 }, { -1, -1 } };
+    static libwacom::Area deviceDefaultArea = devices.empty() ? libwacom::Area {} : TRY(libwacom::get_stylus_default_area(context.device.id));
 
     if (context.hasChangedDeviceArea && context.tabletSettings.device.forceFullArea && context.tabletSettings.device.name != "INVALID")
     {
@@ -343,6 +333,16 @@ liberror::Result<void> render_region_mappers(Context& context, std::vector<libwa
     static ImRect deviceMapperPosition {};
     context.hasChangedDeviceArea = area_mapper(TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Tablet_Device)), deviceAreaAnchors, deviceMapperSize, &deviceMapperPosition, context.tabletSettings.device.forceFullArea, context.tabletSettings.device.forceAspectRatio);
     ImGui::SetCursorPosX(cursorX);
+
+    if (context.hasChangedDeviceArea && context.tabletSettings.device.name != "INVALID")
+    {
+        context.tabletSettings.device.area = {
+            .offsetX = deviceAreaAnchors[0].x * deviceDefaultArea.width,
+            .offsetY = deviceAreaAnchors[0].y * deviceDefaultArea.height,
+            .width   = (deviceAreaAnchors[2].x - deviceAreaAnchors[0].x) * deviceDefaultArea.width,
+            .height  = (deviceAreaAnchors[3].y - deviceAreaAnchors[2].y) * deviceDefaultArea.height
+        };
+    }
 
     for (auto [monitorAnchor, deviceAnchor] : fplus::zip(std::span<ImVec2>(monitorAreaAnchors, 4), std::span<ImVec2>(deviceAreaAnchors, 4)))
     {
