@@ -1,6 +1,6 @@
 # XSetWacomGUI
 
-This is a frontend for the `xsetwacom` utility.
+A graphical `xsetwacom` wrapper for ease of use.
 
 ![image](https://github.com/user-attachments/assets/911f735e-d48d-4105-b63b-e0baadd2b07e)
 
@@ -13,6 +13,7 @@ This is a frontend for the `xsetwacom` utility.
 
 Before building, make sure you have the following depencies installed on your system:
 
+* udev development package
 * opengl development package
 * glfw development package
 * xrandr
