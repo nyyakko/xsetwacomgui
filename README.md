@@ -38,4 +38,4 @@ For cli documentation, read the docs available at the [documentation](documentat
 
 # Contributing
 
-Just try to follow the general styling of the code and make sure to fork from the `devel` branch.
+Just try to follow the general styling of the code and make sure to work on the `devel` branch.
