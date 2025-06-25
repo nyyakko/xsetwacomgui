@@ -275,10 +275,22 @@ liberror::Result<void> render_region_mappers(Context& context, std::vector<libwa
 
     if (!monitors.empty() && context.tabletSettings.monitor.name != "INVALID")
     {
-        monitorAreaAnchors[0] = { context.tabletSettings.monitor.area.offsetX / monitorDefaultArea.width, context.tabletSettings.monitor.area.offsetY / monitorDefaultArea.height };
-        monitorAreaAnchors[1] = { context.tabletSettings.monitor.area.offsetX / monitorDefaultArea.width, (context.tabletSettings.monitor.area.height + context.tabletSettings.monitor.area.offsetY) / monitorDefaultArea.height };
-        monitorAreaAnchors[2] = { (context.tabletSettings.monitor.area.width + context.tabletSettings.monitor.area.offsetX) / monitorDefaultArea.width, context.tabletSettings.monitor.area.offsetY / monitorDefaultArea.height };
-        monitorAreaAnchors[3] = { (context.tabletSettings.monitor.area.width + context.tabletSettings.monitor.area.offsetX) / monitorDefaultArea.width, (context.tabletSettings.monitor.area.height + context.tabletSettings.monitor.area.offsetY) / monitorDefaultArea.height };
+        monitorAreaAnchors[0] = {
+            context.tabletSettings.monitor.area.offsetX / monitorDefaultArea.width,
+            context.tabletSettings.monitor.area.offsetY / monitorDefaultArea.height
+        };
+        monitorAreaAnchors[1] = {
+            context.tabletSettings.monitor.area.offsetX / monitorDefaultArea.width,
+            (context.tabletSettings.monitor.area.height + context.tabletSettings.monitor.area.offsetY) / monitorDefaultArea.height
+        };
+        monitorAreaAnchors[2] = {
+            (context.tabletSettings.monitor.area.width + context.tabletSettings.monitor.area.offsetX) / monitorDefaultArea.width,
+            context.tabletSettings.monitor.area.offsetY / monitorDefaultArea.height
+        };
+        monitorAreaAnchors[3] = {
+            (context.tabletSettings.monitor.area.width + context.tabletSettings.monitor.area.offsetX) / monitorDefaultArea.width,
+            (context.tabletSettings.monitor.area.height + context.tabletSettings.monitor.area.offsetY) / monitorDefaultArea.height
+        };
     }
     else
     {
@@ -319,10 +331,22 @@ liberror::Result<void> render_region_mappers(Context& context, std::vector<libwa
 
     if (!devices.empty() && context.tabletSettings.device.name != "INVALID")
     {
-        deviceAreaAnchors[0] = { context.tabletSettings.device.area.offsetX / deviceDefaultArea.width, context.tabletSettings.device.area.offsetY / deviceDefaultArea.height };
-        deviceAreaAnchors[1] = { context.tabletSettings.device.area.offsetX / deviceDefaultArea.width, (context.tabletSettings.device.area.height + context.tabletSettings.device.area.offsetY) / deviceDefaultArea.height };
-        deviceAreaAnchors[2] = { (context.tabletSettings.device.area.width + context.tabletSettings.device.area.offsetX) / deviceDefaultArea.width, context.tabletSettings.device.area.offsetY / deviceDefaultArea.height };
-        deviceAreaAnchors[3] = { (context.tabletSettings.device.area.width + context.tabletSettings.device.area.offsetX) / deviceDefaultArea.width, (context.tabletSettings.device.area.height + context.tabletSettings.device.area.offsetY) / deviceDefaultArea.height };
+        deviceAreaAnchors[0] = {
+            context.tabletSettings.device.area.offsetX / deviceDefaultArea.width,
+            context.tabletSettings.device.area.offsetY / deviceDefaultArea.height
+        };
+        deviceAreaAnchors[1] = {
+            context.tabletSettings.device.area.offsetX / deviceDefaultArea.width,
+            (context.tabletSettings.device.area.height + context.tabletSettings.device.area.offsetY) / deviceDefaultArea.height
+        };
+        deviceAreaAnchors[2] = {
+            (context.tabletSettings.device.area.width + context.tabletSettings.device.area.offsetX) / deviceDefaultArea.width,
+            context.tabletSettings.device.area.offsetY / deviceDefaultArea.height
+        };
+        deviceAreaAnchors[3] = {
+            (context.tabletSettings.device.area.width + context.tabletSettings.device.area.offsetX) / deviceDefaultArea.width,
+            (context.tabletSettings.device.area.height + context.tabletSettings.device.area.offsetY) / deviceDefaultArea.height
+        };
     }
     else
     {
