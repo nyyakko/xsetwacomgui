@@ -358,6 +358,13 @@ liberror::Result<void> render_tablet_settings_tab(Context& context, std::vector<
 {
     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - (250_scaled + 300_scaled + ImGui::GetStyle().WindowPadding.x))/2);
 
+    static libwacom::Area deviceDefaultArea = devices.empty() ? libwacom::Area {} : TRY(libwacom::get_stylus_default_area(context.device.id));
+
+    if (context.hasChangedDevice && context.tabletSettings.device.name != "INVALID")
+    {
+        deviceDefaultArea = TRY(libwacom::get_stylus_default_area(context.device.id));
+    }
+
     ImGui::BeginGroup();
     {
         ImGui::AlignTextToFramePadding();
@@ -482,12 +489,29 @@ liberror::Result<void> render_tablet_settings_tab(Context& context, std::vector<
     }
     ImGui::EndGroup();
 
+    if (context.hasChangedDeviceArea && context.tabletSettings.device.name != "INVALID")
+    {
+        context.tabletSettings.device.area = {
+            .offsetX = std::clamp(context.tabletSettings.device.area.offsetX, 0.f, deviceDefaultArea.offsetX),
+            .offsetY = std::clamp(context.tabletSettings.device.area.offsetY, 0.f, deviceDefaultArea.offsetY),
+            .width   = std::clamp(context.tabletSettings.device.area.width, 0.f, deviceDefaultArea.width),
+            .height  = std::clamp(context.tabletSettings.device.area.height, 0.f, deviceDefaultArea.height)
+        };
+    }
+
     return {};
 }
 
 liberror::Result<void> render_monitor_settings_tab(Context& context, std::vector<Monitor> const& monitors)
 {
     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - (300_scaled + ImGui::GetStyle().WindowPadding.x))/2);
+
+    static libwacom::Area monitorDefaultArea = monitors.empty() ? libwacom::Area {} : libwacom::Area { 0, 0, context.monitor.width, context.monitor.height };
+
+    if (context.hasChangedMonitor && context.tabletSettings.monitor.name != "INVALID")
+    {
+        monitorDefaultArea = libwacom::Area { 0, 0, context.monitor.width, context.monitor.height };
+    }
 
     ImGui::BeginGroup();
     {
@@ -563,6 +587,16 @@ liberror::Result<void> render_monitor_settings_tab(Context& context, std::vector
         ImGui::EndDisabled();
     }
     ImGui::EndGroup();
+
+    if (context.hasChangedMonitorArea && context.tabletSettings.monitor.name != "INVALID")
+    {
+        context.tabletSettings.monitor.area = {
+            .offsetX = std::clamp(context.tabletSettings.monitor.area.offsetX, 0.f, monitorDefaultArea.offsetX),
+            .offsetY = std::clamp(context.tabletSettings.monitor.area.offsetY, 0.f, monitorDefaultArea.offsetY),
+            .width   = std::clamp(context.tabletSettings.monitor.area.width, 0.f, monitorDefaultArea.width),
+            .height  = std::clamp(context.tabletSettings.monitor.area.height, 0.f, monitorDefaultArea.height)
+        };
+    }
 
     return {};
 }
