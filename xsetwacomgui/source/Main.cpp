@@ -394,6 +394,7 @@ liberror::Result<void> render_tablet_settings_tab(Context& context, std::vector<
             context.tabletSettings.device.forceAspectRatio = false;
         }
 
+        ImGui::BeginDisabled(context.tabletSettings.device.forceFullArea);
         {
             ImGui::BeginGroup();
             {
@@ -432,6 +433,7 @@ liberror::Result<void> render_tablet_settings_tab(Context& context, std::vector<
             }
             ImGui::EndGroup();
         }
+        ImGui::EndDisabled();
 
         ImGui::AlignTextToFramePadding();
         ImGui::Text("%s", TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Tablet_Orientation)));
@@ -542,6 +544,7 @@ liberror::Result<void> render_monitor_settings_tab(Context& context, std::vector
             context.tabletSettings.monitor.forceAspectRatio = false;
         }
 
+        ImGui::BeginDisabled(context.tabletSettings.monitor.forceFullArea);
         {
             ImGui::BeginGroup();
             {
@@ -580,6 +583,7 @@ liberror::Result<void> render_monitor_settings_tab(Context& context, std::vector
             }
             ImGui::EndGroup();
         }
+        ImGui::EndDisabled();
 
         context.hasChangedMonitorArea |= ImGui::Checkbox(TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Monitor_FullArea)), &context.tabletSettings.monitor.forceFullArea);
         ImGui::BeginDisabled();
