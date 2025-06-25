@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Settings.hpp"
+#include "settings/ApplicationSettings.hpp"
 
 #include <liberror/Result.hpp>
 

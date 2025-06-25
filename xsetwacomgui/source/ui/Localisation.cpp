@@ -1,6 +1,4 @@
-#include "Localisation.hpp"
-
-#include "Environment.hpp"
+#include "ui/Localisation.hpp"
 
 #include <fmt/format.h>
 #include <fplus/fplus.hpp>
@@ -8,6 +6,7 @@
 
 #include <sstream>
 #include <fstream>
+#include <ranges>
 
 liberror::Result<char const*> Localisation::get(ApplicationSettings::Language language, LocalisedMessage id)
 {

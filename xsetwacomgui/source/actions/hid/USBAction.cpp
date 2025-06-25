@@ -1,4 +1,4 @@
-#include "USBAction.hpp"
+#include "actions/hid/USBAction.hpp"
 
 #include <fplus/fplus.hpp>
 #include <liberror/Try.hpp>

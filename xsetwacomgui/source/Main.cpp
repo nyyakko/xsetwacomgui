@@ -2,13 +2,14 @@
 
 #include <spdlog/spdlog.h>
 
-#include "USBAction.hpp"
-#include "Environment.hpp"
-#include "Localisation.hpp"
-#include "Monitor.hpp"
-#include "Scaling.hpp"
-#include "Settings.hpp"
-#include "Widgets.hpp"
+#include "actions/hid/USBAction.hpp"
+#include "platform/Environment.hpp"
+#include "ui/Localisation.hpp"
+#include "platform/Monitor.hpp"
+#include "ui/Scaling.hpp"
+#include "settings/TabletSettings.hpp"
+#include "settings/ApplicationSettings.hpp"
+#include "ui/widgets/AreaMapper.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "external/stb_image/stb_image.h"
@@ -632,7 +633,7 @@ liberror::Result<void> render_window(Context& context, std::vector<libwacom::Dev
     if (!(devices.empty() || context.hasTriedToInitializeDeviceSettings))
     {
         context.hasTriedToInitializeDeviceSettings = true;
-        if (std::filesystem::exists(DEVICE_SETTINGS_FILE))
+        if (std::filesystem::exists(TABLET_SETTINGS_FILE))
         {
             auto result = load_tablet_settings(context.tabletSettings);
 
@@ -759,7 +760,7 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
 
     if (configCommand["--load"] != false)
     {
-        if (!std::filesystem::exists(DEVICE_SETTINGS_FILE))
+        if (!std::filesystem::exists(TABLET_SETTINGS_FILE))
         {
             return liberror::make_error("Device settings could not be found");
         }
