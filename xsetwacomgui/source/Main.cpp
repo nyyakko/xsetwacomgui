@@ -128,24 +128,6 @@ liberror::Result<void> render_settings_popup_display_tab(Context const& context)
     return {};
 }
 
-std::vector<ApplicationSettings::Language> get_available_languages()
-{
-    std::vector<ApplicationSettings::Language> languages {};
-
-    for (auto const& entry : std::filesystem::directory_iterator(get_application_data_path() / "languages"))
-    {
-        if (entry.path().extension() == ".json")
-        {
-            auto languageNameUpper = entry.path().stem().string() | std::views::transform(::toupper);
-            languages.push_back(
-                ApplicationSettings::Language::from_string(std::string(languageNameUpper.begin(), languageNameUpper.end()))
-            );
-        }
-    }
-
-    return languages;
-};
-
 liberror::Result<void> render_settings_popup_language_tab(Context const& context)
 {
     ImGui::Text("%s", TRY(Localisation::get(context.applicationSettings.language, Localisation::Popup_Settings_Tabs_Language_Language)));

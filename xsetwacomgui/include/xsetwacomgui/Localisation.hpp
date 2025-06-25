@@ -83,3 +83,5 @@ public:
     static liberror::Result<char const*> get(ApplicationSettings::Language language, LocalisedMessage id);
 };
 
+std::vector<ApplicationSettings::Language> get_available_languages();
+
