@@ -816,14 +816,18 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
         }
 
         auto device  = devices.front();
-        auto monitor = *std::ranges::find_if(monitors, &Monitor::primary);
+        auto maybeMonitor = std::ranges::find_if(monitors, &Monitor::primary);
+        if (maybeMonitor == monitors.end())
+        {
+            return liberror::make_error("Could not find primary monitor");
+        }
 
         TRY(libwacom::set_stylus_area(device.id, tabletSettings.device.area));
         TRY(libwacom::set_stylus_handedness(device.id, tabletSettings.device.handedness));
         TRY(libwacom::set_stylus_pressure_curve(device.id, tabletSettings.device.pressure));
         TRY(libwacom::set_stylus_output_from_display_area(device.id, {
-            tabletSettings.monitor.area.offsetX + monitor.offsetX,
-            tabletSettings.monitor.area.offsetY + monitor.offsetY,
+            tabletSettings.monitor.area.offsetX + maybeMonitor->offsetX,
+            tabletSettings.monitor.area.offsetY + maybeMonitor->offsetY,
             tabletSettings.monitor.area.width,
             tabletSettings.monitor.area.height,
         }));
@@ -938,11 +942,12 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
         font = io.Fonts->AddFontFromFileTTF(applicationSettings.font.data(), 20_scaled, nullptr, ranges.Data);
     }
 
-    static Context context = [&] () {
+    static Context context = TRY([&] () -> liberror::Result<Context> {
         libwacom::Device device = devices.empty() ? libwacom::Device {} : devices.front();
-        Monitor monitor = *std::ranges::find_if(monitors, &Monitor::primary);
-        return Context { device, monitor, applicationSettings, tabletSettings };
-    }();
+        auto maybeMonitor = std::ranges::find_if(monitors, &Monitor::primary);
+        if (maybeMonitor == monitors.end()) return liberror::make_error("Could not find primary monitor");
+        return Context(device, *maybeMonitor, applicationSettings, tabletSettings);
+    }());
 
     USBAction usbAction {};
 
