@@ -4,6 +4,9 @@
 #include <liberror/Result.hpp>
 #include <libudev.h>
 
+using udev_deleter_t = decltype(&udev_unref);
+using udev_monitor_deleter_t = decltype(&udev_monitor_unref);
+
 class USBAction
 {
 public:
@@ -15,14 +18,12 @@ public:
     )
 
 private:
-    using udev_deleter_t = decltype([] (udev* udev) { udev_unref(udev); });
-    using udev_monitor_deleter_t = decltype([] (udev_monitor* monitor) { udev_monitor_unref(monitor); });
     using listener_t = liberror::Result<void>(std::string_view node, Event event);
 
 public:
     USBAction()
-        : udev(udev_new(), udev_deleter_t{})
-        , monitor(udev_monitor_new_from_netlink(udev.get(), "udev"), udev_monitor_deleter_t{})
+        : udev(udev_new(), udev_unref)
+        , monitor(udev_monitor_new_from_netlink(udev.get(), "udev"), udev_monitor_unref)
         , monitorFd(udev_monitor_get_fd(monitor.get()))
     {
         udev_monitor_filter_add_match_subsystem_devtype(monitor.get(), "usb", NULL);

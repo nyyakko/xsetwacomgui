@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <liberror/Result.hpp>
 #include <nlohmann/json.hpp>
+#include <fmt/format.h>
 
 #include <fstream>
 #include <sstream>

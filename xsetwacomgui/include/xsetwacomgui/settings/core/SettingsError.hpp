@@ -14,28 +14,28 @@ public:
 public:
     using message_t = Type;
 
-    constexpr explicit SettingsError(Type reason) : reason { reason } {}
+    constexpr explicit SettingsError(Type reason) : reason_m { reason } {}
 
     constexpr  SettingsError() noexcept = default;
     constexpr ~SettingsError() noexcept = default;
 
-    constexpr SettingsError(SettingsError const& error) : reason { error.reason } {}
-    constexpr SettingsError(SettingsError&& error) noexcept : reason { std::move(error.reason) } {}
+    constexpr SettingsError(SettingsError const& error) : reason_m { error.reason_m } {}
+    constexpr SettingsError(SettingsError&& error) noexcept : reason_m { std::move(error.reason_m) } {}
 
     constexpr SettingsError& operator=(SettingsError&& error) noexcept
     {
-        reason = std::move(error.reason);
+        reason_m = std::move(error.reason_m);
         return *this;
     }
 
     constexpr SettingsError& operator=(SettingsError const& error)
     {
-        reason = error.reason;
+        reason_m = error.reason_m;
         return *this;
     }
 
-    [[nodiscard]] constexpr auto const& message() const noexcept { return reason; }
+    [[nodiscard]] constexpr auto const& message() const noexcept { return reason_m; }
 
 private:
-    Type reason;
+    Type reason_m;
 };
