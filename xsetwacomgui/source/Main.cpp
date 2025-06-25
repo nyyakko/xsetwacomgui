@@ -4,11 +4,11 @@
 
 #include "actions/hid/USBAction.hpp"
 #include "platform/Environment.hpp"
-#include "ui/Localisation.hpp"
 #include "platform/Monitor.hpp"
-#include "ui/Scaling.hpp"
-#include "settings/TabletSettings.hpp"
 #include "settings/ApplicationSettings.hpp"
+#include "settings/TabletSettings.hpp"
+#include "ui/Localisation.hpp"
+#include "ui/Scaling.hpp"
 #include "ui/widgets/AreaMapper.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
