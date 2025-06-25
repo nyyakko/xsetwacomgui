@@ -46,5 +46,6 @@
     "toastDeviceSettingsSaved": "Successfully saved device settings",
     "toastDeviceSettingsOverwritten": "Successfully overwritten device settings",
     "toastDeviceSettingsLoadFailed": "Failed to load device settings",
+    "toastDeviceSettingsLoadSuccess": "Device settings loaded successfully",
     "toastDeviceSettingsMissing": "No saved device settings could be found, reading directly from xsetwacom instead"
 }

@@ -1,0 +1,8 @@
+add_subdirectory(hid)
+
+set(DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
+set(xsetwacomgui_HeaderFiles ${xsetwacomgui_HeaderFiles}
+    PARENT_SCOPE
+)
+

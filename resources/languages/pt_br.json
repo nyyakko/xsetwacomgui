@@ -46,5 +46,6 @@
     "toastDeviceSettingsSaved": "As configurações do tablet foram salvas com sucesso",
     "toastDeviceSettingsOverwritten": "As configurações do tablet foram sobrescritas com sucesso",
     "toastDeviceSettingsLoadFailed": "Falha ao carregar configurações do tablet",
+    "toastDeviceSettingsLoadSuccess": "As configurações do tablet foram carregadas com sucesso",
     "toastDeviceSettingsMissing": "Não foi possível encontrar configurações para o dispositivo conectado, obtendo informações diretamente do xsetwacom"
 }

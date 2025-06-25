@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Settings.hpp"
+#include "settings/ApplicationSettings.hpp"
 
 #include <liberror/Result.hpp>
 
@@ -69,6 +69,7 @@ public:
         Toast_Device_Settings_Saved,
         Toast_Device_Settings_Overwritten,
         Toast_Device_Settings_Load_Failed,
+        Toast_Device_Settings_Load_Success,
         Toast_Device_Settings_Missing,
         Toast_Devices_Missing,
     };
@@ -81,4 +82,6 @@ public:
 
     static liberror::Result<char const*> get(ApplicationSettings::Language language, LocalisedMessage id);
 };
+
+std::vector<ApplicationSettings::Language> get_available_languages();
 

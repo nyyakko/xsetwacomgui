@@ -1,19 +1,21 @@
-#include <imgui/extensions/imgui_text.hpp>
 #define IMGUI_DEFINE_MATH_OPERATORS
 
 #include <spdlog/spdlog.h>
 
-#include "Environment.hpp"
-#include "Localisation.hpp"
-#include "Monitor.hpp"
-#include "Scaling.hpp"
-#include "Settings.hpp"
-#include "Widgets.hpp"
+#include "actions/hid/USBAction.hpp"
+#include "platform/Environment.hpp"
+#include "ui/Localisation.hpp"
+#include "platform/Monitor.hpp"
+#include "ui/Scaling.hpp"
+#include "settings/TabletSettings.hpp"
+#include "settings/ApplicationSettings.hpp"
+#include "ui/widgets/AreaMapper.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "external/stb_image/stb_image.h"
 
 #include <argparse/argparse.hpp>
+#include <imgui/extensions/imgui_text.hpp>
 #include <imgui/extensions/imgui_toast.hpp>
 #include <imgui/extensions/imgui_bezier.hpp>
 #include <imgui/imgui.hpp>
@@ -26,12 +28,33 @@
 #include <fplus/fplus.hpp>
 #include <scn/scan.h>
 
-#include <mutex>
-#include <filesystem>
-#include <cstdlib>
-#include <span>
 #include <algorithm>
 #include <array>
+#include <cstdlib>
+#include <filesystem>
+#include <mutex>
+#include <span>
+
+struct Context
+{
+    libwacom::Device device;
+    Monitor monitor;
+
+    ApplicationSettings& applicationSettings;
+    TabletSettings& tabletSettings;
+
+    bool handleOutdatedDeviceSettings = false;
+
+    uint8_t hasChangedDevice = false;
+    uint8_t hasChangedDeviceHandedness = false;
+    bool hasChangedDeviceArea = false;
+    bool hasChangedDevicePressure = false;
+    uint8_t hasChangedMonitor = false;
+    bool hasChangedMonitorArea = false;
+    bool hasTriedToInitializeDeviceSettings = false;
+};
+
+static constexpr auto USB_ACTION_MAGIC = 3;
 
 std::vector<std::pair<std::string, std::filesystem::path>> get_available_fonts()
 {
@@ -52,102 +75,99 @@ std::vector<std::pair<std::string, std::filesystem::path>> get_available_fonts()
 
         for (auto const& entry : std::filesystem::recursive_directory_iterator(fontHome))
         {
-            if (entry.path().extension() == ".ttf") fonts.push_back({ entry.path().filename(), entry.path() });
+            if (entry.path().extension() == ".ttf") fonts.push_back({ entry.path().stem(), entry.path() });
         }
     }
 
     return fonts;
 }
 
-liberror::Result<void> render_settings_popup_appearance_tab(ApplicationSettings& settings)
+liberror::Result<void> render_settings_popup_appearance_tab(Context const& context)
 {
-    ImGui::Text("%s", TRY(Localisation::get(settings.language, Localisation::Popup_Settings_Tabs_Appearance_Theme)));
+    ImGui::Text("%s", TRY(Localisation::get(context.applicationSettings.language, Localisation::Popup_Settings_Tabs_Appearance_Theme)));
     char const* themes[] = {
-        TRY(Localisation::get(settings.language, Localisation::Popup_Settings_Tabs_Appearance_Theme_Dark)),
-        TRY(Localisation::get(settings.language, Localisation::Popup_Settings_Tabs_Appearance_Theme_Light))
+        TRY(Localisation::get(context.applicationSettings.language, Localisation::Popup_Settings_Tabs_Appearance_Theme_Dark)),
+        TRY(Localisation::get(context.applicationSettings.language, Localisation::Popup_Settings_Tabs_Appearance_Theme_Light))
     };
-    static int themeIndex = static_cast<int>(settings.theme);
+    static int themeIndex = static_cast<int>(context.applicationSettings.theme);
     auto hasChangedUITheme = ImGui::Combo("##Theme", &themeIndex, themes, std::size(themes));
 
     if (hasChangedUITheme)
     {
-        settings.theme = ApplicationSettings::Theme::from_int(themeIndex);
+        context.applicationSettings.theme = ApplicationSettings::Theme::from_int(themeIndex);
     }
 
-    ImGui::Text("%s", TRY(Localisation::get(settings.language, Localisation::Popup_Settings_Tabs_Appearance_Font)));
+    ImGui::Text("%s", TRY(Localisation::get(context.applicationSettings.language, Localisation::Popup_Settings_Tabs_Appearance_Font)));
     static auto fonts = get_available_fonts();
     static auto fontsData = fplus::transform([] (auto const& font) { return font.first.data(); }, fonts );
     static auto fontIndex = static_cast<int>(
-        std::distance(fonts.begin(), std::ranges::find(fonts, std::filesystem::path(settings.font), &decltype(fonts)::value_type::second))
+        std::distance(fonts.begin(), std::ranges::find(fonts, std::filesystem::path(context.applicationSettings.font), &decltype(fonts)::value_type::second))
     );
     auto hasChangedUIFont = ImGui::Combo("##Font", &fontIndex, fontsData.data(), static_cast<int>(fontsData.size()));
 
     if (hasChangedUIFont)
     {
-        settings.font = fonts.at(static_cast<size_t>(fontIndex)).second;
+        context.applicationSettings.font = fonts.at(static_cast<size_t>(fontIndex)).second;
     }
 
     return {};
 }
 
-liberror::Result<void> render_settings_popup_display_tab(ApplicationSettings& settings)
+liberror::Result<void> render_settings_popup_display_tab(Context const& context)
 {
-    ImGui::Text("%s", TRY(Localisation::get(settings.language, Localisation::Popup_Settings_Tabs_Display_Scale)));
-    static float scale = settings.scale;
+    ImGui::Text("%s", TRY(Localisation::get(context.applicationSettings.language, Localisation::Popup_Settings_Tabs_Display_Scale)));
+    static float scale = context.applicationSettings.scale;
     auto hasChangedUIScale = ImGui::InputFloat("##UiScale", &scale, 0.1f);
 
     if (hasChangedUIScale)
     {
         scale = ImClamp(scale, 1.0f, 10.f);
-        settings.scale = scale;
+        context.applicationSettings.scale = scale;
     }
 
     return {};
 }
 
-liberror::Result<void> render_settings_popup_language_tab(ApplicationSettings& settings)
+liberror::Result<void> render_settings_popup_language_tab(Context const& context)
 {
-    ImGui::Text("%s", TRY(Localisation::get(settings.language, Localisation::Popup_Settings_Tabs_Language_Language)));
+    ImGui::Text("%s", TRY(Localisation::get(context.applicationSettings.language, Localisation::Popup_Settings_Tabs_Language_Language)));
 
-    static constexpr char const* languages[] {
-        ApplicationSettings::Language::EN_US,
-        ApplicationSettings::Language::PT_BR,
-        // ApplicationSettings::Language::RU_RU,
-    };
+    static auto languages = get_available_languages();
+    static auto languagesData = fplus::transform(std::bind_front(&ApplicationSettings::Language::to_string), languages);
 
     static int languageIndex = static_cast<int>(
-        std::distance(&languages[0], std::ranges::find(&languages[0], &languages[std::size(languages)], settings.language.to_string()))
+        std::distance(languages.begin(), std::ranges::find(languages, context.applicationSettings.language))
     );
 
-    auto hasChangedUILanguage = ImGui::Combo("##Language", &languageIndex, languages, std::size(languages));
+    auto hasChangedUILanguage = ImGui::Combo("##Language", &languageIndex, languagesData.data(), static_cast<int>(languages.size()));
 
     if (hasChangedUILanguage)
     {
-        settings.language = ApplicationSettings::Language::from_string(languages[languageIndex]);
+        context.applicationSettings.language = languages.at(static_cast<size_t>(languageIndex));
     }
 
     return {};
 }
 
-liberror::Result<void> render_settings_popup(ApplicationSettings& settings)
+liberror::Result<void> render_settings_popup(Context const& context)
 {
     if (ImGui::BeginTabBar("##Tabs_2"))
     {
-        if (ImGui::BeginTabItem(TRY(Localisation::get(settings.language, Localisation::Popup_Settings_Tabs_Appearance_Title))))
+        if (ImGui::BeginTabItem(TRY(Localisation::get(context.applicationSettings.language, Localisation::Popup_Settings_Tabs_Appearance_Title))))
         {
-            render_settings_popup_appearance_tab(settings);
+            render_settings_popup_appearance_tab(context);
             ImGui::EndTabItem();
         }
 
-        if (ImGui::BeginTabItem(TRY(Localisation::get(settings.language, Localisation::Popup_Settings_Tabs_Display_Title))))
+        if (ImGui::BeginTabItem(TRY(Localisation::get(context.applicationSettings.language, Localisation::Popup_Settings_Tabs_Display_Title))))
         {
-            render_settings_popup_display_tab(settings);
+            render_settings_popup_display_tab(context);
             ImGui::EndTabItem();
         }
 
-        if (ImGui::BeginTabItem(TRY(Localisation::get(settings.language, Localisation::Popup_Settings_Tabs_Language_Title))))
+        if (ImGui::BeginTabItem(TRY(Localisation::get(context.applicationSettings.language, Localisation::Popup_Settings_Tabs_Language_Title))))
         {
-            render_settings_popup_language_tab(settings);
+            render_settings_popup_language_tab(context);
             ImGui::EndTabItem();
         }
 
@@ -156,10 +176,13 @@ liberror::Result<void> render_settings_popup(ApplicationSettings& settings)
 
     auto previousCursorPosition = ImGui::GetCursorPos();
     ImGui::SetCursorPosY(ImGui::GetWindowHeight() - (25_scaled + ImGui::GetStyle().WindowPadding.x));
-    if (ImGui::Button(TRY(Localisation::get(settings.language, Localisation::Save)), { 100_scaled, 25_scaled }))
+    if (ImGui::Button(TRY(Localisation::get(context.applicationSettings.language, Localisation::Save)), { 100_scaled, 25_scaled }))
     {
-        ImGui::PushToast(TRY(Localisation::get(settings.language, Localisation::Toast_Success)), TRY(Localisation::get(settings.language, Localisation::Toast_Application_Settings_Saved)));
-        save_application_settings(settings);
+        ImGui::PushToast(
+            TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Success)),
+            TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Application_Settings_Saved))
+        );
+        save_application_settings(context.applicationSettings);
     }
     ImGui::SetCursorPos(previousCursorPosition);
 
@@ -190,36 +213,21 @@ void render_goddess_popup()
     ImGui::Image(imageTexture, frameDimensions);
 }
 
-struct Context
+liberror::Result<void> apply_settings_to_device(Context const& context)
 {
-    libwacom::Device device;
-    Monitor monitor;
-
-    bool handleOutdatedDeviceSettings = false;
-
-    bool hasChangedDevice = false;
-    bool hasChangedDeviceHandedness = false;
-    bool hasChangedDeviceArea = false;
-    bool hasChangedDevicePressure = false;
-    bool hasChangedMonitor = false;
-    bool hasChangedMonitorArea = false;
-};
-
-liberror::Result<void> set_settings_to_device(Context const& context, DeviceSettings const& settings)
-{
-    TRY(libwacom::set_stylus_area(context.device.id, settings.deviceArea));
-    TRY(libwacom::set_stylus_handedness(context.device.id, settings.deviceHandedness));
-    TRY(libwacom::set_stylus_pressure_curve(context.device.id, settings.devicePressure));
+    TRY(libwacom::set_stylus_area(context.device.id, context.tabletSettings.device.area));
+    TRY(libwacom::set_stylus_handedness(context.device.id, context.tabletSettings.device.handedness));
+    TRY(libwacom::set_stylus_pressure_curve(context.device.id, context.tabletSettings.device.pressure));
     TRY(libwacom::set_stylus_output_from_display_area(context.device.id, {
-        settings.monitorArea.offsetX + context.monitor.offsetX,
-        settings.monitorArea.offsetY + context.monitor.offsetY,
-        settings.monitorArea.width,
-        settings.monitorArea.height,
+        context.tabletSettings.monitor.area.offsetX + context.monitor.offsetX,
+        context.tabletSettings.monitor.area.offsetY + context.monitor.offsetY,
+        context.tabletSettings.monitor.area.width,
+        context.tabletSettings.monitor.area.height,
     }));
     return {};
 }
 
-liberror::Result<void> render_region_mappers(Context& context, ApplicationSettings const& applicationSettings, DeviceSettings& deviceSettings, std::vector<libwacom::Device> const& devices, std::vector<Monitor> const& monitors)
+liberror::Result<void> render_region_mappers(Context& context, std::vector<libwacom::Device> const& devices, std::vector<Monitor> const& monitors)
 {
     auto [cursorX, cursorY] = ImGui::GetCursorPos();
     ImDrawList* drawList = ImGui::GetWindowDrawList();
@@ -227,17 +235,44 @@ liberror::Result<void> render_region_mappers(Context& context, ApplicationSettin
     static ImVec2 monitorAreaAnchors[4] { { -1, -1 }, { -1, -1 }, { -1, -1 }, { -1, -1 } };
     static libwacom::Area monitorDefaultArea = monitors.empty() ? libwacom::Area {} : libwacom::Area { 0, 0, context.monitor.width, context.monitor.height };
 
-    if (context.hasChangedMonitor)
+    if (context.hasChangedMonitorArea && context.tabletSettings.monitor.name != "INVALID")
+    {
+        context.tabletSettings.monitor.area = {
+            .offsetX = monitorAreaAnchors[0].x * monitorDefaultArea.width,
+            .offsetY = monitorAreaAnchors[0].y * monitorDefaultArea.height,
+            .width   = (monitorAreaAnchors[2].x - monitorAreaAnchors[0].x) * monitorDefaultArea.width,
+            .height  = (monitorAreaAnchors[3].y - monitorAreaAnchors[2].y) * monitorDefaultArea.height
+        };
+    }
+
+    if (context.hasChangedMonitorArea && context.tabletSettings.monitor.forceFullArea && context.tabletSettings.monitor.name != "INVALID")
+    {
+        context.tabletSettings.monitor.area = monitorDefaultArea;
+    }
+
+    if (context.hasChangedMonitor && context.tabletSettings.monitor.name != "INVALID")
     {
         monitorDefaultArea = libwacom::Area { 0, 0, context.monitor.width, context.monitor.height };
     }
 
-    if (!monitors.empty())
+    if (!monitors.empty() && context.tabletSettings.monitor.name != "INVALID")
     {
-        monitorAreaAnchors[0] = { deviceSettings.monitorArea.offsetX / monitorDefaultArea.width, deviceSettings.monitorArea.offsetY / monitorDefaultArea.height };
-        monitorAreaAnchors[1] = { deviceSettings.monitorArea.offsetX / monitorDefaultArea.width, (deviceSettings.monitorArea.height + deviceSettings.monitorArea.offsetY) / monitorDefaultArea.height };
-        monitorAreaAnchors[2] = { (deviceSettings.monitorArea.width + deviceSettings.monitorArea.offsetX) / monitorDefaultArea.width, deviceSettings.monitorArea.offsetY / monitorDefaultArea.height };
-        monitorAreaAnchors[3] = { (deviceSettings.monitorArea.width + deviceSettings.monitorArea.offsetX) / monitorDefaultArea.width, (deviceSettings.monitorArea.height + deviceSettings.monitorArea.offsetY) / monitorDefaultArea.height };
+        monitorAreaAnchors[0] = {
+            context.tabletSettings.monitor.area.offsetX / monitorDefaultArea.width,
+            context.tabletSettings.monitor.area.offsetY / monitorDefaultArea.height
+        };
+        monitorAreaAnchors[1] = {
+            context.tabletSettings.monitor.area.offsetX / monitorDefaultArea.width,
+            (context.tabletSettings.monitor.area.height + context.tabletSettings.monitor.area.offsetY) / monitorDefaultArea.height
+        };
+        monitorAreaAnchors[2] = {
+            (context.tabletSettings.monitor.area.width + context.tabletSettings.monitor.area.offsetX) / monitorDefaultArea.width,
+            context.tabletSettings.monitor.area.offsetY / monitorDefaultArea.height
+        };
+        monitorAreaAnchors[3] = {
+            (context.tabletSettings.monitor.area.width + context.tabletSettings.monitor.area.offsetX) / monitorDefaultArea.width,
+            (context.tabletSettings.monitor.area.height + context.tabletSettings.monitor.area.offsetY) / monitorDefaultArea.height
+        };
     }
     else
     {
@@ -250,38 +285,50 @@ liberror::Result<void> render_region_mappers(Context& context, ApplicationSettin
     static const ImVec2 monitorMapperSize { 20 * 16_scaled, 20 * 9_scaled };
     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - monitorMapperSize.x)/2);
     static ImRect monitorMapperPosition {};
-    context.hasChangedMonitorArea |= area_mapper(TRY(Localisation::get(applicationSettings.language, Localisation::Tabs_Monitor_Monitor)), monitorAreaAnchors, monitorMapperSize, &monitorMapperPosition, deviceSettings.monitorForceFullArea, deviceSettings.monitorForceAspectRatio);
+    context.hasChangedMonitorArea = area_mapper(TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Monitor_Monitor)), monitorAreaAnchors, monitorMapperSize, &monitorMapperPosition, context.tabletSettings.monitor.forceFullArea, context.tabletSettings.monitor.forceAspectRatio);
     ImGui::SetCursorPosX(cursorX);
-
-    if (context.hasChangedMonitorArea)
-    {
-        deviceSettings.monitorArea = {
-            .offsetX = monitorAreaAnchors[0].x * monitorDefaultArea.width,
-            .offsetY = monitorAreaAnchors[0].y * monitorDefaultArea.height,
-            .width   = (monitorAreaAnchors[2].x - monitorAreaAnchors[0].x) * monitorDefaultArea.width,
-            .height  = (monitorAreaAnchors[3].y - monitorAreaAnchors[2].y) * monitorDefaultArea.height
-        };
-    }
-
-    if (context.hasChangedMonitorArea && deviceSettings.monitorForceFullArea)
-    {
-        deviceSettings.monitorArea = monitorDefaultArea;
-    }
 
     static ImVec2 deviceAreaAnchors[4] { { -1, -1 }, { -1, -1 }, { -1, -1 }, { -1, -1 } };
     static libwacom::Area deviceDefaultArea = devices.empty() ? libwacom::Area {} : TRY(libwacom::get_stylus_default_area(context.device.id));
 
-    if (context.hasChangedDevice)
+    if (context.hasChangedDeviceArea && context.tabletSettings.device.name != "INVALID")
+    {
+        context.tabletSettings.device.area = {
+            .offsetX = deviceAreaAnchors[0].x * deviceDefaultArea.width,
+            .offsetY = deviceAreaAnchors[0].y * deviceDefaultArea.height,
+            .width   = (deviceAreaAnchors[2].x - deviceAreaAnchors[0].x) * deviceDefaultArea.width,
+            .height  = (deviceAreaAnchors[3].y - deviceAreaAnchors[2].y) * deviceDefaultArea.height
+        };
+    }
+
+    if (context.hasChangedDeviceArea && context.tabletSettings.device.forceFullArea && context.tabletSettings.device.name != "INVALID")
+    {
+        context.tabletSettings.device.area = deviceDefaultArea;
+    }
+
+    if (context.hasChangedDevice && context.tabletSettings.device.name != "INVALID")
     {
         deviceDefaultArea = TRY(libwacom::get_stylus_default_area(context.device.id));
     }
 
-    if (!devices.empty())
+    if (!devices.empty() && context.tabletSettings.device.name != "INVALID")
     {
-        deviceAreaAnchors[0] = { deviceSettings.deviceArea.offsetX / deviceDefaultArea.width, deviceSettings.deviceArea.offsetY / deviceDefaultArea.height };
-        deviceAreaAnchors[1] = { deviceSettings.deviceArea.offsetX / deviceDefaultArea.width, (deviceSettings.deviceArea.height + deviceSettings.deviceArea.offsetY) / deviceDefaultArea.height };
-        deviceAreaAnchors[2] = { (deviceSettings.deviceArea.width + deviceSettings.deviceArea.offsetX) / deviceDefaultArea.width, deviceSettings.deviceArea.offsetY / deviceDefaultArea.height };
-        deviceAreaAnchors[3] = { (deviceSettings.deviceArea.width + deviceSettings.deviceArea.offsetX) / deviceDefaultArea.width, (deviceSettings.deviceArea.height + deviceSettings.deviceArea.offsetY) / deviceDefaultArea.height };
+        deviceAreaAnchors[0] = {
+            context.tabletSettings.device.area.offsetX / deviceDefaultArea.width,
+            context.tabletSettings.device.area.offsetY / deviceDefaultArea.height
+        };
+        deviceAreaAnchors[1] = {
+            context.tabletSettings.device.area.offsetX / deviceDefaultArea.width,
+            (context.tabletSettings.device.area.height + context.tabletSettings.device.area.offsetY) / deviceDefaultArea.height
+        };
+        deviceAreaAnchors[2] = {
+            (context.tabletSettings.device.area.width + context.tabletSettings.device.area.offsetX) / deviceDefaultArea.width,
+            context.tabletSettings.device.area.offsetY / deviceDefaultArea.height
+        };
+        deviceAreaAnchors[3] = {
+            (context.tabletSettings.device.area.width + context.tabletSettings.device.area.offsetX) / deviceDefaultArea.width,
+            (context.tabletSettings.device.area.height + context.tabletSettings.device.area.offsetY) / deviceDefaultArea.height
+        };
     }
     else
     {
@@ -294,23 +341,8 @@ liberror::Result<void> render_region_mappers(Context& context, ApplicationSettin
     static const ImVec2 deviceMapperSize { 15 * 16_scaled, 15 * 9_scaled };
     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - deviceMapperSize.x)/2);
     static ImRect deviceMapperPosition {};
-    context.hasChangedDeviceArea |= area_mapper(TRY(Localisation::get(applicationSettings.language, Localisation::Tabs_Tablet_Device)), deviceAreaAnchors, deviceMapperSize, &deviceMapperPosition, deviceSettings.deviceForceFullArea, deviceSettings.deviceForceAspectRatio);
+    context.hasChangedDeviceArea = area_mapper(TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Tablet_Device)), deviceAreaAnchors, deviceMapperSize, &deviceMapperPosition, context.tabletSettings.device.forceFullArea, context.tabletSettings.device.forceAspectRatio);
     ImGui::SetCursorPosX(cursorX);
-
-    if (context.hasChangedDeviceArea)
-    {
-        deviceSettings.deviceArea = {
-            .offsetX = deviceAreaAnchors[0].x * deviceDefaultArea.width,
-            .offsetY = deviceAreaAnchors[0].y * deviceDefaultArea.height,
-            .width   = (deviceAreaAnchors[2].x - deviceAreaAnchors[0].x) * deviceDefaultArea.width,
-            .height  = (deviceAreaAnchors[3].y - deviceAreaAnchors[2].y) * deviceDefaultArea.height
-        };
-    }
-
-    if (context.hasChangedDeviceArea && deviceSettings.deviceForceFullArea)
-    {
-        deviceSettings.deviceArea = deviceDefaultArea;
-    }
 
     for (auto [monitorAnchor, deviceAnchor] : fplus::zip(std::span<ImVec2>(monitorAreaAnchors, 4), std::span<ImVec2>(deviceAreaAnchors, 4)))
     {
@@ -322,44 +354,55 @@ liberror::Result<void> render_region_mappers(Context& context, ApplicationSettin
     return {};
 }
 
-liberror::Result<void> render_tablet_settings_tab(Context& context, ApplicationSettings const& applicationSettings, DeviceSettings& deviceSettings, std::vector<libwacom::Device> const& devices)
+liberror::Result<void> render_tablet_settings_tab(Context& context, std::vector<libwacom::Device> const& devices)
 {
     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - (250_scaled + 300_scaled + ImGui::GetStyle().WindowPadding.x))/2);
 
     ImGui::BeginGroup();
     {
         ImGui::AlignTextToFramePadding();
-        ImGui::Text("%s", TRY(Localisation::get(applicationSettings.language, Localisation::Tabs_Tablet_Device)));
+        ImGui::Text("%s", TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Tablet_Device)));
         auto deviceNames = fplus::transform([] (libwacom::Device const& device) { return device.name.data(); }, devices);
         ImGui::SetNextItemWidth(300_scaled + ImGui::GetStyle().WindowPadding.x);
-        static int deviceIndex = deviceSettings.deviceName == "INVALID" ? 0 : static_cast<int>(
-            std::distance(devices.begin(), std::ranges::find(devices, deviceSettings.deviceName, &libwacom::Device::name))
+        static int deviceIndex = context.tabletSettings.device.name == "INVALID" ? 0 : static_cast<int>(
+            std::distance(devices.begin(), std::ranges::find(devices, context.tabletSettings.device.name, &libwacom::Device::name))
         );
+
+        if (context.hasChangedDevice && (context.hasChangedDevice & USB_ACTION_MAGIC) == 0)
+        {
+            deviceIndex = context.tabletSettings.device.name == "INVALID" ? 0 : static_cast<int>(
+                std::distance(devices.begin(), std::ranges::find(devices, context.tabletSettings.device.name, &libwacom::Device::name))
+            );
+        }
+
         context.hasChangedDevice = ImGui::Combo("##Device", &deviceIndex, deviceNames.data(), static_cast<int>(deviceNames.size()));
 
         if (context.hasChangedDevice)
         {
             context.device = devices.at(static_cast<size_t>(deviceIndex));
-            deviceSettings.deviceName = context.device.name;
-            deviceSettings.deviceArea = TRY(libwacom::get_stylus_default_area(context.device.id));
+            context.tabletSettings.device.name = context.device.name;
+            context.tabletSettings.device.area = TRY(libwacom::get_stylus_default_area(context.device.id));
+            context.tabletSettings.device.pressure = { 0, 0, 1, 1 };
+            context.tabletSettings.device.forceFullArea = false;
+            context.tabletSettings.device.forceAspectRatio = false;
         }
 
         {
             ImGui::BeginGroup();
             {
                 ImGui::AlignTextToFramePadding();
-                ImGui::Text("%s", TRY(Localisation::get(applicationSettings.language, Localisation::Tabs_Tablet_Width)));
+                ImGui::Text("%s", TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Tablet_Width)));
                 ImGui::SetNextItemWidth(150_scaled);
-                context.hasChangedDeviceArea |= ImGui::InputFloat("##TabletWidth", &deviceSettings.deviceArea.width, 0.f, 0.f, "%.0f");
+                context.hasChangedDeviceArea |= ImGui::InputFloat("##TabletWidth", &context.tabletSettings.device.area.width, 0.f, 0.f, "%.0f");
             }
             ImGui::EndGroup();
             ImGui::SameLine();
             ImGui::BeginGroup();
             {
                 ImGui::AlignTextToFramePadding();
-                ImGui::Text("%s", TRY(Localisation::get(applicationSettings.language, Localisation::Tabs_Tablet_Height)));
+                ImGui::Text("%s", TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Tablet_Height)));
                 ImGui::SetNextItemWidth(150_scaled);
-                context.hasChangedDeviceArea |= ImGui::InputFloat("##TabletHeight", &deviceSettings.deviceArea.height, 0.f, 0.f, "%.0f");
+                context.hasChangedDeviceArea |= ImGui::InputFloat("##TabletHeight", &context.tabletSettings.device.area.height, 0.f, 0.f, "%.0f");
             }
             ImGui::EndGroup();
         }
@@ -367,40 +410,45 @@ liberror::Result<void> render_tablet_settings_tab(Context& context, ApplicationS
             ImGui::BeginGroup();
             {
                 ImGui::AlignTextToFramePadding();
-                ImGui::Text("%s", TRY(Localisation::get(applicationSettings.language, Localisation::Tabs_Tablet_OffsetX)));
+                ImGui::Text("%s", TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Tablet_OffsetX)));
                 ImGui::SetNextItemWidth(150_scaled);
-                context.hasChangedDeviceArea |= ImGui::InputFloat("##TabletOffsetX", &deviceSettings.deviceArea.offsetX, 0.f, 0.f, "%.0f");
+                context.hasChangedDeviceArea |= ImGui::InputFloat("##TabletOffsetX", &context.tabletSettings.device.area.offsetX, 0.f, 0.f, "%.0f");
             }
             ImGui::EndGroup();
             ImGui::SameLine();
             ImGui::BeginGroup();
             {
                 ImGui::AlignTextToFramePadding();
-                ImGui::Text("%s", TRY(Localisation::get(applicationSettings.language, Localisation::Tabs_Tablet_OffsetY)));
+                ImGui::Text("%s", TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Tablet_OffsetY)));
                 ImGui::SetNextItemWidth(150_scaled);
-                context.hasChangedDeviceArea |= ImGui::InputFloat("##TabletOffsetY", &deviceSettings.deviceArea.offsetY, 0.f, 0.f, "%.0f");
+                context.hasChangedDeviceArea |= ImGui::InputFloat("##TabletOffsetY", &context.tabletSettings.device.area.offsetY, 0.f, 0.f, "%.0f");
             }
             ImGui::EndGroup();
         }
 
         ImGui::AlignTextToFramePadding();
-        ImGui::Text("%s", TRY(Localisation::get(applicationSettings.language, Localisation::Tabs_Tablet_Orientation)));
+        ImGui::Text("%s", TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Tablet_Orientation)));
         char const* orientations[] = {
-            TRY(Localisation::get(applicationSettings.language, Localisation::Tabs_Tablet_Orientation_Left)),
-            TRY(Localisation::get(applicationSettings.language, Localisation::Tabs_Tablet_Orientation_Right)),
+            TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Tablet_Orientation_Left)),
+            TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Tablet_Orientation_Right)),
         };
         ImGui::SetNextItemWidth(150_scaled);
-        static int orientationIndex = static_cast<int>(deviceSettings.deviceHandedness.to_int());
+        static int orientationIndex = static_cast<int>(context.tabletSettings.device.handedness.to_int());
+        if (context.hasChangedDeviceHandedness && (context.hasChangedDeviceHandedness & USB_ACTION_MAGIC) == 0)
+        {
+            orientationIndex = static_cast<int>(context.tabletSettings.device.handedness.to_int());
+        }
+
         context.hasChangedDeviceHandedness = ImGui::Combo("##Orientations", &orientationIndex, orientations, std::size(orientations));
 
         if (context.hasChangedDeviceHandedness)
         {
-            deviceSettings.deviceHandedness = libwacom::Handedness::from_int(orientationIndex);
+            context.tabletSettings.device.handedness = libwacom::Handedness::from_int(orientationIndex);
         }
 
-        context.hasChangedDeviceArea |= ImGui::Checkbox(TRY(Localisation::get(applicationSettings.language, Localisation::Tabs_Tablet_FullArea)), &deviceSettings.deviceForceFullArea);
+        context.hasChangedDeviceArea |= ImGui::Checkbox(TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Tablet_FullArea)), &context.tabletSettings.device.forceFullArea);
         ImGui::BeginDisabled();
-        ImGui::Checkbox(TRY(Localisation::get(applicationSettings.language, Localisation::Tabs_Tablet_ForceProportions)), &deviceSettings.deviceForceAspectRatio);
+        ImGui::Checkbox(TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Tablet_ForceProportions)), &context.tabletSettings.device.forceAspectRatio);
         ImGui::EndDisabled();
     }
     ImGui::EndGroup();
@@ -409,12 +457,12 @@ liberror::Result<void> render_tablet_settings_tab(Context& context, ApplicationS
     {
         static float devicePressureAnchors[4] = {};
 
-        if (!devices.empty())
+        if (!devices.empty() && context.tabletSettings.device.name != "INVALID")
         {
-            devicePressureAnchors[0] = deviceSettings.devicePressure.minX;
-            devicePressureAnchors[1] = deviceSettings.devicePressure.minY;
-            devicePressureAnchors[2] = deviceSettings.devicePressure.maxX;
-            devicePressureAnchors[3] = deviceSettings.devicePressure.maxY;
+            devicePressureAnchors[0] = context.tabletSettings.device.pressure.minX;
+            devicePressureAnchors[1] = context.tabletSettings.device.pressure.minY;
+            devicePressureAnchors[2] = context.tabletSettings.device.pressure.maxX;
+            devicePressureAnchors[3] = context.tabletSettings.device.pressure.maxY;
         }
         else
         {
@@ -425,11 +473,11 @@ liberror::Result<void> render_tablet_settings_tab(Context& context, ApplicationS
         }
 
         ImGui::AlignTextToFramePadding();
-        context.hasChangedDevicePressure = ImGui::BezierEditor(TRY(Localisation::get(applicationSettings.language, Localisation::Tabs_Tablet_PressureCurve)), devicePressureAnchors, { 250_scaled, 250_scaled });
+        context.hasChangedDevicePressure = ImGui::BezierEditor(TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Tablet_PressureCurve)), devicePressureAnchors, { 250_scaled, 250_scaled });
 
         if (context.hasChangedDevicePressure)
         {
-            deviceSettings.devicePressure = { devicePressureAnchors[0], devicePressureAnchors[1], devicePressureAnchors[2], devicePressureAnchors[3] };
+            context.tabletSettings.device.pressure = { devicePressureAnchors[0], devicePressureAnchors[1], devicePressureAnchors[2], devicePressureAnchors[3] };
         }
     }
     ImGui::EndGroup();
@@ -437,45 +485,55 @@ liberror::Result<void> render_tablet_settings_tab(Context& context, ApplicationS
     return {};
 }
 
-liberror::Result<void> render_monitor_settings_tab(Context& context, ApplicationSettings const& applicationSettings, DeviceSettings& deviceSettings, std::vector<Monitor> const& monitors)
+liberror::Result<void> render_monitor_settings_tab(Context& context, std::vector<Monitor> const& monitors)
 {
     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - (300_scaled + ImGui::GetStyle().WindowPadding.x))/2);
 
     ImGui::BeginGroup();
     {
         ImGui::AlignTextToFramePadding();
-        ImGui::Text("%s", TRY(Localisation::get(applicationSettings.language, Localisation::Tabs_Monitor_Monitor)));
+        ImGui::Text("%s", TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Monitor_Monitor)));
         auto monitorNames = fplus::transform([] (Monitor const& monitor) { return fmt::format("{} ({}x{})", monitor.name, monitor.width, monitor.height); }, monitors);
         auto monitorNamesData = fplus::transform([] (std::string const& name) { return name.data(); }, monitorNames);
         ImGui::SetNextItemWidth(300_scaled + ImGui::GetStyle().WindowPadding.x);
-        static int monitorIndex = deviceSettings.monitorName == "INVALID" ? 0 : static_cast<int>(
-            std::distance(monitors.begin(), std::ranges::find(monitors, deviceSettings.monitorName, &Monitor::name))
+        static int monitorIndex = context.tabletSettings.monitor.name == "INVALID" ? 0 : static_cast<int>(
+            std::distance(monitors.begin(), std::ranges::find(monitors, context.tabletSettings.monitor.name, &Monitor::name))
         );
+
+        if (context.hasChangedMonitor && (context.hasChangedMonitor & USB_ACTION_MAGIC) == 0)
+        {
+            monitorIndex = context.tabletSettings.monitor.name == "INVALID" ? 0 : static_cast<int>(
+                std::distance(monitors.begin(), std::ranges::find(monitors, context.tabletSettings.monitor.name, &Monitor::name))
+            );
+        }
+
         context.hasChangedMonitor = ImGui::Combo("##Monitors", &monitorIndex, monitorNamesData.data(), static_cast<int>(monitorNamesData.size()));
 
         if (context.hasChangedMonitor)
         {
             context.monitor = monitors.at(static_cast<size_t>(monitorIndex));
-            deviceSettings.monitorName = context.monitor.name;
-            deviceSettings.monitorArea = libwacom::Area { 0, 0, context.monitor.width, context.monitor.height };
+            context.tabletSettings.monitor.name = context.monitor.name;
+            context.tabletSettings.monitor.area = libwacom::Area { 0, 0, context.monitor.width, context.monitor.height };
+            context.tabletSettings.monitor.forceFullArea = false;
+            context.tabletSettings.monitor.forceAspectRatio = false;
         }
 
         {
             ImGui::BeginGroup();
             {
                 ImGui::AlignTextToFramePadding();
-                ImGui::Text("%s", TRY(Localisation::get(applicationSettings.language, Localisation::Tabs_Monitor_Width)));
+                ImGui::Text("%s", TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Monitor_Width)));
                 ImGui::SetNextItemWidth(150_scaled);
-                context.hasChangedMonitorArea |= ImGui::InputFloat("##MonitorWidth", &deviceSettings.monitorArea.width, 0.f, 0.f, "%.0f");
+                context.hasChangedMonitorArea |= ImGui::InputFloat("##MonitorWidth", &context.tabletSettings.monitor.area.width, 0.f, 0.f, "%.0f");
             }
             ImGui::EndGroup();
             ImGui::SameLine();
             ImGui::BeginGroup();
             {
                 ImGui::AlignTextToFramePadding();
-                ImGui::Text("%s", TRY(Localisation::get(applicationSettings.language, Localisation::Tabs_Monitor_Height)));
+                ImGui::Text("%s", TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Monitor_Height)));
                 ImGui::SetNextItemWidth(150_scaled);
-                context.hasChangedMonitorArea |= ImGui::InputFloat("##MonitorHeight", &deviceSettings.monitorArea.height, 0.f, 0.f, "%.0f");
+                context.hasChangedMonitorArea |= ImGui::InputFloat("##MonitorHeight", &context.tabletSettings.monitor.area.height, 0.f, 0.f, "%.0f");
             }
             ImGui::EndGroup();
         }
@@ -483,25 +541,25 @@ liberror::Result<void> render_monitor_settings_tab(Context& context, Application
             ImGui::BeginGroup();
             {
                 ImGui::AlignTextToFramePadding();
-                ImGui::Text("%s", TRY(Localisation::get(applicationSettings.language, Localisation::Tabs_Monitor_OffsetX)));
+                ImGui::Text("%s", TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Monitor_OffsetX)));
                 ImGui::SetNextItemWidth(150_scaled);
-                context.hasChangedMonitorArea |= ImGui::InputFloat("##MonitorOffsetX", &deviceSettings.monitorArea.offsetX, 0.f, 0.f, "%.0f");
+                context.hasChangedMonitorArea |= ImGui::InputFloat("##MonitorOffsetX", &context.tabletSettings.monitor.area.offsetX, 0.f, 0.f, "%.0f");
             }
             ImGui::EndGroup();
             ImGui::SameLine();
             ImGui::BeginGroup();
             {
                 ImGui::AlignTextToFramePadding();
-                ImGui::Text("%s", TRY(Localisation::get(applicationSettings.language, Localisation::Tabs_Monitor_OffsetY)));
+                ImGui::Text("%s", TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Monitor_OffsetY)));
                 ImGui::SetNextItemWidth(150_scaled);
-                context.hasChangedMonitorArea |= ImGui::InputFloat("##MonitorOffsetY", &deviceSettings.monitorArea.offsetY, 0.f, 0.f, "%.0f");
+                context.hasChangedMonitorArea |= ImGui::InputFloat("##MonitorOffsetY", &context.tabletSettings.monitor.area.offsetY, 0.f, 0.f, "%.0f");
             }
             ImGui::EndGroup();
         }
 
-        context.hasChangedMonitorArea |= ImGui::Checkbox(TRY(Localisation::get(applicationSettings.language, Localisation::Tabs_Monitor_FullArea)), &deviceSettings.monitorForceFullArea);
+        context.hasChangedMonitorArea |= ImGui::Checkbox(TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Monitor_FullArea)), &context.tabletSettings.monitor.forceFullArea);
         ImGui::BeginDisabled();
-        ImGui::Checkbox(TRY(Localisation::get(applicationSettings.language, Localisation::Tabs_Monitor_ForceProportions)), &deviceSettings.monitorForceAspectRatio);
+        ImGui::Checkbox(TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Monitor_ForceProportions)), &context.tabletSettings.monitor.forceAspectRatio);
         ImGui::EndDisabled();
     }
     ImGui::EndGroup();
@@ -509,7 +567,7 @@ liberror::Result<void> render_monitor_settings_tab(Context& context, Application
     return {};
 }
 
-liberror::Result<void> render_window(ApplicationSettings const& applicationSettings, DeviceSettings& deviceSettings, std::vector<libwacom::Device> const& devices, std::vector<Monitor> const& monitors)
+liberror::Result<void> render_window(Context& context, std::vector<libwacom::Device> const& devices, std::vector<Monitor> const& monitors)
 {
 #ifdef DEBUG
     static std::once_flag debugWarningFlag {};
@@ -517,12 +575,6 @@ liberror::Result<void> render_window(ApplicationSettings const& applicationSetti
         ImGui::PushToast("Debug", "You are running a debug build!");
     });
 #endif
-
-    static Context context = [&] () {
-        libwacom::Device device = devices.empty() ? libwacom::Device {} : devices.front();
-        Monitor monitor = *std::ranges::find_if(monitors, &Monitor::primary);
-        return Context { device, monitor };
-    }();
 
     if (context.handleOutdatedDeviceSettings)
     {
@@ -532,7 +584,7 @@ liberror::Result<void> render_window(ApplicationSettings const& applicationSetti
         ImGui::SetNextWindowSize({ deviceSettingsMigrationWidth, deviceSettingsMigrationHeight });
         ImGui::SetNextWindowPos({ (static_cast<float>(windowWidth) - deviceSettingsMigrationWidth)/2, (static_cast<float>(windowHeight) - deviceSettingsMigrationHeight)/2 });
         ImGui::Begin(
-            TRY(Localisation::get(applicationSettings.language, Localisation::Popup_Outdated_Device_Settings_Title)),
+            TRY(Localisation::get(context.applicationSettings.language, Localisation::Popup_Outdated_Device_Settings_Title)),
             nullptr,
             ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
         );
@@ -541,42 +593,49 @@ liberror::Result<void> render_window(ApplicationSettings const& applicationSetti
 
             ImGui::BeginGroup();
                 for (auto messageLine :
-                    ImGui::SplitToWidth(TRY(Localisation::get(applicationSettings.language, Localisation::Popup_Outdated_Device_Settings_Text)), static_cast<int>(popupWidth)))
+                    ImGui::SplitToWidth(TRY(Localisation::get(context.applicationSettings.language, Localisation::Popup_Outdated_Device_Settings_Text)), static_cast<int>(popupWidth)))
                 {
                     ImGui::Text("%s", messageLine.data());
                 }
             ImGui::EndGroup();
 
             ImGui::SetCursorPosY(popupHeight - (25_scaled + ImGui::GetStyle().WindowPadding.y));
-            if (ImGui::Button(TRY(Localisation::get(applicationSettings.language, Localisation::Popup_Outdated_Device_Settings_Overwrite)), { 0, 25_scaled }))
+            if (ImGui::Button(TRY(Localisation::get(context.applicationSettings.language, Localisation::Popup_Outdated_Device_Settings_Overwrite)), { 0, 25_scaled }))
             {
-                ImGui::PushToast(TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Success)), TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Device_Settings_Overwritten)));
-                save_device_settings(deviceSettings);
+                ImGui::PushToast(
+                    TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Success)),
+                    TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Device_Settings_Overwritten))
+                );
+
+                save_tablet_settings(context.tabletSettings);
                 context.handleOutdatedDeviceSettings = false;
             }
 
             ImGui::SameLine();
 
-            if (ImGui::Button(TRY(Localisation::get(applicationSettings.language, Localisation::Popup_Outdated_Device_Settings_Migrate)), { 0, 25_scaled }))
+            if (ImGui::Button(TRY(Localisation::get(context.applicationSettings.language, Localisation::Popup_Outdated_Device_Settings_Migrate)), { 0, 25_scaled }))
             {
-                migrate_device_settings(deviceSettings);
+                migrate_tablet_settings(context.tabletSettings);
             }
         }
         ImGui::End();
     }
 
-    if (devices.empty() && deviceSettings.devicePressure.minX == -1 && deviceSettings.devicePressure.minY == -1 && deviceSettings.deviceArea.width == -1 && deviceSettings.deviceArea.height == -1)
+    if (devices.empty() && !context.hasTriedToInitializeDeviceSettings)
     {
-        ImGui::PushToast(TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Warning)), TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Devices_Missing)));
-        deviceSettings.deviceArea = { 0, 0, 0, 0 };
-        deviceSettings.devicePressure = { 0, 0, 1, 1 };
+        context.hasTriedToInitializeDeviceSettings = true;
+        ImGui::PushToast(
+            TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Warning)),
+            TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Devices_Missing))
+        );
     }
 
-    if (!devices.empty() && deviceSettings.devicePressure.minX == -1 && deviceSettings.devicePressure.minY == -1 && deviceSettings.deviceArea.width == -1 && deviceSettings.deviceArea.height == -1)
+    if (!(devices.empty() || context.hasTriedToInitializeDeviceSettings))
     {
-        if (std::filesystem::exists(DEVICE_SETTINGS_FILE))
+        context.hasTriedToInitializeDeviceSettings = true;
+        if (std::filesystem::exists(TABLET_SETTINGS_FILE))
         {
-            auto result = load_device_settings(deviceSettings);
+            auto result = load_tablet_settings(context.tabletSettings);
 
             if (!result.has_value())
             {
@@ -584,7 +643,10 @@ liberror::Result<void> render_window(ApplicationSettings const& applicationSetti
                 {
                     case SettingsError::Type::WRITE_FAILURE: break;
                     case SettingsError::Type::READ_FAILURE: {
-                        ImGui::PushToast(TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Warning)), TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Device_Settings_Load_Failed)));
+                        ImGui::PushToast(
+                            TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Warning)),
+                            TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Device_Settings_Load_Failed))
+                        );
                         break;
                     }
                     case SettingsError::Type::OUTDATED_SCHEMA: {
@@ -593,49 +655,55 @@ liberror::Result<void> render_window(ApplicationSettings const& applicationSetti
                     }
                 }
 
-                // some defaults to prevent rendering nonsense
-                deviceSettings.deviceName = context.device.name;
-                deviceSettings.deviceArea = MUST(libwacom::get_stylus_area(context.device.id));
-                deviceSettings.devicePressure = MUST(libwacom::get_stylus_pressure_curve(context.device.id));
-                deviceSettings.monitorName = context.monitor.name;
-                deviceSettings.monitorArea = libwacom::Area { 0, 0, context.monitor.width, context.monitor.height };
+                context.tabletSettings.device.name = context.device.name;
+                context.tabletSettings.device.area = TRY(libwacom::get_stylus_area(context.device.id));
+                context.tabletSettings.device.pressure = TRY(libwacom::get_stylus_pressure_curve(context.device.id));
+                context.tabletSettings.device.forceFullArea = false;
+                context.tabletSettings.device.forceAspectRatio = false;
+                context.tabletSettings.monitor.name = context.monitor.name;
+                context.tabletSettings.monitor.area = { 0, 0, context.monitor.width, context.monitor.height };
+                context.tabletSettings.monitor.forceFullArea = false;
+                context.tabletSettings.monitor.forceAspectRatio = false;
             }
             else
             {
-                context.monitor = *std::ranges::find(monitors, deviceSettings.monitorName, &Monitor::name);
-                context.device  = *std::ranges::find(devices, deviceSettings.deviceName, &libwacom::Device::name);
+                context.monitor = *std::ranges::find(monitors, context.tabletSettings.monitor.name, &Monitor::name);
+                context.device  = *std::ranges::find(devices, context.tabletSettings.device.name, &libwacom::Device::name);
             }
         }
         else
         {
-            ImGui::PushToast(TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Warning)), TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Device_Settings_Missing)));
-            deviceSettings.deviceName = context.device.name;
-            deviceSettings.deviceArea = MUST(libwacom::get_stylus_area(context.device.id));
-            deviceSettings.devicePressure = MUST(libwacom::get_stylus_pressure_curve(context.device.id));
-            deviceSettings.monitorName = context.monitor.name;
-            deviceSettings.monitorArea = libwacom::Area { 0, 0, context.monitor.width, context.monitor.height };
-            save_device_settings(deviceSettings);
+            ImGui::PushToast(
+                TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Warning)),
+                TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Device_Settings_Missing))
+            );
+            context.tabletSettings.device.name = context.device.name;
+            context.tabletSettings.device.area = MUST(libwacom::get_stylus_area(context.device.id));
+            context.tabletSettings.device.pressure = MUST(libwacom::get_stylus_pressure_curve(context.device.id));
+            context.tabletSettings.monitor.name = context.monitor.name;
+            context.tabletSettings.monitor.area = libwacom::Area { 0, 0, context.monitor.width, context.monitor.height };
+            save_tablet_settings(context.tabletSettings);
         }
     }
 
     ImGui::BeginDisabled(context.handleOutdatedDeviceSettings);
     ImGui::BeginGroup();
     {
-        render_region_mappers(context, applicationSettings, deviceSettings, devices, monitors);
+        render_region_mappers(context, devices, monitors);
     }
     ImGui::EndGroup();
 
     if (ImGui::BeginTabBar("##Tabs_1"))
     {
-        if (ImGui::BeginTabItem(TRY(Localisation::get(applicationSettings.language, Localisation::Tabs_Tablet_Title))))
+        if (ImGui::BeginTabItem(TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Tablet_Title))))
         {
-            TRY(render_tablet_settings_tab(context, applicationSettings, deviceSettings, devices));
+            TRY(render_tablet_settings_tab(context, devices));
             ImGui::EndTabItem();
         }
 
-        if (ImGui::BeginTabItem(TRY(Localisation::get(applicationSettings.language, Localisation::Tabs_Monitor_Title))))
+        if (ImGui::BeginTabItem(TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Monitor_Title))))
         {
-            TRY(render_monitor_settings_tab(context, applicationSettings, deviceSettings, monitors));
+            TRY(render_monitor_settings_tab(context, monitors));
             ImGui::EndTabItem();
         }
 
@@ -644,14 +712,20 @@ liberror::Result<void> render_window(ApplicationSettings const& applicationSetti
 
     auto previousCursorPosition = ImGui::GetCursorPos();
     ImGui::SetCursorPosY(ImGui::GetWindowHeight() - (35_scaled + ImGui::GetStyle().WindowPadding.x));
-    if (ImGui::Button(TRY(Localisation::get(applicationSettings.language, Localisation::Save_Apply)), { 200_scaled, 35_scaled }))
+    if (ImGui::Button(TRY(Localisation::get(context.applicationSettings.language, Localisation::Save_Apply)), { 200_scaled, 35_scaled }))
     {
-        save_device_settings(deviceSettings);
-        ImGui::PushToast(TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Success)), TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Device_Settings_Saved)));
-        TRY(set_settings_to_device(context, deviceSettings));
+        save_tablet_settings(context.tabletSettings);
+        ImGui::PushToast(
+            TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Success)),
+            TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Device_Settings_Saved))
+        );
+        TRY(apply_settings_to_device(context));
     }
     ImGui::SetCursorPos(previousCursorPosition);
     ImGui::EndDisabled();
+
+    if (context.hasChangedDevice && (context.hasChangedDevice & USB_ACTION_MAGIC) == 0) context.hasChangedDevice = false;
+    if (context.hasChangedMonitor && (context.hasChangedMonitor & USB_ACTION_MAGIC) == 0) context.hasChangedMonitor = false;
 
     return {};
 }
@@ -686,14 +760,14 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
 
     if (configCommand["--load"] != false)
     {
-        if (!std::filesystem::exists(DEVICE_SETTINGS_FILE))
+        if (!std::filesystem::exists(TABLET_SETTINGS_FILE))
         {
             return liberror::make_error("Device settings could not be found");
         }
 
-        DeviceSettings deviceSettings {};
+        TabletSettings tabletSettings {};
 
-        if (!load_device_settings(deviceSettings))
+        if (!load_tablet_settings(tabletSettings))
         {
             return liberror::make_error("Failed to load device settings");
         }
@@ -705,7 +779,16 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
 
         auto device  = devices.front();
         auto monitor = *std::ranges::find_if(monitors, &Monitor::primary);
-        TRY(set_settings_to_device({ device, monitor }, deviceSettings));
+
+        TRY(libwacom::set_stylus_area(device.id, tabletSettings.device.area));
+        TRY(libwacom::set_stylus_handedness(device.id, tabletSettings.device.handedness));
+        TRY(libwacom::set_stylus_pressure_curve(device.id, tabletSettings.device.pressure));
+        TRY(libwacom::set_stylus_output_from_display_area(device.id, {
+            tabletSettings.monitor.area.offsetX + monitor.offsetX,
+            tabletSettings.monitor.area.offsetY + monitor.offsetY,
+            tabletSettings.monitor.area.width,
+            tabletSettings.monitor.area.height,
+        }));
 
         fmt::println("Device settings loaded successfully");
 
@@ -719,17 +802,21 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
         .font = "Default",
     };
 
-    DeviceSettings deviceSettings {
-        .deviceName = "INVALID",
-        .deviceHandedness = libwacom::Handedness::RIGHT,
-        .deviceArea = { -1, -1, -1, -1 },
-        .devicePressure = { -1, -1, -1, -1 },
-        .deviceForceFullArea = false,
-        .deviceForceAspectRatio = false,
-        .monitorName = "INVALID",
-        .monitorArea = { -1, -1, -1, -1 },
-        .monitorForceFullArea = false,
-        .monitorForceAspectRatio = false
+    TabletSettings tabletSettings {
+        .device = {
+            .name = "INVALID",
+            .handedness = libwacom::Handedness::RIGHT,
+            .area = { -1, -1, -1, -1 },
+            .pressure = { -1, -1, -1, -1 },
+            .forceFullArea = false,
+            .forceAspectRatio = false
+        },
+        .monitor = {
+            .name = "INVALID",
+            .area = { -1, -1, -1, -1 },
+            .forceFullArea = false,
+            .forceAspectRatio = false
+        }
     };
 
     if (!std::filesystem::exists(APPLICATION_SETTINGS_FILE))
@@ -797,8 +884,7 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
     ImVector<ImWchar> ranges {};
     ImFontGlyphRangesBuilder rangeBuilder {};
 
-    static const ImWchar rangesData[] =
-    {
+    static const ImWchar rangesData[] = {
         0x0020, 0x00FF, // Basic Latin + Latin Supplement
         0x0400, 0x052F, // Cyrillic + Cyrillic Supplement
         0x2DE0, 0x2DFF, // Cyrillic Extended-A
@@ -813,6 +899,109 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
     {
         font = io.Fonts->AddFontFromFileTTF(applicationSettings.font.data(), 20_scaled, nullptr, ranges.Data);
     }
+
+    static Context context = [&] () {
+        libwacom::Device device = devices.empty() ? libwacom::Device {} : devices.front();
+        Monitor monitor = *std::ranges::find_if(monitors, &Monitor::primary);
+        return Context { device, monitor, applicationSettings, tabletSettings };
+    }();
+
+    USBAction usbAction {};
+
+    usbAction.subscribe([&] (std::string_view, USBAction::Event event) -> liberror::Result<void> {
+        if (event != USBAction::Event::UNBIND) return {};
+
+        auto hadMoreThanOneDevice = devices.size() > 1;
+        devices = fplus::keep_if([] (auto&& device) { return device.kind == libwacom::Device::Kind::STYLUS; }, TRY(libwacom::get_available_devices()));
+
+        if (hadMoreThanOneDevice) return {};
+
+        auto maybeDevice = std::ranges::find(devices, context.tabletSettings.device.name, &libwacom::Device::name);
+        if (maybeDevice == devices.end())
+        {
+            context.monitor = Monitor {};
+            context.device = libwacom::Device {};
+            context.tabletSettings = {
+                .device = {
+                    .name = "INVALID",
+                    .handedness = libwacom::Handedness::RIGHT,
+                    .area = { -1, -1, -1, -1 },
+                    .pressure = { -1, -1, -1, -1 },
+                    .forceFullArea = false,
+                    .forceAspectRatio = false
+                },
+                .monitor = {
+                    .name = "INVALID",
+                    .area = { -1, -1, -1, -1 },
+                    .forceFullArea = false,
+                    .forceAspectRatio = false
+                }
+            };
+        }
+
+        return {};
+    });
+
+    usbAction.subscribe([&] (std::string_view, USBAction::Event event) -> liberror::Result<void> {
+        if (event != USBAction::Event::BIND) return {};
+
+        auto hadAtleastOneDevice = !devices.empty();
+        devices = fplus::keep_if([] (auto&& device) { return device.kind == libwacom::Device::Kind::STYLUS; }, TRY(libwacom::get_available_devices()));
+
+        if (hadAtleastOneDevice) return {};
+
+        TabletSettings settings {};
+        auto result = load_tablet_settings(settings);
+        if (!result.has_value())
+        {
+            switch (result.error().message())
+            {
+                case SettingsError::Type::WRITE_FAILURE: break;
+                case SettingsError::Type::READ_FAILURE: {
+                    ImGui::PushToast(
+                        TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Warning)),
+                        TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Device_Settings_Load_Failed))
+                    );
+                    break;
+                }
+                case SettingsError::Type::OUTDATED_SCHEMA: {
+                    context.handleOutdatedDeviceSettings = true;
+                    break;
+                }
+            }
+
+            context.device = devices.back();
+            context.hasChangedDevice = 0xFF ^ USB_ACTION_MAGIC;
+            context.hasChangedDeviceHandedness = 0xFF ^ USB_ACTION_MAGIC;
+            context.monitor = *std::ranges::find_if(monitors, &Monitor::primary);
+            context.hasChangedMonitor = 0xFF ^ USB_ACTION_MAGIC;
+            context.tabletSettings.device.name = context.device.name;
+            context.tabletSettings.device.area = TRY(libwacom::get_stylus_area(context.device.id));
+            context.tabletSettings.device.pressure = TRY(libwacom::get_stylus_pressure_curve(context.device.id));
+            context.tabletSettings.device.forceFullArea = false;
+            context.tabletSettings.device.forceAspectRatio = false;
+            context.tabletSettings.monitor.name = context.monitor.name;
+            context.tabletSettings.monitor.area = { 0, 0, context.monitor.width, context.monitor.height };
+            context.tabletSettings.monitor.forceFullArea = false;
+            context.tabletSettings.monitor.forceAspectRatio = false;
+        }
+        else if (devices.back().name == settings.device.name)
+        {
+            ImGui::PushToast(
+                TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Success)),
+                TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Device_Settings_Load_Success))
+            );
+            context.device = devices.back();
+            context.hasChangedDevice = 0xFF ^ USB_ACTION_MAGIC;
+            context.hasChangedDeviceHandedness = 0xFF ^ USB_ACTION_MAGIC;
+            context.tabletSettings = settings;
+            context.monitor = *std::ranges::find(monitors, settings.monitor.name, &Monitor::name);
+            context.hasChangedMonitor = 0xFF ^ USB_ACTION_MAGIC;
+            TRY(apply_settings_to_device(context));
+        }
+
+        return {};
+    });
 
     while (!glfwWindowShouldClose(window))
     {
@@ -847,6 +1036,8 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
             {
                 static bool isApplicationSettingsOpen = false;
                 static bool isGoddessOpen = false;
+
+                TRY(usbAction.update());
 
                 if (ImGui::BeginMenuBar())
                 {
@@ -884,7 +1075,7 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
                         ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
                     );
                     {
-                        render_settings_popup(applicationSettings);
+                        render_settings_popup(context);
                     }
                     ImGui::End();
                 }
@@ -907,7 +1098,7 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
 
                 ImGui::BeginDisabled(devices.empty());
                 {
-                    TRY(render_window(applicationSettings, deviceSettings, devices, monitors));
+                    TRY(render_window(context, devices, monitors));
                 }
                 ImGui::EndDisabled();
             }

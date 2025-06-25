@@ -1,6 +1,4 @@
-#include "Localisation.hpp"
-
-#include "Environment.hpp"
+#include "ui/Localisation.hpp"
 
 #include <fmt/format.h>
 #include <fplus/fplus.hpp>
@@ -8,6 +6,7 @@
 
 #include <sstream>
 #include <fstream>
+#include <ranges>
 
 liberror::Result<char const*> Localisation::get(ApplicationSettings::Language language, LocalisedMessage id)
 {
@@ -71,6 +70,7 @@ liberror::Result<char const*> Localisation::get(ApplicationSettings::Language la
                 { Localisation::Toast_Device_Settings_Saved, json["toastDeviceSettingsSaved"].get<std::string>() },
                 { Localisation::Toast_Device_Settings_Overwritten, json["toastDeviceSettingsOverwritten"].get<std::string>() },
                 { Localisation::Toast_Device_Settings_Load_Failed, json["toastDeviceSettingsLoadFailed"].get<std::string>() },
+                { Localisation::Toast_Device_Settings_Load_Success, json["toastDeviceSettingsLoadSuccess"].get<std::string>() },
                 { Localisation::Toast_Device_Settings_Missing, json["toastDeviceSettingsMissing"].get<std::string>() },
             };
         }
@@ -81,4 +81,22 @@ liberror::Result<char const*> Localisation::get(ApplicationSettings::Language la
     }
 
     return the()[language][id].data();
+}
+
+std::vector<ApplicationSettings::Language> get_available_languages()
+{
+    std::vector<ApplicationSettings::Language> languages {};
+
+    for (auto const& entry : std::filesystem::directory_iterator(get_application_data_path() / "languages"))
+    {
+        if (entry.path().extension() == ".json")
+        {
+            auto languageNameUpper = entry.path().stem().string() | std::views::transform(::toupper);
+            languages.push_back(
+                ApplicationSettings::Language::from_string(std::string(languageNameUpper.begin(), languageNameUpper.end()))
+            );
+        }
+    }
+
+    return languages;
 }
