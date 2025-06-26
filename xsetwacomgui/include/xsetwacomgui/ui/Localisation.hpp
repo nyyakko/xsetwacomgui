@@ -33,6 +33,7 @@ public:
         Popup_Settings_Tabs_Appearance_Theme_Dark,
         Popup_Settings_Tabs_Appearance_Theme_Light,
         Popup_Settings_Tabs_Appearance_Font,
+        Popup_Settings_Tabs_Appearance_FontStyle,
         Popup_Settings_Tabs_Display_Title,
         Popup_Settings_Tabs_Display_Scale,
         Popup_Settings_Tabs_Language_Title,

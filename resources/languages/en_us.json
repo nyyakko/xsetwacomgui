@@ -17,6 +17,7 @@
     "popupSettingsTabsLanguageTitle": "Language",
     "popupSettingsTabsLanguageLanguage": "Language",
     "popupSettingsTabsAppearanceFont": "Font",
+    "popupSettingsTabsAppearanceFontStyle": "Font Style",
     "popupOutdatedDeviceSettingsTitle": "Outdated settings",
     "popupOutdatedDeviceSettingsText": "The currently saved device settings differs from the expected format. How would you like to proceed?",
     "popupOutdatedDeviceSettingsOverwrite": "Overwrite",

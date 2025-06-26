@@ -17,6 +17,7 @@
     "popupSettingsTabsLanguageTitle": "Língua",
     "popupSettingsTabsLanguageLanguage": "Língua",
     "popupSettingsTabsAppearanceFont": "Fonte",
+    "popupSettingsTabsAppearanceFontStyle": "Estilo da Fonte",
     "popupOutdatedDeviceSettingsTitle": "Configurações desatualizadas",
     "popupOutdatedDeviceSettingsText": "As configurações de dispositivo salvas diferem do formato esperado. Como você gostaria de proceder?",
     "popupOutdatedDeviceSettingsOverwrite": "Sobrescrever",

@@ -2,6 +2,7 @@
 
 #include "platform/Environment.hpp"
 #include "core/SettingsError.hpp"
+#include "ui/FreeType.hpp"
 
 #include <imgui/imgui_internal.hpp>
 #include <libwacom/Device.hpp>
@@ -13,7 +14,7 @@ struct ApplicationSettings
 {
 private:
     // Should be updated every time a change is made
-    static constexpr auto SCHEMA_VERSION = "1.0";
+    static constexpr auto SCHEMA_VERSION = "1.1";
 
     friend liberror::Result<void, SettingsError> load_application_settings(ApplicationSettings& settings);
     friend void save_application_settings(ApplicationSettings const& settings);
@@ -24,7 +25,7 @@ public:
     float scale;
     Theme theme;
     Language language;
-    std::string font;
+    FontInfo font;
 };
 
 liberror::Result<void, SettingsError> load_application_settings(ApplicationSettings& settings);

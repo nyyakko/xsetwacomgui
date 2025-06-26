@@ -27,10 +27,12 @@ liberror::Result<void, SettingsError> load_application_settings(ApplicationSetti
             return liberror::make_error<SettingsError>(SettingsError::Type::OUTDATED_SCHEMA);
         }
 
-        settings.theme    = ApplicationSettings::Theme::from_string((json["appearance"]["theme"].get<std::string>()));
-        settings.font     = json["appearance"]["font"].get<std::string>();
-        settings.scale    = json["display"]["scale"].get<float>();
-        settings.language = ApplicationSettings::Language::from_string(json["language"]["language"].get<std::string>());
+        settings.theme       = ApplicationSettings::Theme::from_string((json["appearance"]["theme"].get<std::string>()));
+        settings.font.path   = json["appearance"]["font"]["path"].get<std::string>();
+        settings.font.family = json["appearance"]["font"]["family"].get<std::string>();
+        settings.font.style  = json["appearance"]["font"]["style"].get<std::string>();
+        settings.scale       = json["display"]["scale"].get<float>();
+        settings.language    = ApplicationSettings::Language::from_string(json["language"]["language"].get<std::string>());
     }
     catch (std::exception const& error)
     {
@@ -48,7 +50,12 @@ void save_application_settings(ApplicationSettings const& settings)
         {
             "appearance", {
                 { "theme", settings.theme.to_string() },
-                { "font", settings.font },
+                { "font", {
+                        { "path", settings.font.path },
+                        { "family", settings.font.family },
+                        { "style", settings.font.style },
+                    }
+                },
             }
         },
         {

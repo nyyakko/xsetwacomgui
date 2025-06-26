@@ -7,6 +7,7 @@
 #include "platform/Monitor.hpp"
 #include "settings/ApplicationSettings.hpp"
 #include "settings/TabletSettings.hpp"
+#include "ui/FreeType.hpp"
 #include "ui/Localisation.hpp"
 #include "ui/Scaling.hpp"
 #include "ui/widgets/AreaMapper.hpp"
@@ -28,6 +29,7 @@
 #include <fplus/fplus.hpp>
 #include <scn/scan.h>
 
+#include <ranges>
 #include <algorithm>
 #include <array>
 #include <cstdlib>
@@ -56,32 +58,6 @@ struct Context
 
 static constexpr auto USB_ACTION_MAGIC = 3;
 
-std::vector<std::pair<std::string, std::filesystem::path>> get_available_fonts()
-{
-    std::vector<std::pair<std::string, std::filesystem::path>> fonts {
-        { "Default", "Default" }
-    };
-
-    static std::array paths {
-        get_system_home_path() / ".fonts",
-        get_system_home_path() / ".local/share/fonts",
-        std::filesystem::path("/usr/share/fonts"),
-        std::filesystem::path("/usr/local/share/fonts"),
-    };
-
-    for (auto const& fontHome : paths)
-    {
-        if (!std::filesystem::exists(fontHome)) continue;
-
-        for (auto const& entry : std::filesystem::recursive_directory_iterator(fontHome))
-        {
-            if (entry.path().extension() == ".ttf") fonts.push_back({ entry.path().stem(), entry.path() });
-        }
-    }
-
-    return fonts;
-}
-
 liberror::Result<void> render_settings_popup_appearance_tab(Context const& context)
 {
     ImGui::Text("%s", TRY(Localisation::get(context.applicationSettings.language, Localisation::Popup_Settings_Tabs_Appearance_Theme)));
@@ -90,6 +66,7 @@ liberror::Result<void> render_settings_popup_appearance_tab(Context const& conte
         TRY(Localisation::get(context.applicationSettings.language, Localisation::Popup_Settings_Tabs_Appearance_Theme_Light))
     };
     static int themeIndex = static_cast<int>(context.applicationSettings.theme);
+    ImGui::SetNextItemWidth(300_scaled + ImGui::GetStyle().WindowPadding.x);
     auto hasChangedUITheme = ImGui::Combo("##Theme", &themeIndex, themes, std::size(themes));
 
     if (hasChangedUITheme)
@@ -97,17 +74,45 @@ liberror::Result<void> render_settings_popup_appearance_tab(Context const& conte
         context.applicationSettings.theme = ApplicationSettings::Theme::from_int(themeIndex);
     }
 
-    ImGui::Text("%s", TRY(Localisation::get(context.applicationSettings.language, Localisation::Popup_Settings_Tabs_Appearance_Font)));
     static auto fonts = get_available_fonts();
-    static auto fontsData = fplus::transform([] (auto const& font) { return font.first.data(); }, fonts );
-    static auto fontIndex = static_cast<int>(
-        std::distance(fonts.begin(), std::ranges::find(fonts, std::filesystem::path(context.applicationSettings.font), &decltype(fonts)::value_type::second))
-    );
-    auto hasChangedUIFont = ImGui::Combo("##Font", &fontIndex, fontsData.data(), static_cast<int>(fontsData.size()));
+    static auto fontsInfoView = fonts | std::views::values;
+    static std::vector<std::vector<FontInfo>> fontsInfo(fontsInfoView.begin(), fontsInfoView.end());
 
-    if (hasChangedUIFont)
+    static auto fontsFamily = fplus::transform([] (std::vector<FontInfo> const& fontInfo) { return fontInfo.front().family.data(); }, fontsInfo);
+    static auto fontFamilyIndex = static_cast<int>(std::distance(fonts.begin(), fonts.find(context.applicationSettings.font.family)));
+
+    static auto fontStyles = fplus::transform([] (FontInfo const& fontInfo) { return fontInfo.style.data(); }, fontsInfo.at(static_cast<size_t>(fontFamilyIndex)));
+    static auto fontStyleIndex = static_cast<int>(std::distance(fontStyles.begin(), std::ranges::find(fontStyles, context.applicationSettings.font.style)));
+
+    auto hasChangedUIFont = false;
+    auto hasChangedUIFontStyle = false;
+
+    ImGui::BeginGroup();
     {
-        context.applicationSettings.font = fonts.at(static_cast<size_t>(fontIndex)).second;
+        ImGui::AlignTextToFramePadding();
+        ImGui::Text("%s", TRY(Localisation::get(context.applicationSettings.language, Localisation::Popup_Settings_Tabs_Appearance_Font)));
+        ImGui::SetNextItemWidth(150_scaled);
+        hasChangedUIFont = ImGui::Combo("##FontFamily", &fontFamilyIndex, fontsFamily.data(), static_cast<int>(fontsFamily.size()));
+    }
+    ImGui::EndGroup();
+    ImGui::SameLine();
+    ImGui::BeginGroup();
+    {
+        ImGui::AlignTextToFramePadding();
+        ImGui::Text("%s", TRY(Localisation::get(context.applicationSettings.language, Localisation::Popup_Settings_Tabs_Appearance_FontStyle)));
+        ImGui::SetNextItemWidth(150_scaled);
+        hasChangedUIFontStyle = ImGui::Combo("##FontStyle", &fontStyleIndex, fontStyles.data(), static_cast<int>(fontStyles.size()));
+    }
+    ImGui::EndGroup();
+
+    if (hasChangedUIFont || hasChangedUIFontStyle)
+    {
+        if (hasChangedUIFont)
+        {
+            fontStyles = fplus::transform([] (FontInfo const& fontInfo) { return fontInfo.style.data(); }, fontsInfo.at(static_cast<size_t>(fontFamilyIndex)));
+        }
+
+        context.applicationSettings.font = fonts.at(fontsFamily.at(static_cast<size_t>(fontFamilyIndex))).at(static_cast<size_t>(fontStyleIndex));
     }
 
     return {};
@@ -841,7 +846,11 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
         .scale = 1.0,
         .theme = ApplicationSettings::Theme::DARK,
         .language = ApplicationSettings::Language::EN_US,
-        .font = "Default",
+        .font {
+            .family = "Default",
+            .style  = "Regular",
+            .path   = ""
+        }
     };
 
     TabletSettings tabletSettings {
@@ -937,9 +946,9 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
     rangeBuilder.AddRanges(rangesData);
     rangeBuilder.BuildRanges(&ranges);
 
-    if (applicationSettings.font != "Default")
+    if (applicationSettings.font.family != "Default")
     {
-        font = io.Fonts->AddFontFromFileTTF(applicationSettings.font.data(), 20_scaled, nullptr, ranges.Data);
+        font = io.Fonts->AddFontFromFileTTF(applicationSettings.font.path.string().data(), 20_scaled, nullptr, ranges.Data);
     }
 
     static Context context = TRY([&] () -> liberror::Result<Context> {

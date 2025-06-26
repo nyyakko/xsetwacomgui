@@ -10,6 +10,7 @@ find_xrandr()
 find_xsetwacom()
 find_package(OpenGL REQUIRED)
 find_package(glfw3 REQUIRED)
+find_package(Freetype REQUIRED)
 
 CPMAddPackage(URI "gh:Dobiasd/FunctionalPlus@0.2.24" EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:fmtlib/fmt#10.2.1"             EXCLUDE_FROM_ALL YES)
@@ -43,6 +44,7 @@ set(xsetwacomgui_ExternalLibraries
     argparse::argparse
     scn::scn
     udev
+    freetype
 )
 
 add_subdirectory(xsetwacomgui)
