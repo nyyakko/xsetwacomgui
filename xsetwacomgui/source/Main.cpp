@@ -503,8 +503,8 @@ liberror::Result<void> render_tablet_settings_tab(Context& context, std::vector<
     if (context.hasChangedDeviceArea && context.tabletSettings.device.name != "INVALID")
     {
         context.tabletSettings.device.area = {
-            .offsetX = std::clamp(context.tabletSettings.device.area.offsetX, 0.f, deviceDefaultArea.offsetX),
-            .offsetY = std::clamp(context.tabletSettings.device.area.offsetY, 0.f, deviceDefaultArea.offsetY),
+            .offsetX = std::clamp(context.tabletSettings.device.area.offsetX, 0.f, deviceDefaultArea.width),
+            .offsetY = std::clamp(context.tabletSettings.device.area.offsetY, 0.f, deviceDefaultArea.height),
             .width   = std::clamp(context.tabletSettings.device.area.width, 0.f, deviceDefaultArea.width),
             .height  = std::clamp(context.tabletSettings.device.area.height, 0.f, deviceDefaultArea.height)
         };
@@ -608,8 +608,8 @@ liberror::Result<void> render_monitor_settings_tab(Context& context, std::vector
     if (context.hasChangedMonitorArea && context.tabletSettings.monitor.name != "INVALID")
     {
         context.tabletSettings.monitor.area = {
-            .offsetX = std::clamp(context.tabletSettings.monitor.area.offsetX, 0.f, monitorDefaultArea.offsetX),
-            .offsetY = std::clamp(context.tabletSettings.monitor.area.offsetY, 0.f, monitorDefaultArea.offsetY),
+            .offsetX = std::clamp(context.tabletSettings.monitor.area.offsetX, 0.f, monitorDefaultArea.width),
+            .offsetY = std::clamp(context.tabletSettings.monitor.area.offsetY, 0.f, monitorDefaultArea.height),
             .width   = std::clamp(context.tabletSettings.monitor.area.width, 0.f, monitorDefaultArea.width),
             .height  = std::clamp(context.tabletSettings.monitor.area.height, 0.f, monitorDefaultArea.height)
         };
