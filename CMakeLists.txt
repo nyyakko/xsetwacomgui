@@ -27,7 +27,7 @@ include(cmake/static_analyzers.cmake)
 include(GNUInstallDirs)
 
 set(xsetwacomgui_CompilerOptions ${xsetwacomgui_CompilerOptions} -Wno-gnu-statement-expression-from-macro-expansion)
-set(xsetwacomgui_LinkerOptions ${xsetwacomgui_LinkerOptions} -fsanitize=leak)
+set(xsetwacomgui_LinkerOptions ${xsetwacomgui_LinkerOptions})
 
 set(xsetwacomgui_ExternalLibraries
     OpenGL::GL
