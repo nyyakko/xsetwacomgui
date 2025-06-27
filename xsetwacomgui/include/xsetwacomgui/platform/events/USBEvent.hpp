@@ -7,10 +7,10 @@
 using udev_deleter_t = decltype(&udev_unref);
 using udev_monitor_deleter_t = decltype(&udev_monitor_unref);
 
-class USBAction
+class USBEvent
 {
 public:
-    ENUM_CLASS(Event,
+    ENUM_CLASS(Action,
         UNBIND,
         REMOVE,
         ADD,
@@ -18,10 +18,10 @@ public:
     )
 
 private:
-    using listener_t = liberror::Result<void>(std::string_view node, Event event);
+    using listener_t = liberror::Result<void>(std::string_view node, Action event);
 
 public:
-    USBAction()
+    USBEvent()
         : udev(udev_new(), udev_unref)
         , monitor(udev_monitor_new_from_netlink(udev.get(), "udev"), udev_monitor_unref)
         , monitorFd(udev_monitor_get_fd(monitor.get()))
@@ -32,7 +32,7 @@ public:
 
     void subscribe(std::function<listener_t> const& listener);
     liberror::Result<void> update() const;
-    liberror::Result<void> notify_all(std::string_view node, Event event) const;
+    liberror::Result<void> notify_all(std::string_view node, Action event) const;
 
 private:
     std::unique_ptr<struct udev, udev_deleter_t> udev;

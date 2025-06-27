@@ -1,4 +1,3 @@
-add_subdirectory(actions)
 add_subdirectory(platform)
 add_subdirectory(settings)
 add_subdirectory(ui)
