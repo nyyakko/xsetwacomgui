@@ -160,19 +160,19 @@ liberror::Result<void> render_settings_popup(Context const& context)
     {
         if (ImGui::BeginTabItem(TRY(Localisation::get(context.applicationSettings.language, Localisation::Popup_Settings_Tabs_Appearance_Title))))
         {
-            render_settings_popup_appearance_tab(context);
+            TRY(render_settings_popup_appearance_tab(context));
             ImGui::EndTabItem();
         }
 
         if (ImGui::BeginTabItem(TRY(Localisation::get(context.applicationSettings.language, Localisation::Popup_Settings_Tabs_Display_Title))))
         {
-            render_settings_popup_display_tab(context);
+            TRY(render_settings_popup_display_tab(context));
             ImGui::EndTabItem();
         }
 
         if (ImGui::BeginTabItem(TRY(Localisation::get(context.applicationSettings.language, Localisation::Popup_Settings_Tabs_Language_Title))))
         {
-            render_settings_popup_language_tab(context);
+            TRY(render_settings_popup_language_tab(context));
             ImGui::EndTabItem();
         }
 
