@@ -460,10 +460,14 @@ liberror::Result<void> render_tablet_settings_tab(Context& context, std::vector<
             context.tabletSettings.device.handedness = libwacom::Handedness::from_int(orientationIndex);
         }
 
-        context.hasChangedDeviceArea |= ImGui::Checkbox(TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Tablet_FullArea)), &context.tabletSettings.device.forceFullArea);
-        ImGui::BeginDisabled();
-        ImGui::Checkbox(TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Tablet_ForceProportions)), &context.tabletSettings.device.forceAspectRatio);
-        ImGui::EndDisabled();
+        ImGui::BeginGroup();
+        {
+            context.hasChangedDeviceArea |= ImGui::Checkbox(TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Tablet_FullArea)), &context.tabletSettings.device.forceFullArea);
+            ImGui::BeginDisabled();
+            ImGui::Checkbox(TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Tablet_ForceProportions)), &context.tabletSettings.device.forceAspectRatio);
+            ImGui::EndDisabled();
+        }
+        ImGui::EndGroup();
     }
     ImGui::EndGroup();
     ImGui::SameLine();
@@ -590,10 +594,14 @@ liberror::Result<void> render_monitor_settings_tab(Context& context, std::vector
         }
         ImGui::EndDisabled();
 
-        context.hasChangedMonitorArea |= ImGui::Checkbox(TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Monitor_FullArea)), &context.tabletSettings.monitor.forceFullArea);
-        ImGui::BeginDisabled();
-        ImGui::Checkbox(TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Monitor_ForceProportions)), &context.tabletSettings.monitor.forceAspectRatio);
-        ImGui::EndDisabled();
+        ImGui::BeginGroup();
+        {
+            context.hasChangedMonitorArea |= ImGui::Checkbox(TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Monitor_FullArea)), &context.tabletSettings.monitor.forceFullArea);
+            ImGui::BeginDisabled();
+            ImGui::Checkbox(TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Monitor_ForceProportions)), &context.tabletSettings.monitor.forceAspectRatio);
+            ImGui::EndDisabled();
+        }
+        ImGui::EndGroup();
     }
     ImGui::EndGroup();
 
