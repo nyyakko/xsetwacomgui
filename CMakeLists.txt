@@ -16,7 +16,6 @@ CPMAddPackage(URI "gh:Dobiasd/FunctionalPlus@0.2.24" EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:fmtlib/fmt#10.2.1"             EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:gabime/spdlog@1.15.3"          EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:nlohmann/json@3.12.0"          EXCLUDE_FROM_ALL YES)
-CPMAddPackage(URI "gh:nyyakko/expected#master"       EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:nyyakko/imgui#master"          EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:nyyakko/LibEnum#master"        EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:nyyakko/LibError#master"       EXCLUDE_FROM_ALL YES)
@@ -28,7 +27,7 @@ include(cmake/static_analyzers.cmake)
 include(GNUInstallDirs)
 
 set(xsetwacomgui_CompilerOptions ${xsetwacomgui_CompilerOptions} -Wno-gnu-statement-expression-from-macro-expansion)
-# set(xsetwacomgui_LinkerOptions ${xsetwacomgui_LinkerOptions})
+set(xsetwacomgui_LinkerOptions ${xsetwacomgui_LinkerOptions} -fsanitize=leak)
 
 set(xsetwacomgui_ExternalLibraries
     OpenGL::GL
