@@ -39,5 +39,4 @@ For cli documentation, read the docs available at the [documentation](documentat
 
 # Contributing
 
-Just try to follow the general styling of the code and make sure to work in the `devel` branch.\
-For submitting translation, check the [localisation](resources/localisation/) folder.
+Just try to follow the general styling of the code and make sure to work in the `devel` branch. For submitting translations, check the [languages](resources/languages/) folder.
