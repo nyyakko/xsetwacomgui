@@ -1,4 +1,4 @@
-#include "actions/hid/USBAction.hpp"
+#include "platform/events/USBEvent.hpp"
 
 #include <fplus/fplus.hpp>
 #include <liberror/Try.hpp>
@@ -6,7 +6,7 @@
 
 #include <ranges>
 
-liberror::Result<void> USBAction::update() const
+liberror::Result<void> USBEvent::update() const
 {
     pollfd pfd;
 
@@ -27,7 +27,7 @@ liberror::Result<void> USBAction::update() const
                 if (node)
                 {
                     auto actionUppercase = std::string(action) | std::views::transform(::toupper);
-                    notify_all(node, Event::from_string(std::string(actionUppercase.begin(), actionUppercase.end())));
+                    notify_all(node, Action::from_string(std::string(actionUppercase.begin(), actionUppercase.end())));
                 }
 
                 udev_device_unref(device);
@@ -38,14 +38,14 @@ liberror::Result<void> USBAction::update() const
     return {};
 }
 
-liberror::Result<void> USBAction::notify_all(std::string_view node, Event event) const
+liberror::Result<void> USBEvent::notify_all(std::string_view node, Action action) const
 {
     for (auto const& listener : listeners)
-        TRY(listener(node, event));
+        TRY(listener(node, action));
     return {};
 }
 
-void USBAction::subscribe(std::function<listener_t> const& listener)
+void USBEvent::subscribe(std::function<listener_t> const& listener)
 {
     listeners.push_back(listener);
 }

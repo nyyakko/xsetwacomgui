@@ -2,8 +2,8 @@
 
 #include <spdlog/spdlog.h>
 
-#include "actions/hid/USBAction.hpp"
 #include "platform/Environment.hpp"
+#include "platform/events/USBEvent.hpp"
 #include "platform/Monitor.hpp"
 #include "settings/ApplicationSettings.hpp"
 #include "settings/TabletSettings.hpp"
@@ -966,10 +966,10 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
         return Context(device, *maybeMonitor, applicationSettings, tabletSettings);
     }());
 
-    USBAction usbAction {};
+    USBEvent usbAction {};
 
-    usbAction.subscribe([&] (std::string_view, USBAction::Event event) -> liberror::Result<void> {
-        if (event != USBAction::Event::UNBIND) return {};
+    usbAction.subscribe([&] (std::string_view, USBEvent::Action event) -> liberror::Result<void> {
+        if (event != USBEvent::Action::UNBIND) return {};
 
         auto hadMoreThanOneDevice = devices.size() > 1;
         devices = fplus::keep_if([] (auto&& device) { return device.kind == libwacom::Device::Kind::STYLUS; }, TRY(libwacom::get_available_devices()));
@@ -1002,8 +1002,8 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
         return {};
     });
 
-    usbAction.subscribe([&] (std::string_view, USBAction::Event event) -> liberror::Result<void> {
-        if (event != USBAction::Event::BIND) return {};
+    usbAction.subscribe([&] (std::string_view, USBEvent::Action event) -> liberror::Result<void> {
+        if (event != USBEvent::Action::BIND) return {};
 
         auto hadAtleastOneDevice = !devices.empty();
         devices = fplus::keep_if([] (auto&& device) { return device.kind == libwacom::Device::Kind::STYLUS; }, TRY(libwacom::get_available_devices()));
