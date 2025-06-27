@@ -643,11 +643,13 @@ liberror::Result<void> render_window(Context& context, std::vector<libwacom::Dev
             auto [popupWidth, popupHeight] = ImGui::GetWindowSize();
 
             ImGui::BeginGroup();
+            {
                 for (auto messageLine :
                     ImGui::SplitToWidth(TRY(Localisation::get(context.applicationSettings.language, Localisation::Popup_Outdated_Device_Settings_Text)), static_cast<int>(popupWidth)))
                 {
                     ImGui::Text("%s", messageLine.data());
                 }
+            }
             ImGui::EndGroup();
 
             ImGui::SetCursorPosY(popupHeight - (25_scaled + ImGui::GetStyle().WindowPadding.y));
