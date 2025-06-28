@@ -1,10 +1,12 @@
 #include "settings/ApplicationSettings.hpp"
 
-#include <filesystem>
-#include <liberror/Result.hpp>
-#include <nlohmann/json.hpp>
 #include <fmt/format.h>
+#include <liberror/Result.hpp>
+#include <liberror/Try.hpp>
+#include <libexec/Execute.hpp>
+#include <nlohmann/json.hpp>
 
+#include <filesystem>
 #include <fstream>
 #include <sstream>
 #include <cstdlib>
@@ -74,7 +76,7 @@ void save_application_settings(ApplicationSettings const& settings)
     stream << std::setw(4) << json;
 }
 
-void migrate_application_settings(ApplicationSettings const& settings)
+liberror::Result<void> migrate_application_settings(ApplicationSettings const& settings)
 {
     static auto newSettingsSchema = get_application_config_path() / "application_settings.json";
     static auto oldSettingsSchema = get_application_config_path() / "application_settings.old.json";
@@ -83,6 +85,10 @@ void migrate_application_settings(ApplicationSettings const& settings)
 
     save_application_settings(settings);
 
-    popen(fmt::format("xdg-open {}", get_application_config_path().string()).data(), "r");
-    pclose(popen(fmt::format("git diff {} {} > {}/conflict.diff", oldSettingsSchema.string(), newSettingsSchema.string(), get_application_config_path().string()).data(), "r"));
+    TRY(libexec::execute("xdg-open", { get_application_config_path() }, libexec::Mode::DETACHED));
+    auto [out, err] = TRY(libexec::execute("git", { "diff", oldSettingsSchema, newSettingsSchema }));
+    std::ofstream stream(get_application_config_path() / "conflict.diff");
+    stream << out;
+
+    return {};
 }

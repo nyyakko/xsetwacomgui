@@ -43,5 +43,5 @@ public:
 
 liberror::Result<void, SettingsError> load_tablet_settings(TabletSettings& settings);
 void save_tablet_settings(TabletSettings const& settings);
-void migrate_tablet_settings(TabletSettings const& settings);
+liberror::Result<void> migrate_tablet_settings(TabletSettings const& settings);
 
