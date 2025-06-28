@@ -223,12 +223,12 @@ liberror::Result<void> apply_settings_to_device(Context const& context)
     TRY(libwacom::set_stylus_area(context.device.id, context.tabletSettings.device.area));
     TRY(libwacom::set_stylus_handedness(context.device.id, context.tabletSettings.device.handedness));
     TRY(libwacom::set_stylus_pressure_curve(context.device.id, context.tabletSettings.device.pressure));
-    TRY(libwacom::set_stylus_output_from_display_area(context.device.id, {
-        context.tabletSettings.monitor.area.offsetX + context.monitor.area.offsetX,
-        context.tabletSettings.monitor.area.offsetY + context.monitor.area.offsetY,
-        context.tabletSettings.monitor.area.width,
-        context.tabletSettings.monitor.area.height,
-    }));
+
+    auto monitorArea = context.tabletSettings.monitor.area;
+    monitorArea.offsetX += context.monitor.area.offsetX;
+    monitorArea.offsetY += context.monitor.area.offsetY;
+    TRY(libwacom::set_stylus_output_from_display_area(context.device.id, monitorArea));
+
     return {};
 }
 
@@ -448,6 +448,7 @@ liberror::Result<void> render_tablet_settings_tab(Context& context, std::vector<
         };
         ImGui::SetNextItemWidth(150_scaled);
         static int orientationIndex = static_cast<int>(context.tabletSettings.device.handedness.to_int());
+
         if (context.hasChangedDeviceHandedness && (context.hasChangedDeviceHandedness & USB_ACTION_MAGIC) == 0)
         {
             orientationIndex = static_cast<int>(context.tabletSettings.device.handedness.to_int());
@@ -840,12 +841,11 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
         TRY(libwacom::set_stylus_area(device.id, tabletSettings.device.area));
         TRY(libwacom::set_stylus_handedness(device.id, tabletSettings.device.handedness));
         TRY(libwacom::set_stylus_pressure_curve(device.id, tabletSettings.device.pressure));
-        TRY(libwacom::set_stylus_output_from_display_area(device.id, {
-            tabletSettings.monitor.area.offsetX + maybeMonitor->area.offsetX,
-            tabletSettings.monitor.area.offsetY + maybeMonitor->area.offsetY,
-            tabletSettings.monitor.area.width,
-            tabletSettings.monitor.area.height,
-        }));
+
+        auto monitorArea = tabletSettings.monitor.area;
+        monitorArea.offsetX += maybeMonitor->area.offsetX;
+        monitorArea.offsetY += maybeMonitor->area.offsetY;
+        TRY(libwacom::set_stylus_output_from_display_area(device.id, monitorArea));
 
         fmt::println("Device settings loaded successfully");
 
