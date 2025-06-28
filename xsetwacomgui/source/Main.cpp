@@ -958,22 +958,7 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
         {
             context.monitor = Monitor {};
             context.device = libwacom::Device {};
-            context.tabletSettings = {
-                .device = {
-                    .name = "INVALID",
-                    .handedness = libwacom::Handedness::RIGHT,
-                    .area = { -1, -1, -1, -1 },
-                    .pressure = { -1, -1, -1, -1 },
-                    .forceFullArea = false,
-                    .forceAspectRatio = false
-                },
-                .monitor = {
-                    .name = "INVALID",
-                    .area = { -1, -1, -1, -1 },
-                    .forceFullArea = false,
-                    .forceAspectRatio = false
-                }
-            };
+            context.tabletSettings = {};
         }
 
         return {};
