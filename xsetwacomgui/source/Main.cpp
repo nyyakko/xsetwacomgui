@@ -110,6 +110,7 @@ liberror::Result<void> render_settings_popup_appearance_tab(Context const& conte
         if (hasChangedUIFont)
         {
             fontStyles = fplus::transform([] (FontInfo const& fontInfo) { return fontInfo.style.data(); }, fontsInfo.at(static_cast<size_t>(fontFamilyIndex)));
+            fontStyleIndex = 0;
         }
 
         context.applicationSettings.font = fonts.at(fontsFamily.at(static_cast<size_t>(fontFamilyIndex))).at(static_cast<size_t>(fontStyleIndex));
