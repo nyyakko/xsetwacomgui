@@ -1,5 +1,7 @@
 #include "ui/Localisation.hpp"
 
+#include "platform/Environment.hpp"
+
 #include <fmt/format.h>
 #include <fplus/fplus.hpp>
 #include <nlohmann/json.hpp>
@@ -58,14 +60,14 @@ liberror::Result<char const*> Localisation::get(std::string_view language, Local
                 { Localisation::Tabs_Tablet_OffsetY, json["tabsTabletOffsetY"].get<std::string>() },
                 { Localisation::Tabs_Tablet_FullArea, json["tabsTabletFullArea"].get<std::string>() },
                 { Localisation::Tabs_Tablet_ForceProportions, json["tabsTabletForceProportions"].get<std::string>() },
-                { Localisation::Tabs_Monitor_Title, json["tabsMonitorTitle"].get<std::string>() },
-                { Localisation::Tabs_Monitor_Monitor, json["tabsMonitorMonitor"].get<std::string>() },
-                { Localisation::Tabs_Monitor_Width, json["tabsMonitorWidth"].get<std::string>() },
-                { Localisation::Tabs_Monitor_Height, json["tabsMonitorHeight"].get<std::string>() },
-                { Localisation::Tabs_Monitor_OffsetX, json["tabsMonitorOffsetX"].get<std::string>() },
-                { Localisation::Tabs_Monitor_OffsetY, json["tabsMonitorOffsetY"].get<std::string>() },
-                { Localisation::Tabs_Monitor_FullArea, json["tabsMonitorFullArea"].get<std::string>() },
-                { Localisation::Tabs_Monitor_ForceProportions, json["tabsMonitorForceProportions"].get<std::string>() },
+                { Localisation::Tabs_Display_Title, json["tabsDisplayTitle"].get<std::string>() },
+                { Localisation::Tabs_Display_Display, json["tabsDisplayDisplay"].get<std::string>() },
+                { Localisation::Tabs_Display_Width, json["tabsDisplayWidth"].get<std::string>() },
+                { Localisation::Tabs_Display_Height, json["tabsDisplayHeight"].get<std::string>() },
+                { Localisation::Tabs_Display_OffsetX, json["tabsDisplayOffsetX"].get<std::string>() },
+                { Localisation::Tabs_Display_OffsetY, json["tabsDisplayOffsetY"].get<std::string>() },
+                { Localisation::Tabs_Display_FullArea, json["tabsDisplayFullArea"].get<std::string>() },
+                { Localisation::Tabs_Display_ForceProportions, json["tabsDisplayForceProportions"].get<std::string>() },
                 { Localisation::Toast_Devices_Missing, json["toastDevicesMissing"].get<std::string>() },
                 { Localisation::Toast_Application_Settings_Saved, json["toastApplicationSettingsSaved"].get<std::string>() },
                 { Localisation::Toast_Device_Settings_Saved, json["toastDeviceSettingsSaved"].get<std::string>() },
