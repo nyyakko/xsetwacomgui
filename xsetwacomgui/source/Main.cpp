@@ -224,12 +224,10 @@ liberror::Result<void> apply_settings_to_device(Context const& context)
     TRY(libwacom::set_stylus_area(context.device.id, context.tabletSettings.device.area));
     TRY(libwacom::set_stylus_handedness(context.device.id, context.tabletSettings.device.handedness));
     TRY(libwacom::set_stylus_pressure_curve(context.device.id, context.tabletSettings.device.pressure));
-
     auto monitorArea = context.tabletSettings.monitor.area;
     monitorArea.offsetX += context.monitor.area.offsetX;
     monitorArea.offsetY += context.monitor.area.offsetY;
     TRY(libwacom::set_stylus_output_from_display_area(context.device.id, monitorArea));
-
     return {};
 }
 
@@ -842,7 +840,6 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
         TRY(libwacom::set_stylus_area(device.id, tabletSettings.device.area));
         TRY(libwacom::set_stylus_handedness(device.id, tabletSettings.device.handedness));
         TRY(libwacom::set_stylus_pressure_curve(device.id, tabletSettings.device.pressure));
-
         auto monitorArea = tabletSettings.monitor.area;
         monitorArea.offsetX += maybeMonitor->area.offsetX;
         monitorArea.offsetY += maybeMonitor->area.offsetY;
@@ -883,10 +880,6 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
 
             return {};
         }
-        else
-        {
-            set_scale(applicationSettings.scale);
-        }
     }
 
     if (!glfwInit())
@@ -897,6 +890,8 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+
+    set_scale(applicationSettings.scale);
 
 #ifdef DEBUG
     auto window = glfwCreateWindow(static_cast<int>(800_scaled), static_cast<int>(815_scaled), NAME " - DEBUG BUILD", nullptr, nullptr);
