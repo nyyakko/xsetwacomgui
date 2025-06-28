@@ -4,13 +4,13 @@
 #include <vector>
 
 #include <liberror/Result.hpp>
+#include <libwacom/Device.hpp>
 
 struct Monitor
 {
     int id;
     bool primary;
-    float offsetX, offsetY;
-    float width, height;
+    libwacom::Area area;
     std::string name;
 };
 
