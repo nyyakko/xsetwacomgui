@@ -32,7 +32,7 @@ liberror::Result<void, SettingsError> load_application_settings(ApplicationSetti
         settings.font.family = json["appearance"]["font"]["family"].get<std::string>();
         settings.font.style  = json["appearance"]["font"]["style"].get<std::string>();
         settings.scale       = json["display"]["scale"].get<float>();
-        settings.language    = ApplicationSettings::Language::from_string(json["language"]["language"].get<std::string>());
+        settings.language    = json["language"]["language"].get<std::string>();
     }
     catch (std::exception const& error)
     {
@@ -65,7 +65,7 @@ void save_application_settings(ApplicationSettings const& settings)
         },
         {
             "language", {
-                { "language", settings.language.to_string() },
+                { "language", settings.language },
             }
         }
     };

@@ -138,7 +138,7 @@ liberror::Result<void> render_settings_popup_language_tab(Context const& context
     ImGui::Text("%s", TRY(Localisation::get(context.applicationSettings.language, Localisation::Popup_Settings_Tabs_Language_Language)));
 
     static auto languages = get_available_languages();
-    static auto languagesData = fplus::transform(std::bind_front(&ApplicationSettings::Language::to_string), languages);
+    static auto languagesData = fplus::transform([] (std::string const& language) { return language.data(); }, languages);
 
     static int languageIndex = static_cast<int>(
         std::distance(languages.begin(), std::ranges::find(languages, context.applicationSettings.language))
@@ -852,33 +852,8 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
         return {};
     }
 
-    ApplicationSettings applicationSettings {
-        .scale = 1.0,
-        .theme = ApplicationSettings::Theme::DARK,
-        .language = ApplicationSettings::Language::EN_US,
-        .font {
-            .family = "Default",
-            .style  = "Regular",
-            .path   = ""
-        }
-    };
-
-    TabletSettings tabletSettings {
-        .device = {
-            .name = "INVALID",
-            .handedness = libwacom::Handedness::RIGHT,
-            .area = { -1, -1, -1, -1 },
-            .pressure = { -1, -1, -1, -1 },
-            .forceFullArea = false,
-            .forceAspectRatio = false
-        },
-        .monitor = {
-            .name = "INVALID",
-            .area = { -1, -1, -1, -1 },
-            .forceFullArea = false,
-            .forceAspectRatio = false
-        }
-    };
+    ApplicationSettings applicationSettings {};
+    TabletSettings tabletSettings {};
 
     if (!std::filesystem::exists(APPLICATION_SETTINGS_FILE))
     {
