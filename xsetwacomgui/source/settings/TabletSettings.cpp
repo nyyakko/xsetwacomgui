@@ -1,13 +1,15 @@
 #include "settings/TabletSettings.hpp"
 
-#include <filesystem>
-#include <liberror/Result.hpp>
-#include <nlohmann/json.hpp>
 #include <fmt/format.h>
+#include <liberror/Result.hpp>
+#include <liberror/Try.hpp>
+#include <libexec/Execute.hpp>
+#include <nlohmann/json.hpp>
 
+#include <cstdlib>
+#include <filesystem>
 #include <fstream>
 #include <sstream>
-#include <cstdlib>
 
 liberror::Result<void, SettingsError> load_tablet_settings(TabletSettings& settings)
 {
@@ -105,7 +107,7 @@ void save_tablet_settings(TabletSettings const& settings)
     stream << std::setw(4) << json;
 }
 
-void migrate_tablet_settings(TabletSettings const& settings)
+liberror::Result<void> migrate_tablet_settings(TabletSettings const& settings)
 {
     static auto newSettingsSchema = get_application_config_path() / "tablet_settings.json";
     static auto oldSettingsSchema = get_application_config_path() / "tablet_settings.old.json";
@@ -114,6 +116,10 @@ void migrate_tablet_settings(TabletSettings const& settings)
 
     save_tablet_settings(settings);
 
-    popen(fmt::format("xdg-open {}", get_application_config_path().string()).data(), "r");
-    pclose(popen(fmt::format("git diff {} {} > {}/conflict.diff", oldSettingsSchema.string(), newSettingsSchema.string(), get_application_config_path().string()).data(), "r"));
+    TRY(libexec::execute("xdg-open", { get_application_config_path() }, libexec::Mode::DETACHED));
+    auto [out, err] = TRY(libexec::execute("git", { "diff", oldSettingsSchema, newSettingsSchema }));
+    std::ofstream stream(get_application_config_path() / "conflict.diff");
+    stream << out;
+
+    return {};
 }

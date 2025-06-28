@@ -10,7 +10,7 @@
 class Localisation
 {
 private:
-    std::map<ApplicationSettings::Language, std::map<int, std::string>> data;
+    std::map<std::string, std::map<int, std::string>> data;
 
     using LocalisedMessage = int;
 public:
@@ -81,8 +81,8 @@ public:
         return localisation.data;
     }
 
-    static liberror::Result<char const*> get(ApplicationSettings::Language language, LocalisedMessage id);
+    static liberror::Result<char const*> get(std::string_view language, LocalisedMessage id);
 };
 
-std::vector<ApplicationSettings::Language> get_available_languages();
+std::vector<std::string> get_available_languages();
 

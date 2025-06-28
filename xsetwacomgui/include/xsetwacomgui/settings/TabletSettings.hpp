@@ -11,20 +11,20 @@ inline std::filesystem::path TABLET_SETTINGS_FILE = get_application_config_path(
 
 struct DeviceSettings
 {
-    std::string name;
-    libwacom::Handedness handedness;
-    libwacom::Area area;
-    libwacom::Pressure pressure;
-    bool forceFullArea;
-    bool forceAspectRatio;
+    std::string name = "INVALID";
+    libwacom::Handedness handedness = libwacom::Handedness::RIGHT;
+    libwacom::Area area = { -1, -1, -1, -1 };
+    libwacom::Pressure pressure = { -1, -1, -1, -1 };
+    bool forceFullArea = false;
+    bool forceAspectRatio = false;
 };
 
 struct MonitorSettings
 {
-    std::string name;
-    libwacom::Area area;
-    bool forceFullArea;
-    bool forceAspectRatio;
+    std::string name = "INVALID";
+    libwacom::Area area = { -1, -1, -1, -1 };
+    bool forceFullArea = false;
+    bool forceAspectRatio = false;
 };
 
 struct TabletSettings
@@ -37,11 +37,11 @@ private:
     friend void save_tablet_settings(TabletSettings const& settings);
 public:
 
-    DeviceSettings device;
-    MonitorSettings monitor;
+    DeviceSettings device {};
+    MonitorSettings monitor {};
 };
 
 liberror::Result<void, SettingsError> load_tablet_settings(TabletSettings& settings);
 void save_tablet_settings(TabletSettings const& settings);
-void migrate_tablet_settings(TabletSettings const& settings);
+liberror::Result<void> migrate_tablet_settings(TabletSettings const& settings);
 

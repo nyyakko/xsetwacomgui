@@ -8,11 +8,11 @@
 #include <fstream>
 #include <ranges>
 
-liberror::Result<char const*> Localisation::get(ApplicationSettings::Language language, LocalisedMessage id)
+liberror::Result<char const*> Localisation::get(std::string_view language, LocalisedMessage id)
 {
-    if (!the().contains(language))
+    if (!the().contains(language.data()))
     {
-        auto languageLowercase = std::string_view(language.to_string()) | std::views::transform(tolower);
+        auto languageLowercase = std::string_view(language.data()) | std::views::transform(tolower);
         std::ifstream stream(
             get_application_data_path() / "languages" / fmt::format("{}.json", std::string(languageLowercase.begin(), languageLowercase.end()))
         );
@@ -22,7 +22,7 @@ liberror::Result<char const*> Localisation::get(ApplicationSettings::Language la
         try
         {
             auto json = nlohmann::json::parse(content.str());
-            the()[language] = {
+            the()[language.data()] = {
                 { Localisation::Toast_Success, json["toastSuccess"].get<std::string>() },
                 { Localisation::Toast_Warning, json["toastWarning"].get<std::string>() },
                 { Localisation::Toast_Error, json["toastError"].get<std::string>() },
@@ -81,22 +81,17 @@ liberror::Result<char const*> Localisation::get(ApplicationSettings::Language la
         }
     }
 
-    return the()[language][id].data();
+    return the()[language.data()][id].data();
 }
 
-std::vector<ApplicationSettings::Language> get_available_languages()
+std::vector<std::string> get_available_languages()
 {
-    std::vector<ApplicationSettings::Language> languages {};
+    std::vector<std::string> languages {};
 
     for (auto const& entry : std::filesystem::directory_iterator(get_application_data_path() / "languages"))
     {
         if (entry.path().extension() == ".json")
-        {
-            auto languageNameUpper = entry.path().stem().string() | std::views::transform(::toupper);
-            languages.push_back(
-                ApplicationSettings::Language::from_string(std::string(languageNameUpper.begin(), languageNameUpper.end()))
-            );
-        }
+            languages.push_back(entry.path().stem().string());
     }
 
     return languages;

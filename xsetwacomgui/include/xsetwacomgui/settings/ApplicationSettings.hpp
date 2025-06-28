@@ -20,15 +20,14 @@ private:
     friend void save_application_settings(ApplicationSettings const& settings);
 public:
     ENUM_CLASS(Theme, DARK, LIGHT)
-    ENUM_CLASS(Language, EN_US, PT_BR, RU_RU)
 
-    float scale;
-    Theme theme;
-    Language language;
-    FontInfo font;
+    float scale = 1.0;
+    Theme theme = Theme::DARK;
+    std::string language = "en_us";
+    FontInfo font = { "Default", "Regular", "" };
 };
 
 liberror::Result<void, SettingsError> load_application_settings(ApplicationSettings& settings);
 void save_application_settings(ApplicationSettings const& settings);
-void migrate_application_settings(ApplicationSettings const& settings);
+liberror::Result<void> migrate_application_settings(ApplicationSettings const& settings);
 
