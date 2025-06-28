@@ -6,6 +6,19 @@
 
 #include <cstdlib>
 #include <regex>
+#include <algorithm>
+
+liberror::Result<Monitor> get_primary_monitor()
+{
+    auto monitors = TRY(get_available_monitors());
+    auto maybeMonitor = std::ranges::find_if(monitors, &Monitor::primary);
+    if (maybeMonitor == monitors.end())
+    {
+        return liberror::make_error("Could not find primary monitor");
+    }
+
+    return *maybeMonitor;
+}
 
 liberror::Result<std::vector<Monitor>> get_available_monitors()
 {

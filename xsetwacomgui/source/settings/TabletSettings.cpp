@@ -13,6 +13,11 @@
 
 liberror::Result<void, SettingsError> load_tablet_settings(TabletSettings& settings)
 {
+    if (!std::filesystem::exists(TABLET_SETTINGS_FILE))
+    {
+        return liberror::make_error<SettingsError>(SettingsError::Type::FILE_NOT_FOUND);
+    }
+
     std::ifstream stream(TABLET_SETTINGS_FILE);
     std::stringstream content;
     content << stream.rdbuf();

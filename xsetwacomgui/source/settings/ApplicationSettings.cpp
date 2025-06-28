@@ -13,6 +13,11 @@
 
 liberror::Result<void, SettingsError> load_application_settings(ApplicationSettings& settings)
 {
+    if (!std::filesystem::exists(APPLICATION_SETTINGS_FILE))
+    {
+        return liberror::make_error<SettingsError>(SettingsError::Type::FILE_NOT_FOUND);
+    }
+
     std::ifstream stream(APPLICATION_SETTINGS_FILE);
     std::stringstream content;
     content << stream.rdbuf();

@@ -39,11 +39,11 @@
 
 struct Context
 {
-    libwacom::Device device;
-    Monitor monitor;
-
     ApplicationSettings& applicationSettings;
     TabletSettings& tabletSettings;
+
+    libwacom::Device device {};
+    Monitor monitor {};
 
     bool handleOutdatedDeviceSettings = false;
 
@@ -686,56 +686,52 @@ liberror::Result<void> render_window(Context& context, std::vector<libwacom::Dev
     if (!(devices.empty() || context.hasTriedToInitializeDeviceSettings))
     {
         context.hasTriedToInitializeDeviceSettings = true;
-        if (std::filesystem::exists(TABLET_SETTINGS_FILE))
+        auto result = load_tablet_settings(context.tabletSettings);
+        if (!result.has_value())
         {
-            auto result = load_tablet_settings(context.tabletSettings);
+            context.device = devices.back();
+            context.hasChangedDevice = true;
+            context.hasChangedDeviceHandedness = true;
+            context.monitor = TRY(get_primary_monitor());
+            context.hasChangedMonitor = true;
+            context.tabletSettings.device.name = context.device.name;
+            context.tabletSettings.device.area = TRY(libwacom::get_stylus_area(context.device.id));
+            context.tabletSettings.device.pressure = TRY(libwacom::get_stylus_pressure_curve(context.device.id));
+            context.tabletSettings.device.forceFullArea = false;
+            context.tabletSettings.device.forceAspectRatio = false;
+            context.tabletSettings.monitor.name = context.monitor.name;
+            context.tabletSettings.monitor.area = { 0, 0, context.monitor.area.width, context.monitor.area.height };
+            context.tabletSettings.monitor.forceFullArea = false;
+            context.tabletSettings.monitor.forceAspectRatio = false;
 
-            if (!result.has_value())
+            switch (result.error().message())
             {
-                switch (result.error().message())
-                {
-                    case SettingsError::Type::WRITE_FAILURE: break;
-                    case SettingsError::Type::READ_FAILURE: {
-                        ImGui::PushToast(
-                            TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Warning)),
-                            TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Device_Settings_Load_Failed))
-                        );
-                        break;
-                    }
-                    case SettingsError::Type::OUTDATED_SCHEMA: {
-                        context.handleOutdatedDeviceSettings = true;
-                        break;
-                    }
-                }
-
-                context.tabletSettings.device.name = context.device.name;
-                context.tabletSettings.device.area = TRY(libwacom::get_stylus_area(context.device.id));
-                context.tabletSettings.device.pressure = TRY(libwacom::get_stylus_pressure_curve(context.device.id));
-                context.tabletSettings.device.forceFullArea = false;
-                context.tabletSettings.device.forceAspectRatio = false;
-                context.tabletSettings.monitor.name = context.monitor.name;
-                context.tabletSettings.monitor.area = { 0, 0, context.monitor.area.width, context.monitor.area.height };
-                context.tabletSettings.monitor.forceFullArea = false;
-                context.tabletSettings.monitor.forceAspectRatio = false;
+            case SettingsError::Type::WRITE_FAILURE: break;
+            case SettingsError::Type::FILE_NOT_FOUND: {
+                ImGui::PushToast(
+                    TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Warning)),
+                    TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Device_Settings_Missing))
+                );
+                save_tablet_settings(context.tabletSettings);
+                break;
             }
-            else
-            {
-                context.monitor = *std::ranges::find(monitors, context.tabletSettings.monitor.name, &Monitor::name);
-                context.device  = *std::ranges::find(devices, context.tabletSettings.device.name, &libwacom::Device::name);
+            case SettingsError::Type::READ_FAILURE: {
+                ImGui::PushToast(
+                    TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Warning)),
+                    TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Device_Settings_Load_Failed))
+                );
+                break;
+            }
+            case SettingsError::Type::OUTDATED_SCHEMA: {
+                context.handleOutdatedDeviceSettings = true;
+                break;
+            }
             }
         }
         else
         {
-            ImGui::PushToast(
-                TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Warning)),
-                TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Device_Settings_Missing))
-            );
-            context.tabletSettings.device.name = context.device.name;
-            context.tabletSettings.device.area = MUST(libwacom::get_stylus_area(context.device.id));
-            context.tabletSettings.device.pressure = MUST(libwacom::get_stylus_pressure_curve(context.device.id));
-            context.tabletSettings.monitor.name = context.monitor.name;
-            context.tabletSettings.monitor.area = libwacom::Area { 0, 0, context.monitor.area.width, context.monitor.area.height };
-            save_tablet_settings(context.tabletSettings);
+            context.monitor = *std::ranges::find(monitors, context.tabletSettings.monitor.name, &Monitor::name);
+            context.device  = *std::ranges::find(devices, context.tabletSettings.device.name, &libwacom::Device::name);
         }
     }
 
@@ -813,11 +809,6 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
 
     if (configCommand["--load"] != false)
     {
-        if (!std::filesystem::exists(TABLET_SETTINGS_FILE))
-        {
-            return liberror::make_error("Device settings could not be found");
-        }
-
         TabletSettings tabletSettings {};
 
         if (!load_tablet_settings(tabletSettings))
@@ -831,18 +822,14 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
         }
 
         auto device  = devices.front();
-        auto maybeMonitor = std::ranges::find_if(monitors, &Monitor::primary);
-        if (maybeMonitor == monitors.end())
-        {
-            return liberror::make_error("Could not find primary monitor");
-        }
+        auto monitor = TRY(get_primary_monitor());
 
         TRY(libwacom::set_stylus_area(device.id, tabletSettings.device.area));
         TRY(libwacom::set_stylus_handedness(device.id, tabletSettings.device.handedness));
         TRY(libwacom::set_stylus_pressure_curve(device.id, tabletSettings.device.pressure));
         auto monitorArea = tabletSettings.monitor.area;
-        monitorArea.offsetX += maybeMonitor->area.offsetX;
-        monitorArea.offsetY += maybeMonitor->area.offsetY;
+        monitorArea.offsetX += monitor.area.offsetX;
+        monitorArea.offsetY += monitor.area.offsetY;
         TRY(libwacom::set_stylus_output_from_display_area(device.id, monitorArea));
 
         fmt::println("Device settings loaded successfully");
@@ -932,12 +919,7 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
         font = io.Fonts->AddFontFromFileTTF(applicationSettings.font.path.string().data(), 20_scaled, nullptr, ranges.Data);
     }
 
-    static Context context = TRY([&] () -> liberror::Result<Context> {
-        libwacom::Device device = devices.empty() ? libwacom::Device {} : devices.front();
-        auto maybeMonitor = std::ranges::find_if(monitors, &Monitor::primary);
-        if (maybeMonitor == monitors.end()) return liberror::make_error("Could not find primary monitor");
-        return Context(device, *maybeMonitor, applicationSettings, tabletSettings);
-    }());
+    Context context { applicationSettings, tabletSettings };
 
     USBEvent usbAction {};
 
@@ -946,7 +928,6 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
 
         auto hadMoreThanOneDevice = devices.size() > 1;
         devices = fplus::keep_if([] (auto&& device) { return device.kind == libwacom::Device::Kind::STYLUS; }, TRY(libwacom::get_available_devices()));
-
         if (hadMoreThanOneDevice) return {};
 
         auto maybeDevice = std::ranges::find(devices, context.tabletSettings.device.name, &libwacom::Device::name);
@@ -965,45 +946,47 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
 
         auto hadAtleastOneDevice = !devices.empty();
         devices = fplus::keep_if([] (auto&& device) { return device.kind == libwacom::Device::Kind::STYLUS; }, TRY(libwacom::get_available_devices()));
-
         if (hadAtleastOneDevice) return {};
 
-        TabletSettings settings {};
-        auto result = load_tablet_settings(settings);
+        auto result = load_tablet_settings(context.tabletSettings);
         if (!result.has_value())
         {
-            switch (result.error().message())
-            {
-                case SettingsError::Type::WRITE_FAILURE: break;
-                case SettingsError::Type::READ_FAILURE: {
-                    ImGui::PushToast(
-                        TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Warning)),
-                        TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Device_Settings_Load_Failed))
-                    );
-                    break;
-                }
-                case SettingsError::Type::OUTDATED_SCHEMA: {
-                    context.handleOutdatedDeviceSettings = true;
-                    break;
-                }
-            }
-
             context.device = devices.back();
             context.hasChangedDevice = 0xFF ^ USB_ACTION_MAGIC;
             context.hasChangedDeviceHandedness = 0xFF ^ USB_ACTION_MAGIC;
-            context.monitor = *std::ranges::find_if(monitors, &Monitor::primary);
+            context.monitor = TRY(get_primary_monitor());
             context.hasChangedMonitor = 0xFF ^ USB_ACTION_MAGIC;
             context.tabletSettings.device.name = context.device.name;
             context.tabletSettings.device.area = TRY(libwacom::get_stylus_area(context.device.id));
             context.tabletSettings.device.pressure = TRY(libwacom::get_stylus_pressure_curve(context.device.id));
-            context.tabletSettings.device.forceFullArea = false;
-            context.tabletSettings.device.forceAspectRatio = false;
             context.tabletSettings.monitor.name = context.monitor.name;
             context.tabletSettings.monitor.area = { 0, 0, context.monitor.area.width, context.monitor.area.height };
-            context.tabletSettings.monitor.forceFullArea = false;
-            context.tabletSettings.monitor.forceAspectRatio = false;
+
+            switch (result.error().message())
+            {
+            case SettingsError::Type::WRITE_FAILURE: break;
+            case SettingsError::Type::FILE_NOT_FOUND: {
+                ImGui::PushToast(
+                    TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Warning)),
+                    TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Device_Settings_Missing))
+                );
+                save_tablet_settings(context.tabletSettings);
+                break;
+            }
+            case SettingsError::Type::READ_FAILURE: {
+                ImGui::PushToast(
+                    TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Warning)),
+                    TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Device_Settings_Load_Failed))
+                );
+                break;
+            }
+            case SettingsError::Type::OUTDATED_SCHEMA: {
+                context.handleOutdatedDeviceSettings = true;
+                break;
+            }
+            }
         }
-        else if (devices.back().name == settings.device.name)
+        else if (devices.back().name == context.tabletSettings.device.name)
         {
             ImGui::PushToast(
                 TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Success)),
@@ -1012,8 +995,7 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
             context.device = devices.back();
             context.hasChangedDevice = 0xFF ^ USB_ACTION_MAGIC;
             context.hasChangedDeviceHandedness = 0xFF ^ USB_ACTION_MAGIC;
-            context.tabletSettings = settings;
-            context.monitor = *std::ranges::find(monitors, settings.monitor.name, &Monitor::name);
+            context.monitor = *std::ranges::find(monitors, context.tabletSettings.monitor.name, &Monitor::name);
             context.hasChangedMonitor = 0xFF ^ USB_ACTION_MAGIC;
             TRY(apply_settings_to_device(context));
         }

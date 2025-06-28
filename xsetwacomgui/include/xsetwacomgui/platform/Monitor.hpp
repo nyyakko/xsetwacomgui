@@ -15,3 +15,4 @@ struct Monitor
 };
 
 liberror::Result<std::vector<Monitor>> get_available_monitors();
+liberror::Result<Monitor> get_primary_monitor();
