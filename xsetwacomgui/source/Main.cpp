@@ -4,7 +4,7 @@
 
 #include "platform/Environment.hpp"
 #include "platform/events/USBEvent.hpp"
-#include "platform/Monitor.hpp"
+#include "platform/Display.hpp"
 #include "settings/ApplicationSettings.hpp"
 #include "settings/TabletSettings.hpp"
 #include "ui/FreeType.hpp"
@@ -39,11 +39,11 @@
 
 struct Context
 {
-    libwacom::Device device;
-    Monitor monitor;
-
     ApplicationSettings& applicationSettings;
     TabletSettings& tabletSettings;
+
+    libwacom::Device device {};
+    Display display {};
 
     bool handleOutdatedDeviceSettings = false;
 
@@ -51,8 +51,8 @@ struct Context
     uint8_t hasChangedDeviceHandedness = false;
     bool hasChangedDeviceArea = false;
     bool hasChangedDevicePressure = false;
-    uint8_t hasChangedMonitor = false;
-    bool hasChangedMonitorArea = false;
+    uint8_t hasChangedDisplay = false;
+    bool hasChangedDisplayArea = false;
     bool hasTriedToInitializeDeviceSettings = false;
 };
 
@@ -110,6 +110,7 @@ liberror::Result<void> render_settings_popup_appearance_tab(Context const& conte
         if (hasChangedUIFont)
         {
             fontStyles = fplus::transform([] (FontInfo const& fontInfo) { return fontInfo.style.data(); }, fontsInfo.at(static_cast<size_t>(fontFamilyIndex)));
+            fontStyleIndex = 0;
         }
 
         context.applicationSettings.font = fonts.at(fontsFamily.at(static_cast<size_t>(fontFamilyIndex))).at(static_cast<size_t>(fontStyleIndex));
@@ -223,73 +224,71 @@ liberror::Result<void> apply_settings_to_device(Context const& context)
     TRY(libwacom::set_stylus_area(context.device.id, context.tabletSettings.device.area));
     TRY(libwacom::set_stylus_handedness(context.device.id, context.tabletSettings.device.handedness));
     TRY(libwacom::set_stylus_pressure_curve(context.device.id, context.tabletSettings.device.pressure));
-
-    auto monitorArea = context.tabletSettings.monitor.area;
-    monitorArea.offsetX += context.monitor.area.offsetX;
-    monitorArea.offsetY += context.monitor.area.offsetY;
-    TRY(libwacom::set_stylus_output_from_display_area(context.device.id, monitorArea));
-
+    auto displayArea = context.tabletSettings.display.area;
+    displayArea.offsetX += context.display.area.offsetX;
+    displayArea.offsetY += context.display.area.offsetY;
+    TRY(libwacom::set_stylus_output_from_display_area(context.device.id, displayArea));
     return {};
 }
 
-liberror::Result<void> render_region_mappers(Context& context, std::vector<libwacom::Device> const& devices, std::vector<Monitor> const& monitors)
+liberror::Result<void> render_region_mappers(Context& context, std::vector<libwacom::Device> const& devices, std::vector<Display> const& displays)
 {
     auto [cursorX, cursorY] = ImGui::GetCursorPos();
     ImDrawList* drawList = ImGui::GetWindowDrawList();
 
-    static ImVec2 monitorAreaAnchors[4] { { -1, -1 }, { -1, -1 }, { -1, -1 }, { -1, -1 } };
-    static libwacom::Area monitorDefaultArea = monitors.empty() ? libwacom::Area {} : libwacom::Area { 0, 0, context.monitor.area.width, context.monitor.area.height };
+    static ImVec2 displayAreaAnchors[4] { { -1, -1 }, { -1, -1 }, { -1, -1 }, { -1, -1 } };
+    static libwacom::Area displayDefaultArea = displays.empty() ? libwacom::Area {} : libwacom::Area { 0, 0, context.display.area.width, context.display.area.height };
 
-    if (context.hasChangedMonitorArea && context.tabletSettings.monitor.forceFullArea && context.tabletSettings.monitor.name != "INVALID")
+    if (context.hasChangedDisplayArea && context.tabletSettings.display.forceFullArea && context.tabletSettings.display.name != "INVALID")
     {
-        context.tabletSettings.monitor.area = monitorDefaultArea;
+        context.tabletSettings.display.area = displayDefaultArea;
     }
 
-    if (context.hasChangedMonitor && context.tabletSettings.monitor.name != "INVALID")
+    if (context.hasChangedDisplay && context.tabletSettings.display.name != "INVALID")
     {
-        monitorDefaultArea = libwacom::Area { 0, 0, context.monitor.area.width, context.monitor.area.height };
+        displayDefaultArea = libwacom::Area { 0, 0, context.display.area.width, context.display.area.height };
     }
 
-    if (!monitors.empty() && context.tabletSettings.monitor.name != "INVALID")
+    if (!displays.empty() && context.tabletSettings.display.name != "INVALID")
     {
-        monitorAreaAnchors[0] = {
-            context.tabletSettings.monitor.area.offsetX / monitorDefaultArea.width,
-            context.tabletSettings.monitor.area.offsetY / monitorDefaultArea.height
+        displayAreaAnchors[0] = {
+            context.tabletSettings.display.area.offsetX / displayDefaultArea.width,
+            context.tabletSettings.display.area.offsetY / displayDefaultArea.height
         };
-        monitorAreaAnchors[1] = {
-            context.tabletSettings.monitor.area.offsetX / monitorDefaultArea.width,
-            (context.tabletSettings.monitor.area.height + context.tabletSettings.monitor.area.offsetY) / monitorDefaultArea.height
+        displayAreaAnchors[1] = {
+            context.tabletSettings.display.area.offsetX / displayDefaultArea.width,
+            (context.tabletSettings.display.area.height + context.tabletSettings.display.area.offsetY) / displayDefaultArea.height
         };
-        monitorAreaAnchors[2] = {
-            (context.tabletSettings.monitor.area.width + context.tabletSettings.monitor.area.offsetX) / monitorDefaultArea.width,
-            context.tabletSettings.monitor.area.offsetY / monitorDefaultArea.height
+        displayAreaAnchors[2] = {
+            (context.tabletSettings.display.area.width + context.tabletSettings.display.area.offsetX) / displayDefaultArea.width,
+            context.tabletSettings.display.area.offsetY / displayDefaultArea.height
         };
-        monitorAreaAnchors[3] = {
-            (context.tabletSettings.monitor.area.width + context.tabletSettings.monitor.area.offsetX) / monitorDefaultArea.width,
-            (context.tabletSettings.monitor.area.height + context.tabletSettings.monitor.area.offsetY) / monitorDefaultArea.height
+        displayAreaAnchors[3] = {
+            (context.tabletSettings.display.area.width + context.tabletSettings.display.area.offsetX) / displayDefaultArea.width,
+            (context.tabletSettings.display.area.height + context.tabletSettings.display.area.offsetY) / displayDefaultArea.height
         };
     }
     else
     {
-        monitorAreaAnchors[0] = { 0, 0 };
-        monitorAreaAnchors[1] = { 0, 1 };
-        monitorAreaAnchors[2] = { 1, 0 };
-        monitorAreaAnchors[3] = { 1, 1 };
+        displayAreaAnchors[0] = { 0, 0 };
+        displayAreaAnchors[1] = { 0, 1 };
+        displayAreaAnchors[2] = { 1, 0 };
+        displayAreaAnchors[3] = { 1, 1 };
     }
 
-    static const ImVec2 monitorMapperSize { 20 * 16_scaled, 20 * 9_scaled };
-    ImGui::SetCursorPosX((ImGui::GetWindowWidth() - monitorMapperSize.x)/2);
-    static ImRect monitorMapperPosition {};
-    context.hasChangedMonitorArea = area_mapper(TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Monitor_Monitor)), monitorAreaAnchors, monitorMapperSize, &monitorMapperPosition, context.tabletSettings.monitor.forceFullArea, context.tabletSettings.monitor.forceAspectRatio);
+    static const ImVec2 displayMapperSize { 20 * 16_scaled, 20 * 9_scaled };
+    ImGui::SetCursorPosX((ImGui::GetWindowWidth() - displayMapperSize.x)/2);
+    static ImRect displayMapperPosition {};
+    context.hasChangedDisplayArea = area_mapper(TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Display_Display)), displayAreaAnchors, displayMapperSize, &displayMapperPosition, context.tabletSettings.display.forceFullArea, context.tabletSettings.display.forceAspectRatio);
     ImGui::SetCursorPosX(cursorX);
 
-    if (context.hasChangedMonitorArea && context.tabletSettings.monitor.name != "INVALID")
+    if (context.hasChangedDisplayArea && context.tabletSettings.display.name != "INVALID")
     {
-        context.tabletSettings.monitor.area = {
-            .offsetX = monitorAreaAnchors[0].x * monitorDefaultArea.width,
-            .offsetY = monitorAreaAnchors[0].y * monitorDefaultArea.height,
-            .width   = (monitorAreaAnchors[2].x - monitorAreaAnchors[0].x) * monitorDefaultArea.width,
-            .height  = (monitorAreaAnchors[3].y - monitorAreaAnchors[2].y) * monitorDefaultArea.height
+        context.tabletSettings.display.area = {
+            .offsetX = displayAreaAnchors[0].x * displayDefaultArea.width,
+            .offsetY = displayAreaAnchors[0].y * displayDefaultArea.height,
+            .width   = (displayAreaAnchors[2].x - displayAreaAnchors[0].x) * displayDefaultArea.width,
+            .height  = (displayAreaAnchors[3].y - displayAreaAnchors[2].y) * displayDefaultArea.height
         };
     }
 
@@ -349,9 +348,9 @@ liberror::Result<void> render_region_mappers(Context& context, std::vector<libwa
         };
     }
 
-    for (auto [monitorAnchor, deviceAnchor] : fplus::zip(std::span<ImVec2>(monitorAreaAnchors, 4), std::span<ImVec2>(deviceAreaAnchors, 4)))
+    for (auto [displayAnchor, deviceAnchor] : fplus::zip(std::span<ImVec2>(displayAreaAnchors, 4), std::span<ImVec2>(deviceAreaAnchors, 4)))
     {
-        auto p1 = monitorAnchor * (monitorMapperPosition.Max - monitorMapperPosition.Min) + monitorMapperPosition.Min;
+        auto p1 = displayAnchor * (displayMapperPosition.Max - displayMapperPosition.Min) + displayMapperPosition.Min;
         auto p2 = deviceAnchor * (deviceMapperPosition.Max - deviceMapperPosition.Min) + deviceMapperPosition.Min;
         drawList->AddLine(p1, p2, ImColor(255, 0, 0, 127), 2.f);
     }
@@ -514,63 +513,63 @@ liberror::Result<void> render_tablet_settings_tab(Context& context, std::vector<
     return {};
 }
 
-liberror::Result<void> render_monitor_settings_tab(Context& context, std::vector<Monitor> const& monitors)
+liberror::Result<void> render_display_settings_tab(Context& context, std::vector<Display> const& displays)
 {
     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - (300_scaled + ImGui::GetStyle().WindowPadding.x))/2);
 
-    static libwacom::Area monitorDefaultArea = monitors.empty() ? libwacom::Area {} : libwacom::Area { 0, 0, context.monitor.area.width, context.monitor.area.height };
+    static libwacom::Area displayDefaultArea = displays.empty() ? libwacom::Area {} : libwacom::Area { 0, 0, context.display.area.width, context.display.area.height };
 
-    if (context.hasChangedMonitor && context.tabletSettings.monitor.name != "INVALID")
+    if (context.hasChangedDisplay && context.tabletSettings.display.name != "INVALID")
     {
-        monitorDefaultArea = libwacom::Area { 0, 0, context.monitor.area.width, context.monitor.area.height };
+        displayDefaultArea = libwacom::Area { 0, 0, context.display.area.width, context.display.area.height };
     }
 
     ImGui::BeginGroup();
     {
         ImGui::AlignTextToFramePadding();
-        ImGui::Text("%s", TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Monitor_Monitor)));
-        auto monitorNames = fplus::transform([] (Monitor const& monitor) { return fmt::format("{} ({}x{})", monitor.name, monitor.area.width, monitor.area.height); }, monitors);
-        auto monitorNamesData = fplus::transform([] (std::string const& name) { return name.data(); }, monitorNames);
+        ImGui::Text("%s", TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Display_Display)));
+        auto displayNames = fplus::transform([] (Display const& display) { return fmt::format("{} ({}x{})", display.name, display.area.width, display.area.height); }, displays);
+        auto displayNamesData = fplus::transform([] (std::string const& name) { return name.data(); }, displayNames);
         ImGui::SetNextItemWidth(300_scaled + ImGui::GetStyle().WindowPadding.x);
-        static int monitorIndex = context.tabletSettings.monitor.name == "INVALID" ? 0 : static_cast<int>(
-            std::distance(monitors.begin(), std::ranges::find(monitors, context.tabletSettings.monitor.name, &Monitor::name))
+        static int displayIndex = context.tabletSettings.display.name == "INVALID" ? 0 : static_cast<int>(
+            std::distance(displays.begin(), std::ranges::find(displays, context.tabletSettings.display.name, &Display::name))
         );
 
-        if (context.hasChangedMonitor && (context.hasChangedMonitor & USB_ACTION_MAGIC) == 0)
+        if (context.hasChangedDisplay && (context.hasChangedDisplay & USB_ACTION_MAGIC) == 0)
         {
-            monitorIndex = context.tabletSettings.monitor.name == "INVALID" ? 0 : static_cast<int>(
-                std::distance(monitors.begin(), std::ranges::find(monitors, context.tabletSettings.monitor.name, &Monitor::name))
+            displayIndex = context.tabletSettings.display.name == "INVALID" ? 0 : static_cast<int>(
+                std::distance(displays.begin(), std::ranges::find(displays, context.tabletSettings.display.name, &Display::name))
             );
         }
 
-        context.hasChangedMonitor = ImGui::Combo("##Monitors", &monitorIndex, monitorNamesData.data(), static_cast<int>(monitorNamesData.size()));
+        context.hasChangedDisplay = ImGui::Combo("##Displays", &displayIndex, displayNamesData.data(), static_cast<int>(displayNamesData.size()));
 
-        if (context.hasChangedMonitor)
+        if (context.hasChangedDisplay)
         {
-            context.monitor = monitors.at(static_cast<size_t>(monitorIndex));
-            context.tabletSettings.monitor.name = context.monitor.name;
-            context.tabletSettings.monitor.area = libwacom::Area { 0, 0, context.monitor.area.width, context.monitor.area.height };
-            context.tabletSettings.monitor.forceFullArea = false;
-            context.tabletSettings.monitor.forceAspectRatio = false;
+            context.display = displays.at(static_cast<size_t>(displayIndex));
+            context.tabletSettings.display.name = context.display.name;
+            context.tabletSettings.display.area = libwacom::Area { 0, 0, context.display.area.width, context.display.area.height };
+            context.tabletSettings.display.forceFullArea = false;
+            context.tabletSettings.display.forceAspectRatio = false;
         }
 
-        ImGui::BeginDisabled(context.tabletSettings.monitor.forceFullArea);
+        ImGui::BeginDisabled(context.tabletSettings.display.forceFullArea);
         {
             ImGui::BeginGroup();
             {
                 ImGui::AlignTextToFramePadding();
-                ImGui::Text("%s", TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Monitor_Width)));
+                ImGui::Text("%s", TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Display_Width)));
                 ImGui::SetNextItemWidth(150_scaled);
-                context.hasChangedMonitorArea |= ImGui::InputFloat("##MonitorWidth", &context.tabletSettings.monitor.area.width, 0.f, 0.f, "%.0f");
+                context.hasChangedDisplayArea |= ImGui::InputFloat("##DisplayWidth", &context.tabletSettings.display.area.width, 0.f, 0.f, "%.0f");
             }
             ImGui::EndGroup();
             ImGui::SameLine();
             ImGui::BeginGroup();
             {
                 ImGui::AlignTextToFramePadding();
-                ImGui::Text("%s", TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Monitor_Height)));
+                ImGui::Text("%s", TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Display_Height)));
                 ImGui::SetNextItemWidth(150_scaled);
-                context.hasChangedMonitorArea |= ImGui::InputFloat("##MonitorHeight", &context.tabletSettings.monitor.area.height, 0.f, 0.f, "%.0f");
+                context.hasChangedDisplayArea |= ImGui::InputFloat("##DisplayHeight", &context.tabletSettings.display.area.height, 0.f, 0.f, "%.0f");
             }
             ImGui::EndGroup();
         }
@@ -578,18 +577,18 @@ liberror::Result<void> render_monitor_settings_tab(Context& context, std::vector
             ImGui::BeginGroup();
             {
                 ImGui::AlignTextToFramePadding();
-                ImGui::Text("%s", TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Monitor_OffsetX)));
+                ImGui::Text("%s", TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Display_OffsetX)));
                 ImGui::SetNextItemWidth(150_scaled);
-                context.hasChangedMonitorArea |= ImGui::InputFloat("##MonitorOffsetX", &context.tabletSettings.monitor.area.offsetX, 0.f, 0.f, "%.0f");
+                context.hasChangedDisplayArea |= ImGui::InputFloat("##DisplayOffsetX", &context.tabletSettings.display.area.offsetX, 0.f, 0.f, "%.0f");
             }
             ImGui::EndGroup();
             ImGui::SameLine();
             ImGui::BeginGroup();
             {
                 ImGui::AlignTextToFramePadding();
-                ImGui::Text("%s", TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Monitor_OffsetY)));
+                ImGui::Text("%s", TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Display_OffsetY)));
                 ImGui::SetNextItemWidth(150_scaled);
-                context.hasChangedMonitorArea |= ImGui::InputFloat("##MonitorOffsetY", &context.tabletSettings.monitor.area.offsetY, 0.f, 0.f, "%.0f");
+                context.hasChangedDisplayArea |= ImGui::InputFloat("##DisplayOffsetY", &context.tabletSettings.display.area.offsetY, 0.f, 0.f, "%.0f");
             }
             ImGui::EndGroup();
         }
@@ -597,29 +596,29 @@ liberror::Result<void> render_monitor_settings_tab(Context& context, std::vector
 
         ImGui::BeginGroup();
         {
-            context.hasChangedMonitorArea |= ImGui::Checkbox(TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Monitor_FullArea)), &context.tabletSettings.monitor.forceFullArea);
+            context.hasChangedDisplayArea |= ImGui::Checkbox(TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Display_FullArea)), &context.tabletSettings.display.forceFullArea);
             ImGui::BeginDisabled();
-            ImGui::Checkbox(TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Monitor_ForceProportions)), &context.tabletSettings.monitor.forceAspectRatio);
+            ImGui::Checkbox(TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Display_ForceProportions)), &context.tabletSettings.display.forceAspectRatio);
             ImGui::EndDisabled();
         }
         ImGui::EndGroup();
     }
     ImGui::EndGroup();
 
-    if (context.hasChangedMonitorArea && context.tabletSettings.monitor.name != "INVALID")
+    if (context.hasChangedDisplayArea && context.tabletSettings.display.name != "INVALID")
     {
-        context.tabletSettings.monitor.area = {
-            .offsetX = std::clamp(context.tabletSettings.monitor.area.offsetX, 0.f, monitorDefaultArea.width),
-            .offsetY = std::clamp(context.tabletSettings.monitor.area.offsetY, 0.f, monitorDefaultArea.height),
-            .width   = std::clamp(context.tabletSettings.monitor.area.width, 0.f, monitorDefaultArea.width),
-            .height  = std::clamp(context.tabletSettings.monitor.area.height, 0.f, monitorDefaultArea.height)
+        context.tabletSettings.display.area = {
+            .offsetX = std::clamp(context.tabletSettings.display.area.offsetX, 0.f, displayDefaultArea.width),
+            .offsetY = std::clamp(context.tabletSettings.display.area.offsetY, 0.f, displayDefaultArea.height),
+            .width   = std::clamp(context.tabletSettings.display.area.width, 0.f, displayDefaultArea.width),
+            .height  = std::clamp(context.tabletSettings.display.area.height, 0.f, displayDefaultArea.height)
         };
     }
 
     return {};
 }
 
-liberror::Result<void> render_window(Context& context, std::vector<libwacom::Device> const& devices, std::vector<Monitor> const& monitors)
+liberror::Result<void> render_window(Context& context, std::vector<libwacom::Device> const& devices, std::vector<Display> const& displays)
 {
 #ifdef DEBUG
     static std::once_flag debugWarningFlag {};
@@ -687,63 +686,59 @@ liberror::Result<void> render_window(Context& context, std::vector<libwacom::Dev
     if (!(devices.empty() || context.hasTriedToInitializeDeviceSettings))
     {
         context.hasTriedToInitializeDeviceSettings = true;
-        if (std::filesystem::exists(TABLET_SETTINGS_FILE))
+        auto result = load_tablet_settings(context.tabletSettings);
+        if (!result.has_value())
         {
-            auto result = load_tablet_settings(context.tabletSettings);
+            context.device = devices.back();
+            context.hasChangedDevice = true;
+            context.hasChangedDeviceHandedness = true;
+            context.display = TRY(get_primary_display());
+            context.hasChangedDisplay = true;
+            context.tabletSettings.device.name = context.device.name;
+            context.tabletSettings.device.area = TRY(libwacom::get_stylus_area(context.device.id));
+            context.tabletSettings.device.pressure = TRY(libwacom::get_stylus_pressure_curve(context.device.id));
+            context.tabletSettings.device.forceFullArea = false;
+            context.tabletSettings.device.forceAspectRatio = false;
+            context.tabletSettings.display.name = context.display.name;
+            context.tabletSettings.display.area = { 0, 0, context.display.area.width, context.display.area.height };
+            context.tabletSettings.display.forceFullArea = false;
+            context.tabletSettings.display.forceAspectRatio = false;
 
-            if (!result.has_value())
+            switch (result.error().message())
             {
-                switch (result.error().message())
-                {
-                    case SettingsError::Type::WRITE_FAILURE: break;
-                    case SettingsError::Type::READ_FAILURE: {
-                        ImGui::PushToast(
-                            TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Warning)),
-                            TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Device_Settings_Load_Failed))
-                        );
-                        break;
-                    }
-                    case SettingsError::Type::OUTDATED_SCHEMA: {
-                        context.handleOutdatedDeviceSettings = true;
-                        break;
-                    }
-                }
-
-                context.tabletSettings.device.name = context.device.name;
-                context.tabletSettings.device.area = TRY(libwacom::get_stylus_area(context.device.id));
-                context.tabletSettings.device.pressure = TRY(libwacom::get_stylus_pressure_curve(context.device.id));
-                context.tabletSettings.device.forceFullArea = false;
-                context.tabletSettings.device.forceAspectRatio = false;
-                context.tabletSettings.monitor.name = context.monitor.name;
-                context.tabletSettings.monitor.area = { 0, 0, context.monitor.area.width, context.monitor.area.height };
-                context.tabletSettings.monitor.forceFullArea = false;
-                context.tabletSettings.monitor.forceAspectRatio = false;
+            case SettingsError::Type::WRITE_FAILURE: break;
+            case SettingsError::Type::FILE_NOT_FOUND: {
+                ImGui::PushToast(
+                    TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Warning)),
+                    TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Device_Settings_Missing))
+                );
+                save_tablet_settings(context.tabletSettings);
+                break;
             }
-            else
-            {
-                context.monitor = *std::ranges::find(monitors, context.tabletSettings.monitor.name, &Monitor::name);
-                context.device  = *std::ranges::find(devices, context.tabletSettings.device.name, &libwacom::Device::name);
+            case SettingsError::Type::READ_FAILURE: {
+                ImGui::PushToast(
+                    TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Warning)),
+                    TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Device_Settings_Load_Failed))
+                );
+                break;
+            }
+            case SettingsError::Type::OUTDATED_SCHEMA: {
+                context.handleOutdatedDeviceSettings = true;
+                break;
+            }
             }
         }
         else
         {
-            ImGui::PushToast(
-                TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Warning)),
-                TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Device_Settings_Missing))
-            );
-            context.tabletSettings.device.name = context.device.name;
-            context.tabletSettings.device.area = MUST(libwacom::get_stylus_area(context.device.id));
-            context.tabletSettings.device.pressure = MUST(libwacom::get_stylus_pressure_curve(context.device.id));
-            context.tabletSettings.monitor.name = context.monitor.name;
-            context.tabletSettings.monitor.area = libwacom::Area { 0, 0, context.monitor.area.width, context.monitor.area.height };
-            save_tablet_settings(context.tabletSettings);
+            context.display = *std::ranges::find(displays, context.tabletSettings.display.name, &Display::name);
+            context.device  = *std::ranges::find(devices, context.tabletSettings.device.name, &libwacom::Device::name);
         }
     }
 
     ImGui::BeginDisabled(context.handleOutdatedDeviceSettings);
     ImGui::BeginGroup();
     {
-        render_region_mappers(context, devices, monitors);
+        render_region_mappers(context, devices, displays);
     }
     ImGui::EndGroup();
 
@@ -755,9 +750,9 @@ liberror::Result<void> render_window(Context& context, std::vector<libwacom::Dev
             ImGui::EndTabItem();
         }
 
-        if (ImGui::BeginTabItem(TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Monitor_Title))))
+        if (ImGui::BeginTabItem(TRY(Localisation::get(context.applicationSettings.language, Localisation::Tabs_Display_Title))))
         {
-            TRY(render_monitor_settings_tab(context, monitors));
+            TRY(render_display_settings_tab(context, displays));
             ImGui::EndTabItem();
         }
 
@@ -779,7 +774,7 @@ liberror::Result<void> render_window(Context& context, std::vector<libwacom::Dev
     ImGui::EndDisabled();
 
     if (context.hasChangedDevice && (context.hasChangedDevice & USB_ACTION_MAGIC) == 0) context.hasChangedDevice = false;
-    if (context.hasChangedMonitor && (context.hasChangedMonitor & USB_ACTION_MAGIC) == 0) context.hasChangedMonitor = false;
+    if (context.hasChangedDisplay && (context.hasChangedDisplay & USB_ACTION_MAGIC) == 0) context.hasChangedDisplay = false;
 
     return {};
 }
@@ -803,7 +798,7 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
         return liberror::make_error(exception.what());
     }
 
-    std::vector<Monitor> monitors = TRY(get_available_monitors());
+    std::vector<Display> displays = TRY(get_available_displays());
     std::vector<libwacom::Device> devices = TRY(libwacom::get_available_devices());
     devices = fplus::keep_if([] (auto&& device) { return device.kind == libwacom::Device::Kind::STYLUS; }, devices);
 
@@ -814,11 +809,6 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
 
     if (configCommand["--load"] != false)
     {
-        if (!std::filesystem::exists(TABLET_SETTINGS_FILE))
-        {
-            return liberror::make_error("Device settings could not be found");
-        }
-
         TabletSettings tabletSettings {};
 
         if (!load_tablet_settings(tabletSettings))
@@ -826,26 +816,21 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
             return liberror::make_error("Failed to load device settings");
         }
 
-        if (devices.empty() || monitors.empty())
+        if (devices.empty() || displays.empty())
         {
             return liberror::make_error("Failed to load devices");
         }
 
         auto device  = devices.front();
-        auto maybeMonitor = std::ranges::find_if(monitors, &Monitor::primary);
-        if (maybeMonitor == monitors.end())
-        {
-            return liberror::make_error("Could not find primary monitor");
-        }
+        auto display = TRY(get_primary_display());
 
         TRY(libwacom::set_stylus_area(device.id, tabletSettings.device.area));
         TRY(libwacom::set_stylus_handedness(device.id, tabletSettings.device.handedness));
         TRY(libwacom::set_stylus_pressure_curve(device.id, tabletSettings.device.pressure));
-
-        auto monitorArea = tabletSettings.monitor.area;
-        monitorArea.offsetX += maybeMonitor->area.offsetX;
-        monitorArea.offsetY += maybeMonitor->area.offsetY;
-        TRY(libwacom::set_stylus_output_from_display_area(device.id, monitorArea));
+        auto displayArea = tabletSettings.display.area;
+        displayArea.offsetX += display.area.offsetX;
+        displayArea.offsetY += display.area.offsetY;
+        TRY(libwacom::set_stylus_output_from_display_area(device.id, displayArea));
 
         fmt::println("Device settings loaded successfully");
 
@@ -882,10 +867,6 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
 
             return {};
         }
-        else
-        {
-            set_scale(applicationSettings.scale);
-        }
     }
 
     if (!glfwInit())
@@ -896,6 +877,8 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+
+    set_scale(applicationSettings.scale);
 
 #ifdef DEBUG
     auto window = glfwCreateWindow(static_cast<int>(800_scaled), static_cast<int>(815_scaled), NAME " - DEBUG BUILD", nullptr, nullptr);
@@ -936,12 +919,7 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
         font = io.Fonts->AddFontFromFileTTF(applicationSettings.font.path.string().data(), 20_scaled, nullptr, ranges.Data);
     }
 
-    static Context context = TRY([&] () -> liberror::Result<Context> {
-        libwacom::Device device = devices.empty() ? libwacom::Device {} : devices.front();
-        auto maybeMonitor = std::ranges::find_if(monitors, &Monitor::primary);
-        if (maybeMonitor == monitors.end()) return liberror::make_error("Could not find primary monitor");
-        return Context(device, *maybeMonitor, applicationSettings, tabletSettings);
-    }());
+    Context context { applicationSettings, tabletSettings };
 
     USBEvent usbAction {};
 
@@ -950,13 +928,12 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
 
         auto hadMoreThanOneDevice = devices.size() > 1;
         devices = fplus::keep_if([] (auto&& device) { return device.kind == libwacom::Device::Kind::STYLUS; }, TRY(libwacom::get_available_devices()));
-
         if (hadMoreThanOneDevice) return {};
 
         auto maybeDevice = std::ranges::find(devices, context.tabletSettings.device.name, &libwacom::Device::name);
         if (maybeDevice == devices.end())
         {
-            context.monitor = Monitor {};
+            context.display = Display {};
             context.device = libwacom::Device {};
             context.tabletSettings = {};
         }
@@ -969,45 +946,47 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
 
         auto hadAtleastOneDevice = !devices.empty();
         devices = fplus::keep_if([] (auto&& device) { return device.kind == libwacom::Device::Kind::STYLUS; }, TRY(libwacom::get_available_devices()));
-
         if (hadAtleastOneDevice) return {};
 
-        TabletSettings settings {};
-        auto result = load_tablet_settings(settings);
+        auto result = load_tablet_settings(context.tabletSettings);
         if (!result.has_value())
         {
-            switch (result.error().message())
-            {
-                case SettingsError::Type::WRITE_FAILURE: break;
-                case SettingsError::Type::READ_FAILURE: {
-                    ImGui::PushToast(
-                        TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Warning)),
-                        TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Device_Settings_Load_Failed))
-                    );
-                    break;
-                }
-                case SettingsError::Type::OUTDATED_SCHEMA: {
-                    context.handleOutdatedDeviceSettings = true;
-                    break;
-                }
-            }
-
             context.device = devices.back();
             context.hasChangedDevice = 0xFF ^ USB_ACTION_MAGIC;
             context.hasChangedDeviceHandedness = 0xFF ^ USB_ACTION_MAGIC;
-            context.monitor = *std::ranges::find_if(monitors, &Monitor::primary);
-            context.hasChangedMonitor = 0xFF ^ USB_ACTION_MAGIC;
+            context.display = TRY(get_primary_display());
+            context.hasChangedDisplay = 0xFF ^ USB_ACTION_MAGIC;
             context.tabletSettings.device.name = context.device.name;
             context.tabletSettings.device.area = TRY(libwacom::get_stylus_area(context.device.id));
             context.tabletSettings.device.pressure = TRY(libwacom::get_stylus_pressure_curve(context.device.id));
-            context.tabletSettings.device.forceFullArea = false;
-            context.tabletSettings.device.forceAspectRatio = false;
-            context.tabletSettings.monitor.name = context.monitor.name;
-            context.tabletSettings.monitor.area = { 0, 0, context.monitor.area.width, context.monitor.area.height };
-            context.tabletSettings.monitor.forceFullArea = false;
-            context.tabletSettings.monitor.forceAspectRatio = false;
+            context.tabletSettings.display.name = context.display.name;
+            context.tabletSettings.display.area = { 0, 0, context.display.area.width, context.display.area.height };
+
+            switch (result.error().message())
+            {
+            case SettingsError::Type::WRITE_FAILURE: break;
+            case SettingsError::Type::FILE_NOT_FOUND: {
+                ImGui::PushToast(
+                    TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Warning)),
+                    TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Device_Settings_Missing))
+                );
+                save_tablet_settings(context.tabletSettings);
+                break;
+            }
+            case SettingsError::Type::READ_FAILURE: {
+                ImGui::PushToast(
+                    TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Warning)),
+                    TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Device_Settings_Load_Failed))
+                );
+                break;
+            }
+            case SettingsError::Type::OUTDATED_SCHEMA: {
+                context.handleOutdatedDeviceSettings = true;
+                break;
+            }
+            }
         }
-        else if (devices.back().name == settings.device.name)
+        else if (devices.back().name == context.tabletSettings.device.name)
         {
             ImGui::PushToast(
                 TRY(Localisation::get(applicationSettings.language, Localisation::Toast_Success)),
@@ -1016,9 +995,8 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
             context.device = devices.back();
             context.hasChangedDevice = 0xFF ^ USB_ACTION_MAGIC;
             context.hasChangedDeviceHandedness = 0xFF ^ USB_ACTION_MAGIC;
-            context.tabletSettings = settings;
-            context.monitor = *std::ranges::find(monitors, settings.monitor.name, &Monitor::name);
-            context.hasChangedMonitor = 0xFF ^ USB_ACTION_MAGIC;
+            context.display = *std::ranges::find(displays, context.tabletSettings.display.name, &Display::name);
+            context.hasChangedDisplay = 0xFF ^ USB_ACTION_MAGIC;
             TRY(apply_settings_to_device(context));
         }
 
@@ -1120,7 +1098,7 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
 
                 ImGui::BeginDisabled(devices.empty());
                 {
-                    TRY(render_window(context, devices, monitors));
+                    TRY(render_window(context, devices, displays));
                 }
                 ImGui::EndDisabled();
             }

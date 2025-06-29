@@ -6,6 +6,7 @@ class [[nodiscard]] SettingsError
 {
 public:
     ENUM_CLASS(Type,
+        FILE_NOT_FOUND,
         READ_FAILURE,
         WRITE_FAILURE,
         OUTDATED_SCHEMA

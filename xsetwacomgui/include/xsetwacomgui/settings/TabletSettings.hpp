@@ -19,7 +19,7 @@ struct DeviceSettings
     bool forceAspectRatio = false;
 };
 
-struct MonitorSettings
+struct DisplaySettings
 {
     std::string name = "INVALID";
     libwacom::Area area = { -1, -1, -1, -1 };
@@ -38,7 +38,7 @@ private:
 public:
 
     DeviceSettings device {};
-    MonitorSettings monitor {};
+    DisplaySettings display {};
 };
 
 liberror::Result<void, SettingsError> load_tablet_settings(TabletSettings& settings);

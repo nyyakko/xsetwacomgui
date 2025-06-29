@@ -34,6 +34,10 @@ install(TARGETS     ${PROJECT_NAME}
         DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/resources/icons/
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor
+)
+
 install(DIRECTORY   ${CMAKE_SOURCE_DIR}/resources/languages
         DESTINATION ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}
 )

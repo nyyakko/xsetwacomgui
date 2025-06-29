@@ -1,7 +1,5 @@
 #pragma once
 
-#include "settings/ApplicationSettings.hpp"
-
 #include <liberror/Result.hpp>
 
 #include <map>
@@ -57,14 +55,14 @@ public:
         Tabs_Tablet_FullArea,
         Tabs_Tablet_ForceProportions,
 
-        Tabs_Monitor_Title,
-        Tabs_Monitor_Monitor,
-        Tabs_Monitor_Width,
-        Tabs_Monitor_Height,
-        Tabs_Monitor_OffsetX,
-        Tabs_Monitor_OffsetY,
-        Tabs_Monitor_FullArea,
-        Tabs_Monitor_ForceProportions,
+        Tabs_Display_Title,
+        Tabs_Display_Display,
+        Tabs_Display_Width,
+        Tabs_Display_Height,
+        Tabs_Display_OffsetX,
+        Tabs_Display_OffsetY,
+        Tabs_Display_FullArea,
+        Tabs_Display_ForceProportions,
 
         Toast_Application_Settings_Saved,
         Toast_Device_Settings_Saved,

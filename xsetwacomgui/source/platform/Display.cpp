@@ -1,4 +1,4 @@
-#include "platform/Monitor.hpp"
+#include "platform/Display.hpp"
 
 #include <liberror/Try.hpp>
 #include <fmt/format.h>
@@ -6,10 +6,23 @@
 
 #include <cstdlib>
 #include <regex>
+#include <algorithm>
 
-liberror::Result<std::vector<Monitor>> get_available_monitors()
+liberror::Result<Display> get_primary_display()
 {
-    std::vector<Monitor> monitors {};
+    auto displays = TRY(get_available_displays());
+    auto maybeDisplay = std::ranges::find_if(displays, &Display::primary);
+    if (maybeDisplay == displays.end())
+    {
+        return liberror::make_error("Could not find primary display");
+    }
+
+    return *maybeDisplay;
+}
+
+liberror::Result<std::vector<Display>> get_available_displays()
+{
+    std::vector<Display> displays {};
 
     auto [out, err] = TRY(libexec::execute("xrandr", { "--listactivemonitors" }));
 
@@ -22,7 +35,7 @@ liberror::Result<std::vector<Monitor>> get_available_monitors()
     std::sregex_iterator iterator(out.begin(), out.end(), pattern);
     for (; iterator != std::sregex_iterator{}; iterator = std::next(iterator))
     {
-        monitors.push_back({
+        displays.push_back({
             .id = std::atoi(iterator->str(1).data()),
             .primary = !iterator->str(2).empty(),
             .area = {
@@ -35,5 +48,5 @@ liberror::Result<std::vector<Monitor>> get_available_monitors()
         });
     }
 
-    return monitors;
+    return displays;
 }

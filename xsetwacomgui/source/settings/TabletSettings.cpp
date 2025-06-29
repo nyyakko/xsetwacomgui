@@ -13,6 +13,11 @@
 
 liberror::Result<void, SettingsError> load_tablet_settings(TabletSettings& settings)
 {
+    if (!std::filesystem::exists(TABLET_SETTINGS_FILE))
+    {
+        return liberror::make_error<SettingsError>(SettingsError::Type::FILE_NOT_FOUND);
+    }
+
     std::ifstream stream(TABLET_SETTINGS_FILE);
     std::stringstream content;
     content << stream.rdbuf();
@@ -29,13 +34,13 @@ liberror::Result<void, SettingsError> load_tablet_settings(TabletSettings& setti
             return liberror::make_error<SettingsError>(SettingsError::Type::OUTDATED_SCHEMA);
         }
 
-        settings.monitor.name             = json["monitor"]["name"].get<std::string>();
-        settings.monitor.forceFullArea    = json["monitor"]["forceFullArea"].get<bool>();
-        settings.monitor.forceAspectRatio = json["monitor"]["forceAspectRatio"].get<bool>();
-        settings.monitor.area.offsetX     = json["monitor"]["area"]["offsetX"].get<float>();
-        settings.monitor.area.offsetY     = json["monitor"]["area"]["offsetY"].get<float>();
-        settings.monitor.area.width       = json["monitor"]["area"]["width"].get<float>();
-        settings.monitor.area.height      = json["monitor"]["area"]["height"].get<float>();
+        settings.display.name             = json["display"]["name"].get<std::string>();
+        settings.display.forceFullArea    = json["display"]["forceFullArea"].get<bool>();
+        settings.display.forceAspectRatio = json["display"]["forceAspectRatio"].get<bool>();
+        settings.display.area.offsetX     = json["display"]["area"]["offsetX"].get<float>();
+        settings.display.area.offsetY     = json["display"]["area"]["offsetY"].get<float>();
+        settings.display.area.width       = json["display"]["area"]["width"].get<float>();
+        settings.display.area.height      = json["display"]["area"]["height"].get<float>();
         settings.device.name              = json["device"]["name"].get<std::string>();
         settings.device.handedness        = libwacom::Handedness::from_string(json["device"]["handedness"].get<std::string>());
         settings.device.forceFullArea     = json["device"]["forceFullArea"].get<bool>();
@@ -87,18 +92,18 @@ void save_tablet_settings(TabletSettings const& settings)
             }
         },
         {
-            "monitor", {
-                { "name", settings.monitor.name },
+            "display", {
+                { "name", settings.display.name },
                 {
                     "area", {
-                        { "offsetX", settings.monitor.area.offsetX },
-                        { "offsetY", settings.monitor.area.offsetY },
-                        { "width", settings.monitor.area.width },
-                        { "height", settings.monitor.area.height }
+                        { "offsetX", settings.display.area.offsetX },
+                        { "offsetY", settings.display.area.offsetY },
+                        { "width", settings.display.area.width },
+                        { "height", settings.display.area.height }
                     }
                 },
-                { "forceFullArea", settings.monitor.forceFullArea },
-                { "forceAspectRatio", settings.monitor.forceAspectRatio },
+                { "forceFullArea", settings.display.forceFullArea },
+                { "forceAspectRatio", settings.display.forceAspectRatio },
             }
         }
     };
