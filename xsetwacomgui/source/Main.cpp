@@ -933,8 +933,8 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
         auto maybeDevice = std::ranges::find(devices, context.tabletSettings.device.name, &libwacom::Device::name);
         if (maybeDevice == devices.end())
         {
-            context.display = Display {};
-            context.device = libwacom::Device {};
+            context.display = {};
+            context.device = {};
             context.tabletSettings = {};
         }
 
