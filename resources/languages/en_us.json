@@ -1,52 +1,88 @@
 {
-    "toastSuccess": "Success",
-    "toastWarning": "Warning",
-    "toastError": "Error",
     "save": "Save",
     "saveApply": "Save & Apply",
-    "menuBarSettings": "Settings",
-    "menuBarSettingsApplication": "Application Settings...",
-    "menuBarOther": "Other",
-    "menuBarOtherGoddess": "Goddess",
-    "popupSettingsTabsAppearanceTitle": "Appearance",
-    "popupSettingsTabsAppearanceTheme": "Theme",
-    "popupSettingsTabsAppearanceThemeDark": "Dark",
-    "popupSettingsTabsAppearanceThemeLight": "Light",
-    "popupSettingsTabsDisplayTitle": "Display",
-    "popupSettingsTabsDisplayScale": "Scale",
-    "popupSettingsTabsLanguageTitle": "Language",
-    "popupSettingsTabsLanguageLanguage": "Language",
-    "popupSettingsTabsAppearanceFont": "Font",
-    "popupSettingsTabsAppearanceFontStyle": "Font Style",
-    "popupOutdatedDeviceSettingsTitle": "Outdated settings",
-    "popupOutdatedDeviceSettingsText": "The currently saved device settings differs from the expected format. How would you like to proceed?",
-    "popupOutdatedDeviceSettingsOverwrite": "Overwrite",
-    "popupOutdatedDeviceSettingsMigrate": "Migrate manually",
-    "tabsTabletTitle": "Tablet Settings",
-    "tabsTabletDevice": "Device",
-    "tabsTabletOrientation": "Orientation",
-    "tabsTabletOrientationLeft": "Left-Handed",
-    "tabsTabletOrientationRight": "Right-Handed",
-    "tabsTabletPressureCurve": "Pressure Curve",
-    "tabsTabletWidth": "Width",
-    "tabsTabletHeight": "Height",
-    "tabsTabletOffsetX": "Offset X",
-    "tabsTabletOffsetY": "Offset Y",
-    "tabsTabletFullArea": "Full Area",
-    "tabsTabletForceProportions": "Force Proportions",
-    "tabsDisplayTitle": "Display Settings",
-    "tabsDisplayDisplay": "Display",
-    "tabsDisplayWidth": "Width",
-    "tabsDisplayHeight": "Height",
-    "tabsDisplayOffsetX": "Offset X",
-    "tabsDisplayOffsetY": "Offset Y",
-    "tabsDisplayFullArea": "Full Area",
-    "tabsDisplayForceProportions": "Force Proportions",
-    "toastDevicesMissing": "No devices were found",
-    "toastApplicationSettingsSaved": "Successfully saved application settings",
-    "toastDeviceSettingsSaved": "Successfully saved device settings",
-    "toastDeviceSettingsOverwritten": "Successfully overwritten device settings",
-    "toastDeviceSettingsLoadFailed": "Failed to load device settings",
-    "toastDeviceSettingsLoadSuccess": "Device settings loaded successfully",
-    "toastDeviceSettingsMissing": "No saved device settings could be found, reading directly from xsetwacom instead"
+
+    "toast": {
+        "success": "Success",
+        "warning": "Warning",
+        "error": "Error",
+        "applicationSettingsSaved": "Successfully saved application settings",
+        "deviceSettingsSaved": "Successfully saved device settings",
+        "deviceSettingsOverwritten": "Successfully overwritten device settings",
+        "deviceSettingsLoadFailed": "Failed to load device settings",
+        "deviceSettingsLoadSuccess": "Device settings loaded successfully",
+        "deviceSettingsMissing": "No saved device settings could be found, reading directly from xsetwacom instead",
+        "devicesMissing": "No devices were found"
+    },
+
+    "menubar": {
+        "settings": {
+            "title": "Settings",
+            "applicationSettings": "Application Settings..."
+        },
+        "other": {
+            "title": "Other",
+            "goddess": "Goddess"
+        }
+    },
+
+    "popup": {
+        "outdatedDeviceSettings": {
+            "title": "Outdated settings",
+            "text": "The currently saved device settings differs from the expected format. How would you like to proceed?",
+            "overwrite": "Overwrite",
+            "migrate": "Migrate manually"
+        }
+    },
+
+    "window": {
+        "main": {
+            "tabs": {
+                "tablet": {
+                    "title": "Tablet Settings",
+                    "device": "Device",
+                    "orientation": "Orientation",
+                    "orientationLeft": "Left-Handed",
+                    "orientationRight": "Right-Handed",
+                    "pressureCurve": "Pressure Curve",
+                    "width": "Width",
+                    "height": "Height",
+                    "offsetX": "Offset X",
+                    "offsetY": "Offset Y",
+                    "fullArea": "Full Area",
+                    "forceProportions": "Force Proportions"
+                },
+                "display": {
+                    "title": "Display Settings",
+                    "display": "Display",
+                    "width": "Width",
+                    "height": "Height",
+                    "offsetX": "Offset X",
+                    "offsetY": "Offset Y",
+                    "fullArea": "Full Area",
+                    "forceProportions": "Force Proportions"
+                }
+            }
+        },
+        "settings": {
+            "tabs": {
+                "appearance": {
+                    "title": "Appearance",
+                    "theme": "Theme",
+                    "themeDark": "Dark",
+                    "themeLight": "Light",
+                    "font": "Font",
+                    "fontStyle": "Font Style"
+                },
+                "display": {
+                    "title": "Display",
+                    "scale": "Scale"
+                },
+                "language": {
+                    "title": "Language",
+                    "language": "Language"
+                }
+            }
+        }
+    }
 }

@@ -10,6 +10,8 @@ using udev_monitor_deleter_t = decltype(&udev_monitor_unref);
 class USBEvent
 {
 public:
+    static constexpr auto MAGIC = 3;
+
     ENUM_CLASS(Action,
         UNBIND,
         REMOVE,

@@ -1,5 +1,7 @@
 #include "ui/FreeType.hpp"
 
+#include "platform/Environment.hpp"
+
 #include <array>
 
 std::map<std::string, std::vector<FontInfo>> get_available_fonts()
@@ -12,8 +14,8 @@ std::map<std::string, std::vector<FontInfo>> get_available_fonts()
     FT_Init_FreeType(&library);
 
     static std::array FONT_PATHS {
-        std::filesystem::path(getenv("HOME")) / ".fonts",
-        std::filesystem::path(getenv("HOME")) / ".local/share/fonts",
+        get_system_home_path() / ".fonts",
+        get_system_home_path() / ".local/share/fonts",
         std::filesystem::path("/usr/share/fonts"),
         std::filesystem::path("/usr/local/share/fonts")
     };
