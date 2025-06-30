@@ -18,7 +18,7 @@
     "menubar": {
         "settings": {
             "title": "Settings",
-            "applicationSettings": "Application Settings..."
+            "applicationSettings": "Application Settings"
         },
         "other": {
             "title": "Other",
