@@ -1,0 +1,88 @@
+{
+    "save": "Сохранить",
+    "saveApply": "Сохранить и применить",
+
+    "toast": {
+        "success": "Успех",
+        "warning": "Внимание",
+        "error": "Ошибка",
+        "applicationSettingsSaved": "Настройки приложения сохранены",
+        "deviceSettingsSaved": "Настройки устройства сохранены",
+        "deviceSettingsOverwritten": "Настройки устройства перезаписаны",
+        "deviceSettingsLoadFailed": "Не удалось загрузить настройки устройства",
+        "deviceSettingsLoadSuccess": "Настройки устройства загружены",
+        "deviceSettingsMissing": "Не найдены настройки устройства, будут загружены данные из xsetwacom",
+        "devicesMissing": "Устройства не обнаружены"
+    },
+
+    "menubar": {
+        "settings": {
+            "title": "Настройки",
+            "applicationSettings": "Настройки приложения"
+        },
+        "other": {
+            "title": "Другое",
+            "goddess": "Богиня"
+        }
+    },
+
+    "popup": {
+        "outdatedDeviceSettings": {
+            "title": "Устаревшие настройки",
+            "text": "Формат текущих настроек отличается. Что вы хотите сделать?",
+            "overwrite": "Перезаписать",
+            "migrate": "Обновить вручную"
+        }
+    },
+
+    "window": {
+        "main": {
+            "tabs": {
+                "tablet": {
+                    "title": "Настройки планшета",
+                    "device": "Устройство",
+                    "orientation": "Ориентация",
+                    "orientationLeft": "Леворукая",
+                    "orientationRight": "Праворукая",
+                    "pressureCurve": "Кривая давления",
+                    "width": "Ширина",
+                    "height": "Высота",
+                    "offsetX": "Смещение X",
+                    "offsetY": "Смещение Y",
+                    "fullArea": "Вся зона",
+                    "forceProportions": "Принудительные пропорции"
+                },
+                "display": {
+                    "title": "Настройки отображения",
+                    "display": "Монитор",
+                    "width": "Ширина",
+                    "height": "Высота",
+                    "offsetX": "Смещение X",
+                    "offsetY": "Смещение Y",
+                    "fullArea": "Вся зона",
+                    "forceProportions": "Принудительные пропорции"
+                }
+            }
+        },
+        "settings": {
+            "tabs": {
+                "appearance": {
+                    "title": "Внешний вид",
+                    "theme": "Тема",
+                    "themeDark": "Тёмная",
+                    "themeLight": "Светлая",
+                    "font": "Шрифт",
+                    "fontStyle": "Стиль"
+                },
+                "display": {
+                    "title": "Отображение",
+                    "scale": "Соотношение"
+                },
+                "language": {
+                    "title": "Язык",
+                    "language": "Язык"
+                }
+            }
+        }
+    }
+}
