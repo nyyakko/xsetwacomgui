@@ -1,4 +1,4 @@
-#include "ui/windows/GoddessWindow.hpp"
+#include "GoddessWindow.hpp"
 
 #include "platform/Environment.hpp"
 

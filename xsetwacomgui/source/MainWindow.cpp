@@ -1,5 +1,5 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
-#include "ui/windows/MainWindow.hpp"
+#include "MainWindow.hpp"
 
 #include "platform/events/USBEvent.hpp"
 #include "ui/Localisation.hpp"

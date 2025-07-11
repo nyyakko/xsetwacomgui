@@ -2,6 +2,7 @@ set(DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 set(xsetwacomgui_HeaderFiles ${xsetwacomgui_HeaderFiles}
     "${DIR}/Context.hpp"
+    "${DIR}/Task.hpp"
 
     PARENT_SCOPE
 )

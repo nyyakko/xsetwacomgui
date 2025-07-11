@@ -1,4 +1,4 @@
-#include "ui/windows/SettingsWindow.hpp"
+#include "SettingsWindow.hpp"
 
 #include "ui/Localisation.hpp"
 #include "ui/Scaling.hpp"

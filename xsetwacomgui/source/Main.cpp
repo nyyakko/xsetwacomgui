@@ -4,9 +4,9 @@
 
 #include "ui/Localisation.hpp"
 #include "ui/Scaling.hpp"
-#include "ui/windows/SettingsWindow.hpp"
-#include "ui/windows/GoddessWindow.hpp"
-#include "ui/windows/MainWindow.hpp"
+#include "SettingsWindow.hpp"
+#include "GoddessWindow.hpp"
+#include "MainWindow.hpp"
 
 #include <argparse/argparse.hpp>
 #include <fplus/fplus.hpp>
