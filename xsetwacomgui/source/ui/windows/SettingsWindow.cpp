@@ -8,7 +8,6 @@
 #include <imgui/extensions/imgui_toast.hpp>
 
 #include <algorithm>
-#include <ranges>
 
 static liberror::Result<void> render_appearance_tab(Context& context)
 {

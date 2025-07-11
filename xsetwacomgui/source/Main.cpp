@@ -250,7 +250,7 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
                         ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
                     );
                     {
-                        render_goddess_window();
+                        TRY(render_goddess_window());
                     }
                     ImGui::End();
                 }
@@ -275,6 +275,7 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
     glfwDestroyWindow(window);
+
 
     glfwTerminate();
 

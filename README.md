@@ -2,6 +2,7 @@
 
 A graphical `xsetwacom` wrapper for ease of use.
 
+
 ![image](https://github.com/user-attachments/assets/d27b9efd-e091-445e-a64d-48789f5407bc)
 
 # Building
