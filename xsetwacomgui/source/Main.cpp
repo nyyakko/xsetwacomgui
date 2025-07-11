@@ -234,7 +234,7 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
                         ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
                     );
                     {
-                        render_settings_window(context);
+                        TRY(render_settings_window(context));
                     }
                     ImGui::End();
                 }
