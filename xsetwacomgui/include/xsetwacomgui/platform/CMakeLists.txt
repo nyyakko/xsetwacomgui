@@ -1,4 +1,4 @@
-add_subdirectory(events)
+add_subdirectory(udev)
 
 set(DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
