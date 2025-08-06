@@ -446,9 +446,15 @@ static liberror::Result<void> load_display_defaults(Context& context, Display co
     return {};
 }
 
-static libcoro::Generator<UDevDevice> device_listener(UDevMonitor& monitor)
+static libcoro::Generator<UDevDevice> device_listener()
 {
-    static pollfd fd {
+    UDev udev;
+
+    UDevMonitor monitor(udev);
+    monitor.add_subsystem("usb");
+    monitor.enable();
+
+    pollfd fd {
         .fd=udev_monitor_get_fd(monitor.get()),
         .events=POLLIN,
         .revents={}
@@ -482,22 +488,9 @@ liberror::Result<void> render_main_window(Context& context)
     }
 #endif
 
-    static bool hasConfiguredDeviceListener = false;
-    static bool hasTriedToInitializeDeviceSettings = false;
+    static auto hasTriedToInitializeDeviceSettings = false;
 
-    static UDev udev;
-    static UDevMonitor monitor(udev);
-
-    if (!hasConfiguredDeviceListener)
-    {
-        monitor.add_subsystem("usb");
-        monitor.enable();
-
-        hasConfiguredDeviceListener = true;
-    }
-
-    static auto deviceListener = device_listener(monitor);
-
+    static auto deviceListener = device_listener();
     auto device = deviceListener.next();
 
     if (device.get_devnode())
