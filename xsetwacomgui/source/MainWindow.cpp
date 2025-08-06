@@ -199,6 +199,7 @@ static liberror::Result<void> render_tablet_tab(Context& context)
             context.tabletSettings.device.pressure = { 0, 0, 1, 1 };
             context.tabletSettings.device.forceFullArea = false;
             context.tabletSettings.device.forceAspectRatio = false;
+            context.tabletSettings.device.handedness = libwacom::Handedness::RIGHT;
         }
 
         ImGui::BeginDisabled(context.tabletSettings.device.forceFullArea);
@@ -256,7 +257,7 @@ static liberror::Result<void> render_tablet_tab(Context& context)
             orientationIndex = static_cast<int>(context.tabletSettings.device.handedness.to_int());
         }
 
-        context.hasChangedDeviceHandedness = ImGui::Combo("##Orientations", &orientationIndex, orientations, std::size(orientations));
+        context.hasChangedDeviceHandedness |= ImGui::Combo("##Orientations", &orientationIndex, orientations, std::size(orientations));
 
         if (context.hasChangedDeviceHandedness)
         {
@@ -447,21 +448,18 @@ static liberror::Result<void> load_display_defaults(Context& context, Display co
 
 static libcoro::Generator<UDevDevice> device_listener(UDevMonitor& monitor)
 {
-    static std::vector fds = {
-        pollfd {
-            .fd=udev_monitor_get_fd(monitor.get()),
-            .events=POLLIN,
-            .revents={}
-        }
+    static pollfd fd {
+        .fd=udev_monitor_get_fd(monitor.get()),
+        .events=POLLIN,
+        .revents={}
     };
 
     while (true)
     {
-        poll(fds.data(), fds.size(), 0);
-
-        if (!(fds.at(0).revents & POLLIN))
+        if (poll(&fd, 1, 0) <= 0 || !(fd.revents & POLLIN))
         {
-            co_yield UDevDevice {};
+            co_yield {};
+            continue;
         }
 
         UDevDevice device(udev_monitor_receive_device(monitor.get()));
@@ -568,11 +566,13 @@ liberror::Result<void> render_main_window(Context& context)
                         TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Success)),
                         TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Device_Settings_Load_Success))
                     );
+
                     context.device = context.devices.back();
                     context.hasChangedDevice = true;
                     context.hasChangedDeviceHandedness = true;
                     context.display = *std::ranges::find(context.displays, context.tabletSettings.display.name, &Display::name);
                     context.hasChangedDisplay = true;
+
                     TRY(apply_to_device(context));
                 }
 
@@ -719,6 +719,12 @@ liberror::Result<void> render_main_window(Context& context)
     }
     ImGui::SetCursorPos(previousCursorPosition);
     ImGui::EndDisabled();
+
+    if (device.get_devnode())
+    {
+        context.hasChangedDevice = false;
+        context.hasChangedDisplay = false;
+    }
 
     return {};
 }

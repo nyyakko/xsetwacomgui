@@ -17,11 +17,11 @@ struct Context
 
     bool handleOutdatedDeviceSettings = false;
 
-    uint8_t hasChangedDevice = false;
-    uint8_t hasChangedDeviceHandedness = false;
+    bool hasChangedDevice = false;
+    bool hasChangedDeviceHandedness = false;
     bool hasChangedDeviceArea = false;
     bool hasChangedDevicePressure = false;
-    uint8_t hasChangedDisplay = false;
+    bool hasChangedDisplay = false;
     bool hasChangedDisplayArea = false;
     bool hasChangedLanguage = false;
     bool hasChangedScale = false;

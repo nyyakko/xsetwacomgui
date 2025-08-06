@@ -42,7 +42,12 @@ public:
 
 public:
     auto get(this auto& self) { return self.device_.get(); }
-    auto get_devnode(this auto& self) { return udev_device_get_devnode(self.device_.get()); }
+
+    auto get_devnode(this auto& self)
+    {
+        return self.device_.get() ? udev_device_get_devnode(self.device_.get()) : nullptr;
+    }
+
     auto get_action(this auto& self)
     {
         std::string action(udev_device_get_action(self.device_.get()));
