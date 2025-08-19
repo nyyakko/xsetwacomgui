@@ -19,7 +19,6 @@ CPMAddPackage(URI "gh:Neargye/magic_enum@0.9.7"      EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:nlohmann/json@3.12.0"          EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:nyyakko/imgui#master"          EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:nyyakko/LibCoro#master"        EXCLUDE_FROM_ALL YES)
-CPMAddPackage(URI "gh:nyyakko/LibEnum#master"        EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:nyyakko/LibError#master"       EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:nyyakko/LibExec#master"        EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:p-ranav/argparse@3.2"          EXCLUDE_FROM_ALL YES)
@@ -38,7 +37,6 @@ set(xsetwacomgui_ExternalLibraries
     glfw
     imgui::imgui
     LibCoro::LibCoro
-    LibEnum::LibEnum
     LibError::LibError
     LibExec::LibExec
     magic_enum::magic_enum

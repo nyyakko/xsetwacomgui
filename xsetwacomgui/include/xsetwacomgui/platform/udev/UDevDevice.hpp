@@ -1,22 +1,17 @@
 #pragma once
 
-#include <algorithm>
-#include <libenum/Enum.hpp>
+#include <magic_enum/magic_enum.hpp>
 
 #include <libudev.h>
 
+#include <algorithm>
 #include <memory>
 
 class UDevDevice
 {
     using device_t = std::unique_ptr<struct udev_device, decltype(&udev_device_unref)>;
 public:
-    ENUM_CLASS(Action,
-        UNBIND,
-        REMOVE,
-        ADD,
-        BIND
-    )
+    enum class Action { UNBIND, REMOVE, ADD, BIND };
 
 public:
     UDevDevice()
@@ -52,7 +47,7 @@ public:
     {
         std::string action(udev_device_get_action(self.device_.get()));
         std::transform(action.begin(), action.end(), action.begin(), ::toupper);
-        return Action::from_string(action);
+        return *magic_enum::enum_cast<Action>(action);
     }
 
 public:

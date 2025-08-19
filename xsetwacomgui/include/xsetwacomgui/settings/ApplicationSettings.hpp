@@ -5,7 +5,6 @@
 #include "ui/FreeType.hpp"
 
 #include <imgui/imgui_internal.hpp>
-#include <libenum/Enum.hpp>
 #include <liberror/Result.hpp>
 
 inline std::filesystem::path APPLICATION_SETTINGS_FILE = get_application_config_path() / "application_settings.json";
@@ -19,7 +18,7 @@ private:
     friend liberror::Result<void, SettingsError> load_application_settings(ApplicationSettings& settings);
     friend void save_application_settings(ApplicationSettings const& settings);
 public:
-    ENUM_CLASS(Theme, DARK, LIGHT)
+    enum class Theme { DARK, LIGHT };
 
     float scale = 1.0;
     Theme theme = Theme::DARK;

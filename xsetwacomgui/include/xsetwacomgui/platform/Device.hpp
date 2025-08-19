@@ -3,7 +3,6 @@
 #include "platform/Display.hpp"
 
 #include <liberror/Result.hpp>
-#include <libenum/Enum.hpp>
 
 #include <string_view>
 

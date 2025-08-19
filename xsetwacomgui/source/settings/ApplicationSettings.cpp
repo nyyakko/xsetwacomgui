@@ -1,5 +1,6 @@
 #include "settings/ApplicationSettings.hpp"
 
+#include <magic_enum/magic_enum.hpp>
 #include <fmt/format.h>
 #include <liberror/Result.hpp>
 #include <liberror/Try.hpp>
@@ -36,7 +37,7 @@ Result<void, SettingsError> load_application_settings(ApplicationSettings& setti
             return make_error<SettingsError>(SettingsError::Type::OUTDATED_SCHEMA);
         }
 
-        settings.theme       = ApplicationSettings::Theme::from_string((json["appearance"]["theme"].get<std::string>()));
+        settings.theme       = *magic_enum::enum_cast<ApplicationSettings::Theme>(json["appearance"]["theme"].get<std::string>());
         settings.font.path   = json["appearance"]["font"]["path"].get<std::string>();
         settings.font.family = json["appearance"]["font"]["family"].get<std::string>();
         settings.font.style  = json["appearance"]["font"]["style"].get<std::string>();
@@ -58,7 +59,7 @@ void save_application_settings(ApplicationSettings const& settings)
         { "version", ApplicationSettings::SCHEMA_VERSION },
         {
             "appearance", {
-                { "theme", settings.theme.to_string() },
+                { "theme", magic_enum::enum_name<ApplicationSettings::Theme>(settings.theme) },
                 { "font", {
                         { "path", settings.font.path },
                         { "family", settings.font.family },

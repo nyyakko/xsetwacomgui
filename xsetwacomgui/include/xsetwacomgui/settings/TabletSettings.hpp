@@ -6,7 +6,6 @@
 #include "platform/Environment.hpp"
 
 #include <imgui/imgui_internal.hpp>
-#include <libenum/Enum.hpp>
 
 inline std::filesystem::path TABLET_SETTINGS_FILE = get_application_config_path() / "tablet_settings.json";
 
