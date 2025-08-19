@@ -277,7 +277,6 @@ Result<void> safe_main(std::span<char const*> const& arguments)
     ImGui::DestroyContext();
     glfwDestroyWindow(window);
 
-
     glfwTerminate();
 
     return {};
