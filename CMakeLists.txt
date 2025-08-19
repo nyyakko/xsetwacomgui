@@ -15,13 +15,13 @@ CPMAddPackage(URI "gh:Dobiasd/FunctionalPlus@0.2.24" EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:eliaskosunen/scnlib@4.0.1"     EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:fmtlib/fmt#10.2.1"             EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:gabime/spdlog@1.15.3"          EXCLUDE_FROM_ALL YES)
+CPMAddPackage(URI "gh:Neargye/magic_enum@0.9.7"      EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:nlohmann/json@3.12.0"          EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:nyyakko/imgui#master"          EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:nyyakko/LibCoro#master"        EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:nyyakko/LibEnum#master"        EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:nyyakko/LibError#master"       EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:nyyakko/LibExec#master"        EXCLUDE_FROM_ALL YES)
-CPMAddPackage(URI "gh:nyyakko/LibWacom#master"       EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:p-ranav/argparse@3.2"          EXCLUDE_FROM_ALL YES)
 
 include(cmake/static_analyzers.cmake)
@@ -41,7 +41,7 @@ set(xsetwacomgui_ExternalLibraries
     LibEnum::LibEnum
     LibError::LibError
     LibExec::LibExec
-    LibWacom::LibWacom
+    magic_enum::magic_enum
     nlohmann_json::nlohmann_json
     OpenGL::GL
     scn::scn

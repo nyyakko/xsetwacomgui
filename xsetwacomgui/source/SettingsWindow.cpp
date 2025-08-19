@@ -3,13 +3,15 @@
 #include "ui/Localisation.hpp"
 #include "ui/Scaling.hpp"
 
-#include <liberror/Try.hpp>
 #include <fplus/fplus.hpp>
 #include <imgui/extensions/imgui_toast.hpp>
+#include <liberror/Try.hpp>
 
 #include <algorithm>
 
-static liberror::Result<void> render_appearance_tab(Context& context)
+using namespace liberror;
+
+static Result<void> render_appearance_tab(Context& context)
 {
     ImGui::Text("%s", TRY(Localisation::get(context.applicationSettings.language, Localisation::Window_Settings_Tabs_Appearance_Theme)));
     char const* themes[] = {
@@ -66,7 +68,7 @@ static liberror::Result<void> render_appearance_tab(Context& context)
     return {};
 }
 
-static liberror::Result<void> render_display_tab(Context& context)
+static Result<void> render_display_tab(Context& context)
 {
     ImGui::Text("%s", TRY(Localisation::get(context.applicationSettings.language, Localisation::Window_Settings_Tabs_Display_Scale)));
     static float scale = context.applicationSettings.scale;
@@ -81,7 +83,7 @@ static liberror::Result<void> render_display_tab(Context& context)
     return {};
 }
 
-static liberror::Result<void> render_languages_tab(Context& context)
+static Result<void> render_languages_tab(Context& context)
 {
     ImGui::Text("%s", TRY(Localisation::get(context.applicationSettings.language, Localisation::Window_Settings_Tabs_Language_Language)));
 
@@ -102,7 +104,7 @@ static liberror::Result<void> render_languages_tab(Context& context)
     return {};
 }
 
-liberror::Result<void> render_settings_window(Context& context)
+Result<void> render_settings_window(Context& context)
 {
     if (ImGui::BeginTabBar("##Tabs_2"))
     {

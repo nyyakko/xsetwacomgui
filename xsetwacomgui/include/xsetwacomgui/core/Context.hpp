@@ -9,10 +9,10 @@ struct Context
     ApplicationSettings& applicationSettings;
     TabletSettings& tabletSettings;
 
-    std::vector<libwacom::Device>& devices;
+    std::vector<Device>& devices;
     std::vector<Display>& displays;
 
-    libwacom::Device device {};
+    Device device {};
     Display display {};
 
     bool handleOutdatedDeviceSettings = false;

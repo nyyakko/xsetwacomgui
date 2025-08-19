@@ -5,8 +5,8 @@
 #include "ui/FreeType.hpp"
 
 #include <imgui/imgui_internal.hpp>
-#include <libwacom/Device.hpp>
 #include <libenum/Enum.hpp>
+#include <liberror/Result.hpp>
 
 inline std::filesystem::path APPLICATION_SETTINGS_FILE = get_application_config_path() / "application_settings.json";
 

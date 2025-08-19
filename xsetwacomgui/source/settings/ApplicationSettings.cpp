@@ -6,16 +6,18 @@
 #include <libexec/Execute.hpp>
 #include <nlohmann/json.hpp>
 
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <sstream>
-#include <cstdlib>
 
-liberror::Result<void, SettingsError> load_application_settings(ApplicationSettings& settings)
+using namespace liberror;
+
+Result<void, SettingsError> load_application_settings(ApplicationSettings& settings)
 {
     if (!std::filesystem::exists(APPLICATION_SETTINGS_FILE))
     {
-        return liberror::make_error<SettingsError>(SettingsError::Type::FILE_NOT_FOUND);
+        return make_error<SettingsError>(SettingsError::Type::FILE_NOT_FOUND);
     }
 
     std::ifstream stream(APPLICATION_SETTINGS_FILE);
@@ -31,7 +33,7 @@ liberror::Result<void, SettingsError> load_application_settings(ApplicationSetti
         if (json["version"].is_null() || json["version"].get<std::string>() != ApplicationSettings::SCHEMA_VERSION)
         {
             settings = previousSettings;
-            return liberror::make_error<SettingsError>(SettingsError::Type::OUTDATED_SCHEMA);
+            return make_error<SettingsError>(SettingsError::Type::OUTDATED_SCHEMA);
         }
 
         settings.theme       = ApplicationSettings::Theme::from_string((json["appearance"]["theme"].get<std::string>()));
@@ -44,7 +46,7 @@ liberror::Result<void, SettingsError> load_application_settings(ApplicationSetti
     catch (std::exception const& error)
     {
         settings = previousSettings;
-        return liberror::make_error<SettingsError>(SettingsError::Type::READ_FAILURE);
+        return make_error<SettingsError>(SettingsError::Type::READ_FAILURE);
     }
 
     return {};
@@ -81,7 +83,7 @@ void save_application_settings(ApplicationSettings const& settings)
     stream << std::setw(4) << json;
 }
 
-liberror::Result<void> migrate_application_settings(ApplicationSettings const& settings)
+Result<void> migrate_application_settings(ApplicationSettings const& settings)
 {
     static auto newSettingsSchema = get_application_config_path() / "application_settings.json";
     static auto oldSettingsSchema = get_application_config_path() / "application_settings.old.json";

@@ -4,6 +4,7 @@
 #include <liberror/Result.hpp>
 #include <liberror/Try.hpp>
 #include <libexec/Execute.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <nlohmann/json.hpp>
 
 #include <cstdlib>
@@ -11,11 +12,13 @@
 #include <fstream>
 #include <sstream>
 
-liberror::Result<void, SettingsError> load_tablet_settings(TabletSettings& settings)
+using namespace liberror;
+
+Result<void, SettingsError> load_tablet_settings(TabletSettings& settings)
 {
     if (!std::filesystem::exists(TABLET_SETTINGS_FILE))
     {
-        return liberror::make_error<SettingsError>(SettingsError::Type::FILE_NOT_FOUND);
+        return make_error<SettingsError>(SettingsError::Type::FILE_NOT_FOUND);
     }
 
     std::ifstream stream(TABLET_SETTINGS_FILE);
@@ -31,7 +34,7 @@ liberror::Result<void, SettingsError> load_tablet_settings(TabletSettings& setti
         if (json["version"].is_null() || json["version"].get<std::string>() != TabletSettings::SCHEMA_VERSION)
         {
             settings = previousSettings;
-            return liberror::make_error<SettingsError>(SettingsError::Type::OUTDATED_SCHEMA);
+            return make_error<SettingsError>(SettingsError::Type::OUTDATED_SCHEMA);
         }
 
         settings.display.name             = json["display"]["name"].get<std::string>();
@@ -42,7 +45,7 @@ liberror::Result<void, SettingsError> load_tablet_settings(TabletSettings& setti
         settings.display.area.width       = json["display"]["area"]["width"].get<float>();
         settings.display.area.height      = json["display"]["area"]["height"].get<float>();
         settings.device.name              = json["device"]["name"].get<std::string>();
-        settings.device.handedness        = libwacom::Handedness::from_string(json["device"]["handedness"].get<std::string>());
+        settings.device.handedness        = *magic_enum::enum_cast<Device::Handedness>(json["device"]["handedness"].get<std::string>());
         settings.device.forceFullArea     = json["device"]["forceFullArea"].get<bool>();
         settings.device.forceAspectRatio  = json["device"]["forceAspectRatio"].get<bool>();
         settings.device.area.offsetX      = json["device"]["area"]["offsetX"].get<float>();
@@ -57,7 +60,7 @@ liberror::Result<void, SettingsError> load_tablet_settings(TabletSettings& setti
     catch (std::exception const& error)
     {
         settings = previousSettings;
-        return liberror::make_error<SettingsError>(SettingsError::Type::READ_FAILURE);
+        return make_error<SettingsError>(SettingsError::Type::READ_FAILURE);
     }
 
     return {};
@@ -70,7 +73,7 @@ void save_tablet_settings(TabletSettings const& settings)
         {
             "device", {
                 { "name", settings.device.name },
-                { "handedness", settings.device.handedness.to_string() },
+                { "handedness", magic_enum::enum_name<Device::Handedness>(settings.device.handedness) },
                 {
                     "area", {
                         { "offsetX", settings.device.area.offsetX },
@@ -112,7 +115,7 @@ void save_tablet_settings(TabletSettings const& settings)
     stream << std::setw(4) << json;
 }
 
-liberror::Result<void> migrate_tablet_settings(TabletSettings const& settings)
+Result<void> migrate_tablet_settings(TabletSettings const& settings)
 {
     static auto newSettingsSchema = get_application_config_path() / "tablet_settings.json";
     static auto oldSettingsSchema = get_application_config_path() / "tablet_settings.old.json";
@@ -123,6 +126,9 @@ liberror::Result<void> migrate_tablet_settings(TabletSettings const& settings)
 
     TRY(libexec::execute("xdg-open", { get_application_config_path() }, libexec::Mode::DETACHED));
     auto [out, err] = TRY(libexec::execute("git", { "diff", oldSettingsSchema, newSettingsSchema }));
+
+    if (!err.empty()) return make_error(err);
+
     std::ofstream stream(get_application_config_path() / "conflict.diff");
     stream << out;
 

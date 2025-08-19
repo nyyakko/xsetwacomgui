@@ -10,7 +10,9 @@
 #include <fstream>
 #include <ranges>
 
-liberror::Result<char const*> Localisation::get(std::string_view language, Message id)
+using namespace liberror;
+
+Result<char const*> Localisation::get(std::string_view language, Message id)
 {
     if (!the().contains(language.data()))
     {
@@ -85,7 +87,7 @@ liberror::Result<char const*> Localisation::get(std::string_view language, Messa
         }
         catch (std::exception const& error)
         {
-            return liberror::make_error("{}", error.what());
+            return make_error("{}", error.what());
         }
     }
 

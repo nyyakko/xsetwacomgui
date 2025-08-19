@@ -4,13 +4,18 @@
 #include <vector>
 
 #include <liberror/Result.hpp>
-#include <libwacom/Device.hpp>
 
 struct Display
 {
+    struct Area
+    {
+        float offsetX, offsetY;
+        float width, height;
+    };
+
     int id;
     bool primary;
-    libwacom::Area area;
+    Area area;
     std::string name;
 };
 

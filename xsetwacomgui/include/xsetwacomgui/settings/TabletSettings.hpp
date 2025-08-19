@@ -1,10 +1,11 @@
 #pragma once
 
-#include "platform/Environment.hpp"
 #include "core/SettingsError.hpp"
+#include "platform/Device.hpp"
+#include "platform/Display.hpp"
+#include "platform/Environment.hpp"
 
 #include <imgui/imgui_internal.hpp>
-#include <libwacom/Device.hpp>
 #include <libenum/Enum.hpp>
 
 inline std::filesystem::path TABLET_SETTINGS_FILE = get_application_config_path() / "tablet_settings.json";
@@ -12,9 +13,9 @@ inline std::filesystem::path TABLET_SETTINGS_FILE = get_application_config_path(
 struct DeviceSettings
 {
     std::string name = "INVALID";
-    libwacom::Handedness handedness = libwacom::Handedness::RIGHT;
-    libwacom::Area area = { -1, -1, -1, -1 };
-    libwacom::Pressure pressure = { -1, -1, -1, -1 };
+    Device::Handedness handedness = Device::Handedness::RIGHT;
+    Device::Area area = { -1, -1, -1, -1 };
+    Device::Pressure pressure = { -1, -1, -1, -1 };
     bool forceFullArea = false;
     bool forceAspectRatio = false;
 };
@@ -22,7 +23,7 @@ struct DeviceSettings
 struct DisplaySettings
 {
     std::string name = "INVALID";
-    libwacom::Area area = { -1, -1, -1, -1 };
+    Display::Area area = { -1, -1, -1, -1 };
     bool forceFullArea = false;
     bool forceAspectRatio = false;
 };
@@ -35,8 +36,8 @@ private:
 
     friend liberror::Result<void, SettingsError> load_tablet_settings(TabletSettings& settings);
     friend void save_tablet_settings(TabletSettings const& settings);
-public:
 
+public:
     DeviceSettings device {};
     DisplaySettings display {};
 };

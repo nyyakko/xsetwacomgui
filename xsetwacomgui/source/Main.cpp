@@ -2,11 +2,11 @@
 
 #include <spdlog/spdlog.h>
 
-#include "ui/Localisation.hpp"
-#include "ui/Scaling.hpp"
-#include "SettingsWindow.hpp"
 #include "GoddessWindow.hpp"
 #include "MainWindow.hpp"
+#include "SettingsWindow.hpp"
+#include "ui/Localisation.hpp"
+#include "ui/Scaling.hpp"
 
 #include <argparse/argparse.hpp>
 #include <fplus/fplus.hpp>
@@ -17,12 +17,13 @@
 #include <imgui/imgui_impl_glfw.hpp>
 #include <imgui/imgui_impl_opengl3.hpp>
 #include <liberror/Try.hpp>
-#include <libwacom/Device.hpp>
 #include <scn/scan.h>
 
 #include <span>
 
-liberror::Result<void> safe_main(std::span<char const*> const& arguments)
+using namespace liberror;
+
+Result<void> safe_main(std::span<char const*> const& arguments)
 {
     argparse::ArgumentParser parser(NAME, "", argparse::default_arguments::help);
     parser.add_description("A graphical xsetwacom wrapper for ease of use.");
@@ -38,16 +39,16 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
     }
     catch (std::exception const& exception)
     {
-        return liberror::make_error(exception.what());
+        return make_error(exception.what());
     }
 
     std::vector<Display> displays = TRY(get_available_displays());
-    std::vector<libwacom::Device> devices = TRY(libwacom::get_available_devices());
-    devices = fplus::keep_if([] (auto&& device) { return device.kind == libwacom::Device::Kind::STYLUS; }, devices);
+    std::vector<Device> devices = TRY(get_available_devices());
+    devices = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::STYLUS; }, devices);
 
     if (!(std::filesystem::exists(get_application_config_path()) || std::filesystem::create_directory(get_application_config_path())))
     {
-        return liberror::make_error("Failed to create settings directory");
+        return make_error("Failed to create settings directory");
     }
 
     if (configCommand["--load"] != false)
@@ -56,24 +57,24 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
 
         if (!load_tablet_settings(tabletSettings))
         {
-            return liberror::make_error("Failed to load device settings");
+            return make_error("Failed to load device settings");
         }
 
         if (devices.empty() || displays.empty())
         {
-            return liberror::make_error("Failed to load devices");
+            return make_error("Failed to load devices");
         }
 
         auto device  = devices.front();
         auto display = TRY(get_primary_display());
 
-        TRY(libwacom::set_stylus_area(device.id, tabletSettings.device.area));
-        TRY(libwacom::set_stylus_handedness(device.id, tabletSettings.device.handedness));
-        TRY(libwacom::set_stylus_pressure_curve(device.id, tabletSettings.device.pressure));
+        TRY(set_stylus_area(device.id, tabletSettings.device.area));
+        TRY(set_stylus_handedness(device.id, tabletSettings.device.handedness));
+        TRY(set_stylus_pressure_curve(device.id, tabletSettings.device.pressure));
         auto displayArea = tabletSettings.display.area;
         displayArea.offsetX += display.area.offsetX;
         displayArea.offsetY += display.area.offsetY;
-        TRY(libwacom::set_stylus_output_from_display_area(device.id, displayArea));
+        TRY(set_stylus_output_from_display_area(device.id, displayArea));
 
         fmt::println("Device settings loaded successfully");
 
@@ -114,7 +115,7 @@ liberror::Result<void> safe_main(std::span<char const*> const& arguments)
 
     if (!glfwInit())
     {
-        return liberror::make_error("Failed to initialize glfw");
+        return make_error("Failed to initialize glfw");
     }
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
