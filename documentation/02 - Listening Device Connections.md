@@ -12,6 +12,6 @@ passing this flag, the program will start a daemon which will listen for new
 device connections and apply the settings accordingly without you having to
 open xsetwacomgui manually.
 
-> [!INFO]
+> [!NOTE]
 > The daemon will write its logs to /dev/log, so you can stat it there if you
 > wish to do so.
