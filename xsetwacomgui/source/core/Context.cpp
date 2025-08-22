@@ -4,7 +4,7 @@
 
 using namespace liberror;
 
-Result<void> load_settings_from_device_to_context(Context& context)
+Result<void> load_settings_from_driver_to_context(Context& context)
 {
     context.device = context.devices.back();
     context.hasChangedDevice = true;

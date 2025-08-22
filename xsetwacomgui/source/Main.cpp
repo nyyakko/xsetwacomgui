@@ -2,15 +2,17 @@
 
 #include <spdlog/spdlog.h>
 
+#include "platform/udev/UDevDevice.hpp"
+#include "core/ipc/Client.hpp"
+#include "core/ipc/Server.hpp"
 #include "GoddessWindow.hpp"
 #include "MainWindow.hpp"
 #include "platform/Daemon.hpp"
-#include "platform/udev/UDevDevice.hpp"
-#include "platform/udev/UDevMonitor.hpp"
 #include "SettingsWindow.hpp"
 #include "ui/Localisation.hpp"
 #include "ui/Scaling.hpp"
 
+#include <magic_enum/magic_enum.hpp>
 #include <argparse/argparse.hpp>
 #include <fplus/fplus.hpp>
 #include <GLFW/glfw3.h>
@@ -30,6 +32,9 @@ using namespace liberror;
 
 Result<void> run_gui(Context& context)
 {
+    TRY(IPCClient::the().configure(IPCClient::Mode::ASYNC));
+    TRY(IPCClient::the().connect());
+
     if (!glfwInit())
     {
         return make_error("Failed to initialize glfw");
@@ -199,94 +204,88 @@ Result<void> run_gui(Context& context)
 
 Result<void> run_no_gui(Context& context)
 {
-    TRY(daemonize());
+    if (TRY(daemonize(NAME"-client")) == IsDaemon::FALSE)
+    {
+        return {};
+    }
 
-    UDev udev;
+    TRY(IPCClient::the().configure(IPCClient::Mode::SYNC));
+    TRY(IPCClient::the().connect());
 
-    UDevMonitor monitor(udev);
-    monitor.add_subsystem("usb");
-    monitor.enable();
-
-    pollfd fd {
-        .fd=udev_monitor_get_fd(monitor.get()),
-        .events=POLLIN,
-        .revents={}
-    };
+    using namespace std::literals;
 
     while (true)
     {
-        if (poll(&fd, 1, -1) <= 0) continue;
+        auto message = TRY(IPCClient::the().receive_message());
 
-        UDevDevice device(udev_monitor_receive_device(monitor.get()));
+        auto action = magic_enum::enum_cast<UDevDevice::Action>(message.data());
+        assert(action && "INVALID ACTION");
 
-        if (!device.get_devnode()) continue;
-
-        switch (device.get_action())
+        switch (*action)
         {
-        case UDevDevice::Action::UNBIND: {
-            auto hadMoreThanOneDevice = context.devices.size() > 1;
-            context.devices = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::STYLUS; }, TRY(get_available_devices()));
+            case UDevDevice::Action::UNBIND: {
+                auto hadMoreThanOneDevice = context.devices.size() > 1;
+                context.devices = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::STYLUS; }, TRY(get_available_devices()));
 
-            if (hadMoreThanOneDevice) break;
+                if (hadMoreThanOneDevice) break;
 
-            auto maybeDevice = std::ranges::find(context.devices, context.tabletSettings.device.name, &Device::name);
+                auto maybeDevice = std::ranges::find(context.devices, context.tabletSettings.device.name, &Device::name);
 
-            if (maybeDevice == context.devices.end())
-            {
-                context.display = {};
-                context.device = {};
-                context.tabletSettings = {};
-            }
-
-            break;
-
-        }
-        case UDevDevice::Action::BIND: {
-            auto hadAtleastOneDevice = !context.devices.empty();
-            context.devices = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::STYLUS; }, TRY(get_available_devices()));
-
-            if (hadAtleastOneDevice) break;
-
-            auto result = load_tablet_settings(context.tabletSettings);
-
-            if (!result.has_value())
-            {
-                TRY(load_settings_from_device_to_context(context));
-
-                switch (result.error().message())
+                if (maybeDevice == context.devices.end())
                 {
-                case SettingsError::Type::WRITE_FAILURE: break;
-                case SettingsError::Type::FILE_NOT_FOUND: {
-                    return make_error("Tablet settings file not found");
+                    context.display = {};
+                    context.device = {};
+                    context.tabletSettings = {};
                 }
-                case SettingsError::Type::READ_FAILURE: {
-                    return make_error("Could not read tablet settings file");
-                }
-                case SettingsError::Type::OUTDATED_SCHEMA: {
-                    return make_error("Outdated settings schema");
-                }
-                }
+
+                break;
             }
-            else
-            {
-                assert(context.devices.back().name == context.tabletSettings.device.name && "FIXME: assuming device connected is the same as the one saved in the settings file");
+            case UDevDevice::Action::BIND: {
+                auto hadAtleastOneDevice = !context.devices.empty();
+                context.devices = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::STYLUS; }, TRY(get_available_devices()));
 
-                context.device = context.devices.back();
-                context.hasChangedDevice = true;
-                context.hasChangedDeviceHandedness = true;
-                context.display = *std::ranges::find(context.displays, context.tabletSettings.display.name, &Display::name);
-                context.hasChangedDisplay = true;
+                if (hadAtleastOneDevice) break;
 
-                TRY(load_settings_from_context_to_device(context));
+                auto result = load_tablet_settings(context.tabletSettings);
 
-                spdlog::info("loaded settings for device: {}", context.device.name);
+                if (!result.has_value())
+                {
+                    TRY(load_settings_from_driver_to_context(context));
+
+                    switch (result.error().message())
+                    {
+                    case SettingsError::Type::WRITE_FAILURE: break;
+                    case SettingsError::Type::FILE_NOT_FOUND: {
+                        return make_error("No saved device settings could be found, reading directly from xsetwacom instead");
+                    }
+                    case SettingsError::Type::READ_FAILURE: {
+                        return make_error("Failed to load device settings");
+                    }
+                    case SettingsError::Type::OUTDATED_SCHEMA: {
+                        return make_error("Outdated tablet settings file");
+                    }
+                    }
+                }
+                else
+                {
+                    assert(context.devices.back().name == context.tabletSettings.device.name && "FIXME: assuming device connected is the same as the one saved in the settings file");
+
+                    spdlog::info("Device settings loaded successfully");
+
+                    context.device = context.devices.back();
+                    context.hasChangedDevice = true;
+                    context.hasChangedDeviceHandedness = true;
+                    context.display = *std::ranges::find(context.displays, context.tabletSettings.display.name, &Display::name);
+                    context.hasChangedDisplay = true;
+
+                    TRY(load_settings_from_context_to_device(context));
+                }
+
+                break;
             }
-
-            break;
-
-        }
-        case UDevDevice::Action::REMOVE: break;
-        case UDevDevice::Action::ADD: break;
+            case UDevDevice::Action::REMOVE: break;
+            case UDevDevice::Action::ADD: break;
+            case UDevDevice::Action::NONE: break;
         }
     }
 
@@ -298,7 +297,7 @@ Result<void> safe_main(std::span<char const*> const& arguments)
     argparse::ArgumentParser cli(NAME, "", argparse::default_arguments::help);
     cli.add_description("A graphical xsetwacom wrapper for ease of use.");
 
-    cli.add_argument("--no-gui").help("starts a daemon which listens to device connections").flag();
+    cli.add_argument("--no-gui").help("starts only the server daemon").flag();
 
     argparse::ArgumentParser config("config", "", argparse::default_arguments::help);
     config.add_description("manages device related configuration");
@@ -388,13 +387,20 @@ Result<void> safe_main(std::span<char const*> const& arguments)
         }
     }
 
-    if (cli.is_used("--no-gui"))
+    if (TRY(daemonize(NAME"-server")) == IsDaemon::TRUE)
     {
-        TRY(run_no_gui(context));
+        TRY(IPCServer::the().start());
     }
     else
     {
-        TRY(run_gui(context));
+        if (!cli.is_used("--no-gui"))
+        {
+            TRY(run_gui(context));
+        }
+        else
+        {
+            TRY(run_no_gui(context));
+        }
     }
 
     return {};

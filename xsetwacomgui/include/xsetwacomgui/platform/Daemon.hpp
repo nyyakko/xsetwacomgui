@@ -2,4 +2,9 @@
 
 #include <liberror/Result.hpp>
 
-liberror::Result<void> daemonize();
+enum class IsDaemon
+{
+    TRUE, FALSE
+};
+
+liberror::Result<IsDaemon> daemonize(std::string_view name = NAME);

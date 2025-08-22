@@ -1,8 +1,8 @@
+#include "core/ipc/Client.hpp"
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "MainWindow.hpp"
 
 #include "platform/udev/UDevDevice.hpp"
-#include "platform/udev/UDevMonitor.hpp"
 #include "ui/Localisation.hpp"
 #include "ui/Scaling.hpp"
 #include "ui/widgets/AreaMapper.hpp"
@@ -413,36 +413,6 @@ static Result<void> render_display_tab(Context& context)
     return {};
 }
 
-static Generator<UDevDevice> device_listener_generator()
-{
-    UDev udev;
-
-    UDevMonitor monitor(udev);
-    monitor.add_subsystem("usb");
-    monitor.enable();
-
-    pollfd fd {
-        .fd=udev_monitor_get_fd(monitor.get()),
-        .events=POLLIN,
-        .revents={}
-    };
-
-    while (true)
-    {
-        if (poll(&fd, 1, 0) <= 0 || !(fd.revents & POLLIN))
-        {
-            co_yield {};
-            continue;
-        }
-
-        UDevDevice device(udev_monitor_receive_device(monitor.get()));
-
-        co_yield std::move(device);
-    }
-
-    co_return;
-}
-
 Result<void> render_main_window(Context& context)
 {
 #ifdef DEBUG
@@ -457,12 +427,15 @@ Result<void> render_main_window(Context& context)
 
     static auto hasTriedToInitializeDeviceSettings = false;
 
-    static auto deviceListener = device_listener_generator();
-    auto device = deviceListener.next();
+    static auto messageReceiver = IPCClient::the().receive_message_async();
+    auto message = messageReceiver.next();
 
-    if (device.get_devnode())
+    if (!std::string_view(message.data()).empty())
     {
-        switch (device.get_action())
+        auto action = magic_enum::enum_cast<UDevDevice::Action>(message.data());
+        assert(action && "INVALID ACTION");
+
+        switch (*action)
         {
             case UDevDevice::Action::UNBIND: {
                 auto hadMoreThanOneDevice = context.devices.size() > 1;
@@ -491,7 +464,7 @@ Result<void> render_main_window(Context& context)
 
                 if (!result.has_value())
                 {
-                    TRY(load_settings_from_device_to_context(context));
+                    TRY(load_settings_from_driver_to_context(context));
 
                     switch (result.error().message())
                     {
@@ -538,6 +511,7 @@ Result<void> render_main_window(Context& context)
             }
             case UDevDevice::Action::REMOVE: break;
             case UDevDevice::Action::ADD: break;
+            case UDevDevice::Action::NONE: break;
         }
     }
 
@@ -606,7 +580,7 @@ Result<void> render_main_window(Context& context)
         auto result = load_tablet_settings(context.tabletSettings);
         if (!result.has_value())
         {
-            TRY(load_settings_from_device_to_context(context));
+            TRY(load_settings_from_driver_to_context(context));
 
             switch (result.error().message())
             {
@@ -677,7 +651,7 @@ Result<void> render_main_window(Context& context)
     ImGui::SetCursorPos(previousCursorPosition);
     ImGui::EndDisabled();
 
-    if (device.get_devnode())
+    if (!std::string_view(message.data()).empty())
     {
         context.hasChangedDevice = false;
         context.hasChangedDisplay = false;

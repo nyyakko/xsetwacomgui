@@ -11,7 +11,7 @@ class UDevDevice
 {
     using device_t = std::unique_ptr<struct udev_device, decltype(&udev_device_unref)>;
 public:
-    enum class Action { UNBIND, REMOVE, ADD, BIND };
+    enum class Action { UNBIND, REMOVE, ADD, BIND, NONE };
 
 public:
     UDevDevice()

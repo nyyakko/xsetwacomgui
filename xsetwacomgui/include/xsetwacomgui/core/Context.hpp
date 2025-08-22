@@ -30,5 +30,5 @@ struct Context
     bool hasChangedTheme = false;
 };
 
-liberror::Result<void> load_settings_from_device_to_context(Context& context);
+liberror::Result<void> load_settings_from_driver_to_context(Context& context);
 liberror::Result<void> load_settings_from_context_to_device(Context const& context);

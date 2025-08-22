@@ -6,6 +6,7 @@
 #include <fmt/format.h>
 
 #include <fcntl.h>
+#include <sys/wait.h>
 #include <syslog.h>
 #include <sys/stat.h>
 #include <sys/syslog.h>
@@ -16,26 +17,34 @@
 
 using namespace liberror;
 
-Result<void> daemonize()
+Result<IsDaemon> daemonize(std::string_view name)
 {
     umask(0);
 
-    auto const pid = fork();
+    auto const firstFork = fork();
 
-    if (pid > 0)
+    if (firstFork < 0)
     {
-        std::exit(0);
+        return make_error("{}: fork failed: {}", __FUNCTION__, strerror(errno));
     }
-    else if (pid < 0)
+    else if (firstFork > 0)
     {
-        return make_error("fork failed: {}", strerror(errno));
+        waitpid(firstFork, nullptr, 0);
+        return IsDaemon::FALSE;
     }
 
     setsid();
 
-    if (chdir("/") < 0)
+    auto const secondFork = fork();
+
+    if (secondFork > 0)
     {
-        return make_error("chdir failed: {}", strerror(errno));
+        std::exit(EXIT_SUCCESS);
+    }
+    else if (secondFork < 0)
+    {
+        spdlog::error("{}: fork failed: {}", __FUNCTION__, strerror(errno));
+        std::exit(EXIT_FAILURE);
     }
 
     std::ranges::for_each(std::views::iota(0, 1024), close);
@@ -44,21 +53,22 @@ Result<void> daemonize()
     auto fd1 = dup(0);
     auto fd2 = dup(0);
 
-    openlog("xsetwacomgui-daemon", LOG_CONS, LOG_DAEMON);
-
-    auto sink = std::make_shared<spdlog::sinks::syslog_sink_mt>(NAME"-daemon", LOG_PID, LOG_LOCAL0, false);
-    auto logger = std::make_shared<spdlog::logger>(NAME"-daemon", sink);
+    auto sink = std::make_shared<spdlog::sinks::syslog_sink_mt>(name.data(), LOG_PID, LOG_LOCAL0, false);
+    auto logger = std::make_shared<spdlog::logger>(name.data(), sink);
 
     spdlog::set_default_logger(logger);
 
-    if (fd0 != 0 || fd1 != 1 || fd2 != 2)
+    if (chdir("/") < 0)
     {
-        spdlog::error("unexpected file descriptors {} {} {}", fd0, fd1, fd2);
-        std::abort();
+        return make_error("{}: chdir failed: {}", __FUNCTION__, strerror(errno));
     }
 
-    spdlog::info("listening for device connections...");
+    if (fd0 != 0 || fd1 != 1 || fd2 != 2)
+    {
+        spdlog::error("{}: unexpected file descriptors {} {} {}", __FUNCTION__, fd0, fd1, fd2);
+        std::exit(EXIT_FAILURE);
+    }
 
-    return {};
+    return IsDaemon::TRUE;
 }
 
