@@ -45,6 +45,7 @@ public:
 
     auto get_action(this auto& self)
     {
+        assert(self.device_.get() && "DEVICE POINTER WAS NULLPTR");
         std::string action(udev_device_get_action(self.device_.get()));
         std::transform(action.begin(), action.end(), action.begin(), ::toupper);
         return *magic_enum::enum_cast<Action>(action);

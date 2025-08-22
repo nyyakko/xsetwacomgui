@@ -23,18 +23,7 @@
 #include <span>
 
 using namespace liberror;
-
-static Result<void> apply_to_device(Context const& context)
-{
-    TRY(set_stylus_area(context.device.id, context.tabletSettings.device.area));
-    TRY(set_stylus_handedness(context.device.id, context.tabletSettings.device.handedness));
-    TRY(set_stylus_pressure_curve(context.device.id, context.tabletSettings.device.pressure));
-    auto displayArea = context.tabletSettings.display.area;
-    displayArea.offsetX += context.display.area.offsetX;
-    displayArea.offsetY += context.display.area.offsetY;
-    TRY(set_stylus_output_from_display_area(context.device.id, displayArea));
-    return {};
-}
+using namespace libcoro;
 
 static Result<void> render_region_mappers(Context& context)
 {
@@ -424,31 +413,7 @@ static Result<void> render_display_tab(Context& context)
     return {};
 }
 
-static Result<void> load_device_defaults(Context& context, Device const& device)
-{
-    context.device = device;
-    context.hasChangedDevice = true;
-    context.hasChangedDeviceHandedness = true;
-    context.hasChangedDisplay = true;
-    context.tabletSettings.device.name = context.device.name;
-    context.tabletSettings.device.area = TRY(get_stylus_area(context.device.id));
-    context.tabletSettings.device.pressure = TRY(get_stylus_pressure_curve(context.device.id));
-    context.tabletSettings.device.forceFullArea = false;
-    context.tabletSettings.device.forceAspectRatio = false;
-    return {};
-}
-
-static Result<void> load_display_defaults(Context& context, Display const& display)
-{
-    context.display = display;
-    context.tabletSettings.display.name = context.display.name;
-    context.tabletSettings.display.area = { 0, 0, context.display.area.width, context.display.area.height };
-    context.tabletSettings.display.forceFullArea = false;
-    context.tabletSettings.display.forceAspectRatio = false;
-    return {};
-}
-
-static libcoro::Generator<UDevDevice> device_listener()
+static Generator<UDevDevice> device_listener_generator()
 {
     UDev udev;
 
@@ -492,7 +457,7 @@ Result<void> render_main_window(Context& context)
 
     static auto hasTriedToInitializeDeviceSettings = false;
 
-    static auto deviceListener = device_listener();
+    static auto deviceListener = device_listener_generator();
     auto device = deviceListener.next();
 
     if (device.get_devnode())
@@ -526,8 +491,7 @@ Result<void> render_main_window(Context& context)
 
                 if (!result.has_value())
                 {
-                    TRY(load_device_defaults(context, context.devices.back()));
-                    TRY(load_display_defaults(context, TRY(get_primary_display())));
+                    TRY(load_settings_from_device_to_context(context));
 
                     switch (result.error().message())
                     {
@@ -537,7 +501,6 @@ Result<void> render_main_window(Context& context)
                             TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Warning)),
                             TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Device_Settings_Missing))
                         );
-                        save_tablet_settings(context.tabletSettings);
                         break;
                     }
                     case SettingsError::Type::READ_FAILURE: {
@@ -568,7 +531,7 @@ Result<void> render_main_window(Context& context)
                     context.display = *std::ranges::find(context.displays, context.tabletSettings.display.name, &Display::name);
                     context.hasChangedDisplay = true;
 
-                    TRY(apply_to_device(context));
+                    TRY(load_settings_from_context_to_device(context));
                 }
 
                 break;
@@ -643,8 +606,7 @@ Result<void> render_main_window(Context& context)
         auto result = load_tablet_settings(context.tabletSettings);
         if (!result.has_value())
         {
-            TRY(load_device_defaults(context, context.devices.back()));
-            TRY(load_display_defaults(context, TRY(get_primary_display())));
+            TRY(load_settings_from_device_to_context(context));
 
             switch (result.error().message())
             {
@@ -710,7 +672,7 @@ Result<void> render_main_window(Context& context)
             TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Success)),
             TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Device_Settings_Saved))
         );
-        TRY(apply_to_device(context));
+        TRY(load_settings_from_context_to_device(context));
     }
     ImGui::SetCursorPos(previousCursorPosition);
     ImGui::EndDisabled();

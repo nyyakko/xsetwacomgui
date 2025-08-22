@@ -4,6 +4,9 @@
 
 #include "GoddessWindow.hpp"
 #include "MainWindow.hpp"
+#include "platform/Daemon.hpp"
+#include "platform/udev/UDevDevice.hpp"
+#include "platform/udev/UDevMonitor.hpp"
 #include "SettingsWindow.hpp"
 #include "ui/Localisation.hpp"
 #include "ui/Scaling.hpp"
@@ -19,100 +22,14 @@
 #include <liberror/Try.hpp>
 #include <scn/scan.h>
 
+#include <sys/poll.h>
+
 #include <span>
 
 using namespace liberror;
 
-Result<void> safe_main(std::span<char const*> const& arguments)
+Result<void> run_gui(Context& context)
 {
-    argparse::ArgumentParser parser(NAME, "", argparse::default_arguments::help);
-    parser.add_description("A graphical xsetwacom wrapper for ease of use.");
-
-    argparse::ArgumentParser configCommand("config", "", argparse::default_arguments::help);
-    configCommand.add_description("manages device related configuration");
-    configCommand.add_argument("--load").help("loads the tablet configuration without loading the UI").flag();
-    parser.add_subparser(configCommand);
-
-    try
-    {
-        parser.parse_args(static_cast<int>(arguments.size()), arguments.data());
-    }
-    catch (std::exception const& exception)
-    {
-        return make_error(exception.what());
-    }
-
-    std::vector<Display> displays = TRY(get_available_displays());
-    std::vector<Device> devices = TRY(get_available_devices());
-    devices = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::STYLUS; }, devices);
-
-    if (!(std::filesystem::exists(get_application_config_path()) || std::filesystem::create_directory(get_application_config_path())))
-    {
-        return make_error("Failed to create settings directory");
-    }
-
-    if (configCommand["--load"] != false)
-    {
-        TabletSettings tabletSettings {};
-
-        if (!load_tablet_settings(tabletSettings))
-        {
-            return make_error("Failed to load device settings");
-        }
-
-        if (devices.empty() || displays.empty())
-        {
-            return make_error("Failed to load devices");
-        }
-
-        auto device  = devices.front();
-        auto display = TRY(get_primary_display());
-
-        TRY(set_stylus_area(device.id, tabletSettings.device.area));
-        TRY(set_stylus_handedness(device.id, tabletSettings.device.handedness));
-        TRY(set_stylus_pressure_curve(device.id, tabletSettings.device.pressure));
-        auto displayArea = tabletSettings.display.area;
-        displayArea.offsetX += display.area.offsetX;
-        displayArea.offsetY += display.area.offsetY;
-        TRY(set_stylus_output_from_display_area(device.id, displayArea));
-
-        fmt::println("Device settings loaded successfully");
-
-        return {};
-    }
-
-    ApplicationSettings applicationSettings {};
-    TabletSettings tabletSettings {};
-
-    if (!std::filesystem::exists(APPLICATION_SETTINGS_FILE))
-    {
-        save_application_settings(applicationSettings);
-    }
-    else
-    {
-        auto result = load_application_settings(applicationSettings);
-        if (!result.has_value())
-        {
-            fmt::println("The currently saved application settings differs from");
-            fmt::println("the expected format. You can:\n");
-
-            fmt::println("1. Overwrite Everything");
-            fmt::println("2. Migrate Manually\n");
-
-            auto choice = scn::prompt<int>("How would you like to proceed? (choose a value) ", "{}");
-
-            if (choice)
-            {
-                if (choice->value() == 1) save_application_settings(applicationSettings);
-                else if (choice->value() == 2) migrate_application_settings(applicationSettings);
-            }
-
-            fmt::println("Done. Restart the application.");
-
-            return {};
-        }
-    }
-
     if (!glfwInit())
     {
         return make_error("Failed to initialize glfw");
@@ -122,7 +39,7 @@ Result<void> safe_main(std::span<char const*> const& arguments)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-    set_scale(applicationSettings.scale);
+    set_scale(context.applicationSettings.scale);
 
 #ifdef DEBUG
     auto window = glfwCreateWindow(static_cast<int>(800_scaled), static_cast<int>(815_scaled), NAME " - DEBUG BUILD", nullptr, nullptr);
@@ -158,12 +75,10 @@ Result<void> safe_main(std::span<char const*> const& arguments)
     rangeBuilder.AddRanges(rangesData);
     rangeBuilder.BuildRanges(&ranges);
 
-    if (applicationSettings.font.family != "Default")
+    if (context.applicationSettings.font.family != "Default")
     {
-        font = io.Fonts->AddFontFromFileTTF(applicationSettings.font.path.string().data(), 20_scaled, nullptr, ranges.Data);
+        font = io.Fonts->AddFontFromFileTTF(context.applicationSettings.font.path.string().data(), 20_scaled, nullptr, ranges.Data);
     }
-
-    Context context { applicationSettings, tabletSettings, devices, displays };
 
     while (!glfwWindowShouldClose(window))
     {
@@ -174,7 +89,7 @@ Result<void> safe_main(std::span<char const*> const& arguments)
             break;
         }
 
-        if (applicationSettings.theme == ApplicationSettings::Theme::DARK)
+        if (context.applicationSettings.theme == ApplicationSettings::Theme::DARK)
         {
             ImGui::StyleColorsDark();
         }
@@ -201,9 +116,9 @@ Result<void> safe_main(std::span<char const*> const& arguments)
 
                 if (ImGui::BeginMenuBar())
                 {
-                    if (ImGui::BeginMenu(TRY(Localisation::get(applicationSettings.language, Localisation::MenuBar_Settings_Title))))
+                    if (ImGui::BeginMenu(TRY(Localisation::get(context.applicationSettings.language, Localisation::MenuBar_Settings_Title))))
                     {
-                        if (ImGui::MenuItem(TRY(Localisation::get(applicationSettings.language, Localisation::MenuBar_Settings_Application))))
+                        if (ImGui::MenuItem(TRY(Localisation::get(context.applicationSettings.language, Localisation::MenuBar_Settings_Application))))
                         {
                             isApplicationSettingsOpen = true;
                         }
@@ -211,9 +126,9 @@ Result<void> safe_main(std::span<char const*> const& arguments)
                         ImGui::EndMenu();
                     }
 
-                    if (ImGui::BeginMenu(TRY(Localisation::get(applicationSettings.language, Localisation::MenuBar_Other_Title))))
+                    if (ImGui::BeginMenu(TRY(Localisation::get(context.applicationSettings.language, Localisation::MenuBar_Other_Title))))
                     {
-                        if (ImGui::MenuItem(TRY(Localisation::get(applicationSettings.language, Localisation::MenuBar_Other_Goddess))))
+                        if (ImGui::MenuItem(TRY(Localisation::get(context.applicationSettings.language, Localisation::MenuBar_Other_Goddess))))
                         {
                             isGoddessOpen = true;
                         }
@@ -230,7 +145,7 @@ Result<void> safe_main(std::span<char const*> const& arguments)
                     ImGui::SetNextWindowSize({ applicationSettingsWidth, applicationSettingsHeight });
                     ImGui::SetNextWindowPos({ (static_cast<float>(windowWidth) - applicationSettingsWidth)/2, (static_cast<float>(windowHeight) - applicationSettingsHeight)/2 });
                     ImGui::Begin(
-                        TRY(Localisation::get(applicationSettings.language, Localisation::MenuBar_Settings_Application)),
+                        TRY(Localisation::get(context.applicationSettings.language, Localisation::MenuBar_Settings_Application)),
                         &isApplicationSettingsOpen,
                         ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
                     );
@@ -246,7 +161,7 @@ Result<void> safe_main(std::span<char const*> const& arguments)
                     ImGui::SetNextWindowSize({ goddessWidth, goddessHeight });
                     ImGui::SetNextWindowPos({ (static_cast<float>(windowWidth) - goddessWidth)/2, (static_cast<float>(windowHeight) - goddessHeight)/2 });
                     ImGui::Begin(
-                        TRY(Localisation::get(applicationSettings.language, Localisation::MenuBar_Other_Goddess)),
+                        TRY(Localisation::get(context.applicationSettings.language, Localisation::MenuBar_Other_Goddess)),
                         &isGoddessOpen,
                         ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
                     );
@@ -256,7 +171,7 @@ Result<void> safe_main(std::span<char const*> const& arguments)
                     ImGui::End();
                 }
 
-                ImGui::BeginDisabled(devices.empty());
+                ImGui::BeginDisabled(context.devices.empty());
                 {
                     TRY(render_main_window(context));
                 }
@@ -278,6 +193,209 @@ Result<void> safe_main(std::span<char const*> const& arguments)
     glfwDestroyWindow(window);
 
     glfwTerminate();
+
+    return {};
+}
+
+Result<void> run_no_gui(Context& context)
+{
+    TRY(daemonize());
+
+    UDev udev;
+
+    UDevMonitor monitor(udev);
+    monitor.add_subsystem("usb");
+    monitor.enable();
+
+    pollfd fd {
+        .fd=udev_monitor_get_fd(monitor.get()),
+        .events=POLLIN,
+        .revents={}
+    };
+
+    while (true)
+    {
+        if (poll(&fd, 1, -1) <= 0) continue;
+
+        UDevDevice device(udev_monitor_receive_device(monitor.get()));
+
+        if (!device.get_devnode()) continue;
+
+        switch (device.get_action())
+        {
+        case UDevDevice::Action::UNBIND: {
+            auto hadMoreThanOneDevice = context.devices.size() > 1;
+            context.devices = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::STYLUS; }, TRY(get_available_devices()));
+
+            if (hadMoreThanOneDevice) break;
+
+            auto maybeDevice = std::ranges::find(context.devices, context.tabletSettings.device.name, &Device::name);
+
+            if (maybeDevice == context.devices.end())
+            {
+                context.display = {};
+                context.device = {};
+                context.tabletSettings = {};
+            }
+
+            break;
+
+        }
+        case UDevDevice::Action::BIND: {
+            auto hadAtleastOneDevice = !context.devices.empty();
+            context.devices = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::STYLUS; }, TRY(get_available_devices()));
+
+            if (hadAtleastOneDevice) break;
+
+            auto result = load_tablet_settings(context.tabletSettings);
+
+            if (!result.has_value())
+            {
+                TRY(load_settings_from_device_to_context(context));
+
+                switch (result.error().message())
+                {
+                case SettingsError::Type::WRITE_FAILURE: break;
+                case SettingsError::Type::FILE_NOT_FOUND: {
+                    return make_error("Tablet settings file not found");
+                }
+                case SettingsError::Type::READ_FAILURE: {
+                    return make_error("Could not read tablet settings file");
+                }
+                case SettingsError::Type::OUTDATED_SCHEMA: {
+                    return make_error("Outdated settings schema");
+                }
+                }
+            }
+            else
+            {
+                assert(context.devices.back().name == context.tabletSettings.device.name && "FIXME: assuming device connected is the same as the one saved in the settings file");
+
+                context.device = context.devices.back();
+                context.hasChangedDevice = true;
+                context.hasChangedDeviceHandedness = true;
+                context.display = *std::ranges::find(context.displays, context.tabletSettings.display.name, &Display::name);
+                context.hasChangedDisplay = true;
+
+                TRY(load_settings_from_context_to_device(context));
+
+                spdlog::info("loaded settings for device: {}", context.device.name);
+            }
+
+            break;
+
+        }
+        case UDevDevice::Action::REMOVE: break;
+        case UDevDevice::Action::ADD: break;
+        }
+    }
+
+    return {};
+}
+
+Result<void> safe_main(std::span<char const*> const& arguments)
+{
+    argparse::ArgumentParser cli(NAME, "", argparse::default_arguments::help);
+    cli.add_description("A graphical xsetwacom wrapper for ease of use.");
+
+    cli.add_argument("--no-gui").help("starts a daemon which listens to device connections").flag();
+
+    argparse::ArgumentParser config("config", "", argparse::default_arguments::help);
+    config.add_description("manages device related configuration");
+    config.add_argument("--load").help("loads the tablet configuration without loading the UI").flag();
+
+    cli.add_subparser(config);
+
+    try
+    {
+        cli.parse_args(static_cast<int>(arguments.size()), arguments.data());
+    }
+    catch (std::exception const& exception)
+    {
+        return make_error(exception.what());
+    }
+
+    std::vector<Display> displays = TRY(get_available_displays());
+    std::vector<Device> devices = TRY(get_available_devices());
+    devices = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::STYLUS; }, devices);
+
+    if (!(std::filesystem::exists(get_application_config_path()) || std::filesystem::create_directory(get_application_config_path())))
+    {
+        return make_error("Failed to create settings directory");
+    }
+
+    if (config.is_used("--load"))
+    {
+        TabletSettings tabletSettings {};
+
+        if (!load_tablet_settings(tabletSettings))
+        {
+            return make_error("Failed to load device settings");
+        }
+
+        if (devices.empty() || displays.empty())
+        {
+            return make_error("Failed to load devices");
+        }
+
+        auto device  = devices.front();
+        auto display = TRY(get_primary_display());
+
+        TRY(set_stylus_area(device.id, tabletSettings.device.area));
+        TRY(set_stylus_handedness(device.id, tabletSettings.device.handedness));
+        TRY(set_stylus_pressure_curve(device.id, tabletSettings.device.pressure));
+        auto displayArea = tabletSettings.display.area;
+        displayArea.offsetX += display.area.offsetX;
+        displayArea.offsetY += display.area.offsetY;
+        TRY(set_stylus_output_from_display_area(device.id, displayArea));
+
+        fmt::println("Device settings loaded successfully");
+
+        return {};
+    }
+
+    ApplicationSettings applicationSettings {};
+    TabletSettings tabletSettings {};
+
+    Context context { applicationSettings, tabletSettings, devices, displays };
+
+    if (!std::filesystem::exists(APPLICATION_SETTINGS_FILE))
+    {
+        save_application_settings(applicationSettings);
+    }
+    else
+    {
+        auto result = load_application_settings(applicationSettings);
+        if (!result.has_value())
+        {
+            fmt::println("The currently saved application settings differs from");
+            fmt::println("the expected format. You can:\n");
+
+            fmt::println("1. Overwrite Everything");
+            fmt::println("2. Migrate Manually\n");
+
+            auto choice = scn::prompt<int>("How would you like to proceed? (choose a value) ", "{}");
+
+            if (choice)
+            {
+                if (choice->value() == 1) save_application_settings(applicationSettings);
+                else if (choice->value() == 2) migrate_application_settings(applicationSettings);
+            }
+
+            fmt::println("Done. Restart the application.");
+
+            return {};
+        }
+    }
+
+    if (cli.is_used("--no-gui"))
+    {
+        TRY(run_no_gui(context));
+    }
+    else
+    {
+        TRY(run_gui(context));
+    }
 
     return {};
 }

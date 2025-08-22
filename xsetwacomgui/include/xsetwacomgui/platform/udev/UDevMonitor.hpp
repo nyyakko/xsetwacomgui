@@ -2,6 +2,8 @@
 
 #include "UDev.hpp"
 
+#include <libcoro/Generator.hpp>
+
 #include <libudev.h>
 
 #include <string_view>
