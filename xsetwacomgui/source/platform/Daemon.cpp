@@ -28,14 +28,14 @@ Result<void> daemonize()
     }
     else if (pid < 0)
     {
-        return make_error("failed to fork process");
+        return make_error("fork failed: {}", strerror(errno));
     }
 
     setsid();
 
     if (chdir("/") < 0)
     {
-        return make_error("chdir() failed");
+        return make_error("chdir failed: {}", strerror(errno));
     }
 
     std::ranges::for_each(std::views::iota(0, 1024), close);
