@@ -55,8 +55,7 @@ Result<IPCServer> IPCServer::create()
             std::exit(EXIT_FAILURE);
         }
 
-        spdlog::error("IPCServer::{}: mq_open failed: {}", __FUNCTION__, strerror(errno));
-        std::exit(EXIT_FAILURE);
+        return make_error("IPCServer::{}: mq_open failed: {}", __FUNCTION__, strerror(errno));
     }
 
     server.server_ = serverFd;
