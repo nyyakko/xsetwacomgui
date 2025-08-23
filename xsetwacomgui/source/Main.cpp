@@ -204,10 +204,7 @@ Result<void> run_gui(Context& context)
 
 Result<void> run_no_gui(Context& context)
 {
-    if (TRY(daemonize(NAME"-client")) == IsDaemon::FALSE)
-    {
-        return {};
-    }
+    TRY(daemonize(NAME"-client", QuitParent::TRUE));
 
     TRY(IPCClient::the().configure(IPCClient::Mode::SYNC));
     TRY(IPCClient::the().connect());

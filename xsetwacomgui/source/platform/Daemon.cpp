@@ -17,7 +17,7 @@
 
 using namespace liberror;
 
-Result<IsDaemon> daemonize(std::string_view name)
+Result<IsDaemon> daemonize(std::string_view name, QuitParent quitParent)
 {
     umask(0);
 
@@ -30,6 +30,12 @@ Result<IsDaemon> daemonize(std::string_view name)
     else if (firstFork > 0)
     {
         waitpid(firstFork, nullptr, 0);
+
+        if (quitParent == QuitParent::TRUE)
+        {
+            std::exit(0);
+        }
+
         return IsDaemon::FALSE;
     }
 
@@ -71,4 +77,3 @@ Result<IsDaemon> daemonize(std::string_view name)
 
     return IsDaemon::TRUE;
 }
-
