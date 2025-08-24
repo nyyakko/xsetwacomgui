@@ -39,11 +39,13 @@ private:
     static liberror::Result<IPCClient> create();
 
 public:
+    liberror::Result<void> configure(Mode mode);
+
     liberror::Result<void> connect();
     liberror::Result<void> disconnect();
+
     libcoro::Generator<std::array<char, 32>> receive_message_async();
     liberror::Result<std::array<char, 32>> receive_message();
-    liberror::Result<void> configure(Mode mode);
 
 private:
     std::string name_;

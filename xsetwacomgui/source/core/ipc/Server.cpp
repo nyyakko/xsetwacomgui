@@ -23,16 +23,14 @@ using namespace libcoro;
 
 static constexpr auto SERVER_NAME = "/" NAME "-server";
 
-static Task<std::array<char, 32>> receive(mqd_t fd);
+static Task<int> poll(std::vector<pollfd>& fds);
+static Task<Result<std::array<char, 32>>> receive(mqd_t fd);
 
 IPCServer::~IPCServer()
 {
     if (this->server_ != -1)
     {
-        spdlog::info("Server finished");
-
-        mq_close(this->server_);
-        mq_unlink(SERVER_NAME);
+        stop();
     }
 }
 
@@ -73,7 +71,7 @@ Result<IPCServer> IPCServer::create()
     return server;
 }
 
-Result<void> IPCServer::start()
+void IPCServer::start()
 {
     std::thread schedulerThread {
         [] {
@@ -88,14 +86,36 @@ Result<void> IPCServer::start()
 
     schedulerThread.join();
 
-    return {};
+    assert(false && "UNREACHABLE");
+}
+
+void IPCServer::stop()
+{
+    spdlog::info("Server finished");
+
+    mq_close(this->server_);
+    mq_unlink(SERVER_NAME);
+}
+
+void IPCServer::give_up_and_die()
+{
+    stop();
+    std::abort();
 }
 
 Task<void> IPCServer::message_receiver()
 {
     while (true)
     {
-        std::string_view buffer(co_await receive(server_));
+        auto result = co_await receive(server_);
+
+        if (!result.has_value())
+        {
+            spdlog::error("{}", result.error().message());
+            give_up_and_die();
+        }
+
+        std::string_view buffer(*result);
 
         if (buffer.starts_with("CONN"))
         {
@@ -105,7 +125,7 @@ Task<void> IPCServer::message_receiver()
             if (clientFd < 0)
             {
                 spdlog::error("IPCServer::{}: mq_open failed: {}", __FUNCTION__, strerror(errno));
-                std::exit(EXIT_FAILURE);
+                give_up_and_die();
             }
 
             clients_.with([=] (auto& clients) {
@@ -114,7 +134,7 @@ Task<void> IPCServer::message_receiver()
 
             spdlog::info("Client {} connected", clientName);
         }
-        else if (buffer.starts_with("DISC"))
+        else if (buffer.starts_with("QUIT"))
         {
             auto clientName = std::next(buffer.data(), 5);
 
@@ -147,7 +167,7 @@ Task<void> IPCServer::message_sender()
 
     while (true)
     {
-        if (poll(fds.data(), fds.size(), -1) <= 0) continue;
+        if (co_await poll(fds) <= 0) continue;
 
         UDevDevice device(udev_monitor_receive_device(monitor.get()));
 
@@ -160,7 +180,7 @@ Task<void> IPCServer::message_sender()
             if (mq_send(clientFd, action.data(), action.size(), 0) < 0)
             {
                 spdlog::error("IPCServer::{}: mq_send failed: {}", __FUNCTION__, strerror(errno));
-                std::exit(EXIT_FAILURE);
+                give_up_and_die();
             }
         }
     }
@@ -168,14 +188,18 @@ Task<void> IPCServer::message_sender()
     co_return {};
 }
 
-Task<std::array<char, 32>> receive(mqd_t fd)
+Task<int> poll(std::vector<pollfd>& fds)
+{
+    co_return poll(fds.data(), fds.size(), -1);
+}
+
+Task<Result<std::array<char, 32>>> receive(mqd_t fd)
 {
     std::array<char, 32> buffer {};
 
     if (mq_receive(fd, buffer.data(), buffer.size(), nullptr) < 0)
     {
-        spdlog::error("{}: mq_receive failed: {}", __FUNCTION__, strerror(errno));
-        std::exit(EXIT_FAILURE);
+        co_return make_error("{}: mq_receive failed: {}", __FUNCTION__, strerror(errno));
     }
 
     co_return buffer;

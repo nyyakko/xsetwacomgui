@@ -396,7 +396,7 @@ Result<void> safe_main(std::span<char const*> const& arguments)
 
     if (TRY(daemonize(NAME"-server")) == IsDaemon::TRUE)
     {
-        TRY(IPCServer::the().start());
+        IPCServer::the().start();
     }
     else
     {

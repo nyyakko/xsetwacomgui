@@ -97,7 +97,7 @@ Result<void> IPCClient::disconnect()
         return make_error("IPCClient::{}: mq_open failed: {}", __FUNCTION__, strerror(errno));
     }
 
-    auto request = fmt::format("DISC {}", this->name_.data());
+    auto request = fmt::format("QUIT {}", this->name_.data());
 
     if (mq_send(serverFd, request.data(), request.size(), 0) < 0)
     {

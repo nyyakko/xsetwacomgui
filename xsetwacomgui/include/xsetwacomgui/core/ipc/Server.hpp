@@ -7,6 +7,7 @@
 #include <libcoro/Task.hpp>
 
 #include <mqueue.h>
+#include <sys/poll.h>
 
 class IPCServer
 {
@@ -37,11 +38,15 @@ private:
     static liberror::Result<IPCServer> create();
 
 public:
-    liberror::Result<void> start();
+    void start();
 
 private:
+    void stop();
+
     libcoro::Task<void> message_receiver();
     libcoro::Task<void> message_sender();
+
+    void give_up_and_die();
 
 private:
     mqd_t server_;
