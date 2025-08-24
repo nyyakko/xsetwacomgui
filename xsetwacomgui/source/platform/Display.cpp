@@ -28,7 +28,7 @@ Result<std::vector<Display>> get_available_displays()
     std::sregex_iterator iterator(output.begin(), output.end(), pattern);
     for (; iterator != std::sregex_iterator{}; iterator = std::next(iterator))
     {
-        displays.push_back({
+        Display display {
             .id = std::atoi(iterator->str(1).data()),
             .primary = !iterator->str(2).empty(),
             .area = {
@@ -38,7 +38,11 @@ Result<std::vector<Display>> get_available_displays()
                 .height = static_cast<float>(std::atof(iterator->str(5).data())),
             },
             .name = iterator->str(3)
-        });
+        };
+
+        display.nameFormatted = fmt::format("{} ({}x{})", display.name, display.area.width, display.area.height);
+
+        displays.push_back(display);
     }
 
     return displays;

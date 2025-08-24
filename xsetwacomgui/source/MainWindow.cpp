@@ -356,8 +356,7 @@ static Result<void> render_display_tab(Context& context)
     {
         ImGui::AlignTextToFramePadding();
         ImGui::Text("%s", TRY(Localisation::get(context.applicationSettings.language, Localisation::Window_Main_Tabs_Display_Display)));
-        auto displayNames = fplus::transform([] (auto&& display) { return fmt::format("{} ({}x{})", display.name, display.area.width, display.area.height); }, context.displays);
-        auto displayNamesData = fplus::transform([] (std::string const& name) { return name.data(); }, displayNames);
+        auto displaysNames = fplus::transform([] (auto const& display) { return display.nameFormatted.data(); }, context.displays);
         ImGui::SetNextItemWidth(300_scaled + ImGui::GetStyle().WindowPadding.x);
         static int displayIndex = context.tabletSettings.display.name == "INVALID" ? 0 : static_cast<int>(
             std::distance(context.displays.begin(), std::ranges::find(context.displays, context.tabletSettings.display.name, &Display::name))
@@ -370,7 +369,7 @@ static Result<void> render_display_tab(Context& context)
             );
         }
 
-        context.hasChangedDisplay = ImGui::Combo("##Displays", &displayIndex, displayNamesData.data(), static_cast<int>(displayNamesData.size()));
+        context.hasChangedDisplay = ImGui::Combo("##Displays", &displayIndex, displaysNames.data(), static_cast<int>(displaysNames.size()));
 
         if (context.hasChangedDisplay)
         {
