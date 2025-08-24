@@ -17,12 +17,10 @@
 
     "menubar": {
         "settings": {
-            "title": "Settings",
-            "applicationSettings": "Application Settings"
+            "title": "Settings"
         },
         "other": {
-            "title": "Other",
-            "goddess": "Goddess"
+            "title": "Other"
         }
     },
 
@@ -65,6 +63,7 @@
             }
         },
         "settings": {
+            "title": "Application Settings",
             "tabs": {
                 "appearance": {
                     "title": "Appearance",
@@ -83,6 +82,22 @@
                     "language": "Language"
                 }
             }
+        },
+        "mappings": {
+            "title": "Mappings",
+            "tabs": {
+                "stylus": {
+                    "title": "Stylus",
+                    "button": "Button"
+                },
+                "pad": {
+                    "title": "Pad",
+                    "button": "Button"
+                }
+            }
+        },
+        "goddess": {
+            "title": "Goddess"
         }
     }
 }

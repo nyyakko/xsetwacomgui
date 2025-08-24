@@ -131,7 +131,7 @@ Result<void> render_settings_window(Context& context)
 
     auto previousCursorPosition = ImGui::GetCursorPos();
     ImGui::SetCursorPosY(ImGui::GetWindowHeight() - (25_scaled + ImGui::GetStyle().WindowPadding.x));
-    if (ImGui::Button(TRY(Localisation::get(context.applicationSettings.language, Localisation::Save)), { 100_scaled, 25_scaled }))
+    if (ImGui::Button(TRY(Localisation::get(context.applicationSettings.language, Localisation::Save)), { 150_scaled, 25_scaled }))
     {
         ImGui::PushToast(
             TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Success)),

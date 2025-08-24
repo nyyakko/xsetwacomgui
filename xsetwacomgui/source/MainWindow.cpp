@@ -262,20 +262,20 @@ static Result<void> render_tablet_tab(Context& context)
             ImGui::SameLine();
             ImGui::BeginGroup();
             {
-                static auto isApplicationSettingsOpen = false;
+                static auto isMappingsSettingsOpen = false;
 
-                isApplicationSettingsOpen |= ImGui::Button("Mappings", { 150_scaled, 0 });
+                isMappingsSettingsOpen |= ImGui::Button(TRY(Localisation::get(context.applicationSettings.language, Localisation::Window_Mappings_Title)), { 150_scaled, 0 });
 
-                if (isApplicationSettingsOpen)
+                if (isMappingsSettingsOpen)
                 {
                     auto [windowWidth, windowHeight] = ImGui::GetWindowSize();
 
-                    float applicationSettingsWidth = static_cast<float>(windowWidth)/1.5f, applicationSettingsHeight = static_cast<float>(windowHeight)/1.5f;
-                    ImGui::SetNextWindowSize({ applicationSettingsWidth, applicationSettingsHeight });
-                    ImGui::SetNextWindowPos({ (static_cast<float>(windowWidth) - applicationSettingsWidth)/2, (static_cast<float>(windowHeight) - applicationSettingsHeight)/2 });
+                    float mappingsSettingsWidth = static_cast<float>(windowWidth)/1.5f, applicationSettingsHeight = static_cast<float>(windowHeight)/1.5f;
+                    ImGui::SetNextWindowSize({ mappingsSettingsWidth, applicationSettingsHeight });
+                    ImGui::SetNextWindowPos({ (static_cast<float>(windowWidth) - mappingsSettingsWidth)/2, (static_cast<float>(windowHeight) - applicationSettingsHeight)/2 });
                     ImGui::Begin(
-                        "Mappings",
-                        &isApplicationSettingsOpen,
+                        TRY(Localisation::get(context.applicationSettings.language, Localisation::Window_Mappings_Title)),
+                        &isMappingsSettingsOpen,
                         ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
                     );
                     {

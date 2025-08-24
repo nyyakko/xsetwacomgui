@@ -29,7 +29,7 @@ Result<void> render_stylus_tab(Context const& context)
 {
     for (auto const& mapping : context.tabletSettings.stylus.mappings)
     {
-        ImGui::Text("Button %d", mapping.first);
+        ImGui::Text("%s %d", TRY(Localisation::get(context.applicationSettings.language, Localisation::Window_Mappings_Tabs_Stylus_Button)), mapping.first);
         ImGui::SameLine();
 
         static std::array<int, 9> actionIndexes {};
@@ -50,7 +50,7 @@ Result<void> render_pad_tab(Context const& context)
 {
     for (auto const& mapping : context.tabletSettings.pad.mappings)
     {
-        ImGui::Text("Button %d", mapping.first);
+        ImGui::Text("%s %d", TRY(Localisation::get(context.applicationSettings.language, Localisation::Window_Mappings_Tabs_Pad_Button)), mapping.first);
         ImGui::SameLine();
 
         static std::array<int, 9> actionIndexes {};
@@ -72,13 +72,13 @@ Result<void> render_mappings_window(Context& context)
 {
     if (ImGui::BeginTabBar("##Tabs_3"))
     {
-        if (ImGui::BeginTabItem("Stylus"))
+        if (ImGui::BeginTabItem(TRY(Localisation::get(context.applicationSettings.language, Localisation::Window_Mappings_Tabs_Stylus_Title))))
         {
             TRY(render_stylus_tab(context));
             ImGui::EndTabItem();
         }
 
-        if (ImGui::BeginTabItem("Pad"))
+        if (ImGui::BeginTabItem(TRY(Localisation::get(context.applicationSettings.language, Localisation::Window_Mappings_Tabs_Pad_Title))))
         {
             TRY(render_pad_tab(context));
             ImGui::EndTabItem();
@@ -89,7 +89,7 @@ Result<void> render_mappings_window(Context& context)
 
     auto previousCursorPosition = ImGui::GetCursorPos();
     ImGui::SetCursorPosY(ImGui::GetWindowHeight() - (25_scaled + ImGui::GetStyle().WindowPadding.x));
-    if (ImGui::Button(TRY(Localisation::get(context.applicationSettings.language, Localisation::Save_Apply)), { 100_scaled, 25_scaled }))
+    if (ImGui::Button(TRY(Localisation::get(context.applicationSettings.language, Localisation::Save_Apply)), { 150_scaled, 25_scaled }))
     {
         ImGui::PushToast(
             TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Success)),

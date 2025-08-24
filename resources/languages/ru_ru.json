@@ -17,12 +17,10 @@
 
     "menubar": {
         "settings": {
-            "title": "Настройки",
-            "applicationSettings": "Настройки приложения"
+            "title": "Настройки"
         },
         "other": {
-            "title": "Другое",
-            "goddess": "Богиня"
+            "title": "Другое"
         }
     },
 
@@ -65,6 +63,7 @@
             }
         },
         "settings": {
+            "title": "Настройки приложения",
             "tabs": {
                 "appearance": {
                     "title": "Внешний вид",
@@ -83,6 +82,22 @@
                     "language": "Язык"
                 }
             }
+        },
+        "mappings": {
+            "title": "MAPPINGS (FIXME)",
+            "tabs": {
+                "stylus": {
+                    "title": "STYLUS (FIXME)",
+                    "button": "BUTTON (FIXME)"
+                },
+                "pad": {
+                    "title": "PAD (FIXME)",
+                    "button": "BUTTON (FIXME)"
+                }
+            }
+        },
+        "goddess": {
+            "title": "Богиня"
         }
     }
 }

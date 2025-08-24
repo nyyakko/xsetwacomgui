@@ -42,9 +42,10 @@ Result<char const*> Localisation::get(std::string_view language, Message id)
                 { Localisation::Toast_Device_Settings_Missing, json["toast"]["deviceSettingsMissing"].get<std::string>() },
 
                 { Localisation::MenuBar_Settings_Title, json["menubar"]["settings"]["title"].get<std::string>() },
-                { Localisation::MenuBar_Settings_Application, json["menubar"]["settings"]["applicationSettings"].get<std::string>() },
+                { Localisation::MenuBar_Settings_Entry_Application, json["window"]["settings"]["title"].get<std::string>() },
+
                 { Localisation::MenuBar_Other_Title, json["menubar"]["other"]["title"].get<std::string>() },
-                { Localisation::MenuBar_Other_Goddess, json["menubar"]["other"]["goddess"].get<std::string>() },
+                { Localisation::MenuBar_Other_Entry_Goddess, json["window"]["goddess"]["title"].get<std::string>() },
 
                 { Localisation::Popup_Outdated_Device_Settings_Title, json["popup"]["outdatedDeviceSettings"]["title"].get<std::string>() },
                 { Localisation::Popup_Outdated_Device_Settings_Text, json["popup"]["outdatedDeviceSettings"]["text"].get<std::string>() },
@@ -63,7 +64,6 @@ Result<char const*> Localisation::get(std::string_view language, Message id)
                 { Localisation::Window_Main_Tabs_Tablet_OffsetY, json["window"]["main"]["tabs"]["tablet"]["offsetY"].get<std::string>() },
                 { Localisation::Window_Main_Tabs_Tablet_FullArea, json["window"]["main"]["tabs"]["tablet"]["fullArea"].get<std::string>() },
                 { Localisation::Window_Main_Tabs_Tablet_ForceProportions, json["window"]["main"]["tabs"]["tablet"]["forceProportions"].get<std::string>() },
-
                 { Localisation::Window_Main_Tabs_Display_Title, json["window"]["main"]["tabs"]["display"]["title"].get<std::string>() },
                 { Localisation::Window_Main_Tabs_Display_Display, json["window"]["main"]["tabs"]["display"]["display"].get<std::string>() },
                 { Localisation::Window_Main_Tabs_Display_Width, json["window"]["main"]["tabs"]["display"]["width"].get<std::string>() },
@@ -73,6 +73,7 @@ Result<char const*> Localisation::get(std::string_view language, Message id)
                 { Localisation::Window_Main_Tabs_Display_FullArea, json["window"]["main"]["tabs"]["display"]["fullArea"].get<std::string>() },
                 { Localisation::Window_Main_Tabs_Display_ForceProportions, json["window"]["main"]["tabs"]["display"]["forceProportions"].get<std::string>() },
 
+                { Localisation::Window_Settings_Title, json["window"]["settings"]["title"].get<std::string>() },
                 { Localisation::Window_Settings_Tabs_Appearance_Title, json["window"]["settings"]["tabs"]["appearance"]["title"].get<std::string>() },
                 { Localisation::Window_Settings_Tabs_Appearance_Theme, json["window"]["settings"]["tabs"]["appearance"]["theme"].get<std::string>() },
                 { Localisation::Window_Settings_Tabs_Appearance_Theme_Dark, json["window"]["settings"]["tabs"]["appearance"]["themeDark"].get<std::string>() },
@@ -83,6 +84,12 @@ Result<char const*> Localisation::get(std::string_view language, Message id)
                 { Localisation::Window_Settings_Tabs_Display_Scale, json["window"]["settings"]["tabs"]["display"]["scale"].get<std::string>() },
                 { Localisation::Window_Settings_Tabs_Language_Title, json["window"]["settings"]["tabs"]["language"]["title"].get<std::string>() },
                 { Localisation::Window_Settings_Tabs_Language_Language, json["window"]["settings"]["tabs"]["language"]["language"].get<std::string>() },
+
+                { Localisation::Window_Mappings_Title, json["window"]["mappings"]["title"].get<std::string>() },
+                { Localisation::Window_Mappings_Tabs_Stylus_Title, json["window"]["mappings"]["tabs"]["stylus"]["title"].get<std::string>() },
+                { Localisation::Window_Mappings_Tabs_Stylus_Button, json["window"]["mappings"]["tabs"]["stylus"]["button"].get<std::string>() },
+                { Localisation::Window_Mappings_Tabs_Pad_Title, json["window"]["mappings"]["tabs"]["pad"]["title"].get<std::string>() },
+                { Localisation::Window_Mappings_Tabs_Pad_Button, json["window"]["mappings"]["tabs"]["pad"]["button"].get<std::string>() },
             };
         }
         catch (std::exception const& error)
