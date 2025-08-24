@@ -14,8 +14,10 @@
 
 using namespace liberror;
 
-Result<void, SettingsError> load_application_settings(ApplicationSettings& settings)
+Result<ApplicationSettings, SettingsError> load_application_settings()
 {
+    ApplicationSettings settings {};
+
     if (!std::filesystem::exists(APPLICATION_SETTINGS_FILE))
     {
         return make_error<SettingsError>(SettingsError::Type::FILE_NOT_FOUND);
@@ -25,15 +27,12 @@ Result<void, SettingsError> load_application_settings(ApplicationSettings& setti
     std::stringstream content;
     content << stream.rdbuf();
 
-    auto previousSettings = settings;
-
     try
     {
         auto json = nlohmann::json::parse(content.str());
 
         if (json["version"].is_null() || json["version"].get<std::string>() != ApplicationSettings::SCHEMA_VERSION)
         {
-            settings = previousSettings;
             return make_error<SettingsError>(SettingsError::Type::OUTDATED_SCHEMA);
         }
 
@@ -46,11 +45,10 @@ Result<void, SettingsError> load_application_settings(ApplicationSettings& setti
     }
     catch (std::exception const& error)
     {
-        settings = previousSettings;
         return make_error<SettingsError>(SettingsError::Type::READ_FAILURE);
     }
 
-    return {};
+    return settings;
 }
 
 void save_application_settings(ApplicationSettings const& settings)

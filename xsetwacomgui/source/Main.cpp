@@ -2,6 +2,7 @@
 
 #include <spdlog/spdlog.h>
 
+#include "core/Context.hpp"
 #include "platform/udev/UDevDevice.hpp"
 #include "core/ipc/Client.hpp"
 #include "core/ipc/Server.hpp"
@@ -221,33 +222,36 @@ Result<void> run_no_gui(Context& context)
         switch (*action)
         {
             case UDevDevice::Action::UNBIND: {
-                auto hadMoreThanOneDevice = context.devices.size() > 1;
-                context.devices = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::STYLUS; }, TRY(get_available_devices()));
+                auto devicesFiltered = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::STYLUS; }, context.devices);
+                auto hadMoreThanOneDevice = devicesFiltered.size() > 1;
+                context.devices = TRY(get_available_devices());
 
                 if (hadMoreThanOneDevice) break;
 
-                auto maybeDevice = std::ranges::find(context.devices, context.tabletSettings.device.name, &Device::name);
+                auto maybeDevice = std::ranges::find(context.devices, context.tabletSettings.stylus.name, &Device::name);
 
                 if (maybeDevice == context.devices.end())
                 {
                     context.display = {};
-                    context.device = {};
+                    context.stylus = {};
+                    context.pad = {};
                     context.tabletSettings = {};
                 }
 
                 break;
             }
             case UDevDevice::Action::BIND: {
-                auto hadAtleastOneDevice = !context.devices.empty();
-                context.devices = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::STYLUS; }, TRY(get_available_devices()));
+                auto devicesFiltered = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::STYLUS; }, context.devices);
+                auto hadAtleastOneDevice = !devicesFiltered.empty();
+                context.devices = TRY(get_available_devices());
 
                 if (hadAtleastOneDevice) break;
 
-                auto result = load_tablet_settings(context.tabletSettings);
+                auto result = load_tablet_settings();
 
                 if (!result.has_value())
                 {
-                    TRY(load_settings_from_driver_to_context(context));
+                    TRY(apply_settings_from_driver_to_context(context));
 
                     switch (result.error().message())
                     {
@@ -265,17 +269,24 @@ Result<void> run_no_gui(Context& context)
                 }
                 else
                 {
-                    assert(context.devices.back().name == context.tabletSettings.device.name && "FIXME: assuming device connected is the same as the one saved in the settings file");
+                    context.tabletSettings = *result;
 
-                    spdlog::info("Device settings loaded successfully");
+                    auto stylus = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::STYLUS; }, context.devices).back();
+                    assert(stylus.name == context.tabletSettings.stylus.name && "FIXME: assuming device connected is the same as the one saved in the settings file");
+                    context.stylus = stylus;
 
-                    context.device = context.devices.back();
+                    auto pad = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::PAD; }, context.devices).back();
+                    assert(pad.name == context.tabletSettings.pad.name && "FIXME: assuming device connected is the same as the one saved in the settings file");
+                    context.pad = pad;
+
                     context.hasChangedDevice = true;
                     context.hasChangedDeviceHandedness = true;
                     context.display = *std::ranges::find(context.displays, context.tabletSettings.display.name, &Display::name);
                     context.hasChangedDisplay = true;
 
-                    TRY(load_settings_from_context_to_device(context));
+                    TRY(apply_settings_from_context_to_device(context));
+
+                    spdlog::info("Device settings loaded successfully");
                 }
 
                 break;
@@ -311,49 +322,43 @@ Result<void> safe_main(std::span<char const*> const& arguments)
         return make_error(exception.what());
     }
 
-    std::vector<Display> displays = TRY(get_available_displays());
-    std::vector<Device> devices = TRY(get_available_devices());
-    devices = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::STYLUS; }, devices);
-
     if (!(std::filesystem::exists(get_application_config_path()) || std::filesystem::create_directory(get_application_config_path())))
     {
         return make_error("Failed to create settings directory");
     }
 
+    ApplicationSettings applicationSettings {};
+    TabletSettings tabletSettings {};
+    auto displays = MUST(get_available_displays());
+    auto devices = TRY(get_available_devices());
+
+    Context context { applicationSettings, tabletSettings, devices, displays };
+
     if (config.is_used("--load"))
     {
-        TabletSettings tabletSettings {};
+        auto result = load_tablet_settings();
 
-        if (!load_tablet_settings(tabletSettings))
-        {
-            return make_error("Failed to load device settings");
-        }
+        if (!result) return make_error("Failed to load device settings");
+        if (context.devices.empty()) return make_error("Failed to load devices");
 
-        if (devices.empty() || displays.empty())
-        {
-            return make_error("Failed to load devices");
-        }
+        context.tabletSettings = *result;
 
-        auto device  = devices.front();
-        auto display = TRY(get_primary_display());
+        auto stylus = std::ranges::find(context.devices, context.tabletSettings.stylus.name, &Device::name);
+        assert(stylus != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
+        context.stylus = *stylus;
 
-        TRY(set_stylus_area(device.id, tabletSettings.device.area));
-        TRY(set_stylus_handedness(device.id, tabletSettings.device.handedness));
-        TRY(set_stylus_pressure_curve(device.id, tabletSettings.device.pressure));
-        auto displayArea = tabletSettings.display.area;
-        displayArea.offsetX += display.area.offsetX;
-        displayArea.offsetY += display.area.offsetY;
-        TRY(set_stylus_output_from_display_area(device.id, displayArea));
+        auto pad = std::ranges::find(context.devices, context.tabletSettings.pad.name, &Device::name);
+        assert(pad != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
+        context.pad = *pad;
+
+        context.display = *std::ranges::find(context.displays, context.tabletSettings.display.name, &Display::name);
+
+        TRY(apply_settings_from_context_to_device(context));
 
         fmt::println("Device settings loaded successfully");
 
         return {};
     }
-
-    ApplicationSettings applicationSettings {};
-    TabletSettings tabletSettings {};
-
-    Context context { applicationSettings, tabletSettings, devices, displays };
 
     if (!std::filesystem::exists(APPLICATION_SETTINGS_FILE))
     {
@@ -361,7 +366,8 @@ Result<void> safe_main(std::span<char const*> const& arguments)
     }
     else
     {
-        auto result = load_application_settings(applicationSettings);
+        auto result = load_application_settings();
+
         if (!result.has_value())
         {
             fmt::println("The currently saved application settings differs from");
@@ -382,6 +388,10 @@ Result<void> safe_main(std::span<char const*> const& arguments)
 
             return {};
         }
+        else
+        {
+            context.applicationSettings = *result;
+        }
     }
 
     if (TRY(daemonize(NAME"-server")) == IsDaemon::TRUE)
@@ -391,13 +401,9 @@ Result<void> safe_main(std::span<char const*> const& arguments)
     else
     {
         if (!cli.is_used("--no-gui"))
-        {
             TRY(run_gui(context));
-        }
         else
-        {
             TRY(run_no_gui(context));
-        }
     }
 
     return {};

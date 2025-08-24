@@ -15,7 +15,7 @@ private:
     // Should be updated every time a change is made
     static constexpr auto SCHEMA_VERSION = "1.1";
 
-    friend liberror::Result<void, SettingsError> load_application_settings(ApplicationSettings& settings);
+    friend liberror::Result<ApplicationSettings, SettingsError> load_application_settings();
     friend void save_application_settings(ApplicationSettings const& settings);
 public:
     enum class Theme { DARK, LIGHT };
@@ -26,7 +26,7 @@ public:
     FontInfo font = { "Default", "Regular", "" };
 };
 
-liberror::Result<void, SettingsError> load_application_settings(ApplicationSettings& settings);
+liberror::Result<ApplicationSettings, SettingsError> load_application_settings();
 void save_application_settings(ApplicationSettings const& settings);
 liberror::Result<void> migrate_application_settings(ApplicationSettings const& settings);
 

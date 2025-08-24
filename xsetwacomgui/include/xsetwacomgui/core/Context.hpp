@@ -12,7 +12,8 @@ struct Context
     std::vector<Device>& devices;
     std::vector<Display>& displays;
 
-    Device device {};
+    Device stylus {};
+    Device pad {};
     Display display {};
 
     bool handleOutdatedDeviceSettings = false;
@@ -30,5 +31,5 @@ struct Context
     bool hasChangedTheme = false;
 };
 
-liberror::Result<void> load_settings_from_driver_to_context(Context& context);
-liberror::Result<void> load_settings_from_context_to_device(Context const& context);
+liberror::Result<void> apply_settings_from_driver_to_context(Context& context);
+liberror::Result<void> apply_settings_from_context_to_device(Context const& context);
