@@ -3,6 +3,7 @@
 #include <spdlog/spdlog.h>
 
 #include "core/Context.hpp"
+#include "core/Help.hpp"
 #include "core/ipc/Client.hpp"
 #include "core/ipc/Server.hpp"
 #include "GoddessWindow.hpp"
@@ -13,7 +14,6 @@
 #include "ui/Localisation.hpp"
 #include "ui/Scaling.hpp"
 
-#include <argparse/argparse.hpp>
 #include <fplus/fplus.hpp>
 #include <GLFW/glfw3.h>
 #include <GL/gl.h>
@@ -30,6 +30,7 @@
 #include <span>
 
 using namespace liberror;
+using namespace std::literals;
 
 Result<void> run_gui(Context& context)
 {
@@ -302,24 +303,10 @@ Result<void> run_no_gui(Context& context)
 
 Result<void> safe_main(std::span<char const*> const& arguments)
 {
-    argparse::ArgumentParser cli(NAME, "", argparse::default_arguments::help);
-    cli.add_description("A graphical xsetwacom wrapper for ease of use.");
-
-    cli.add_argument("--no-gui").help("starts only the server daemon").flag();
-
-    argparse::ArgumentParser config("config", "", argparse::default_arguments::help);
-    config.add_description("manages device related configuration");
-    config.add_argument("--load").help("loads the tablet configuration without loading the UI").flag();
-
-    cli.add_subparser(config);
-
-    try
+    if (std::ranges::find(arguments, "--help"sv) != arguments.end())
     {
-        cli.parse_args(static_cast<int>(arguments.size()), arguments.data());
-    }
-    catch (std::exception const& exception)
-    {
-        return make_error(exception.what());
+        get_help(arguments);
+        return {};
     }
 
     if (!(std::filesystem::exists(get_application_config_path()) || std::filesystem::create_directory(get_application_config_path())))
@@ -334,30 +321,35 @@ Result<void> safe_main(std::span<char const*> const& arguments)
 
     Context context { applicationSettings, tabletSettings, devices, displays };
 
-    if (config.is_used("--load"))
+    if (auto posConfig = std::ranges::find(arguments, "config"sv); posConfig != arguments.end())
     {
-        auto result = load_tablet_settings();
+        auto commandArguments = arguments.subspan(size_t(std::distance(arguments.begin(), posConfig)));
 
-        if (!result) return make_error("Failed to load device settings");
-        if (context.devices.empty()) return make_error("Failed to load devices");
+        if (auto posLoad = std::ranges::find(commandArguments, "--load"sv); posLoad != arguments.end())
+        {
+            auto result = load_tablet_settings();
 
-        context.tabletSettings = *result;
+            if (!result) return make_error("Failed to load device settings");
+            if (context.devices.empty()) return make_error("Failed to load devices");
 
-        auto stylus = std::ranges::find(context.devices, context.tabletSettings.stylus.name, &Device::name);
-        assert(stylus != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
-        context.stylus = *stylus;
+            context.tabletSettings = *result;
 
-        auto pad = std::ranges::find(context.devices, context.tabletSettings.pad.name, &Device::name);
-        assert(pad != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
-        context.pad = *pad;
+            auto stylus = std::ranges::find(context.devices, context.tabletSettings.stylus.name, &Device::name);
+            assert(stylus != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
+            context.stylus = *stylus;
 
-        context.display = *std::ranges::find(context.displays, context.tabletSettings.display.name, &Display::name);
+            auto pad = std::ranges::find(context.devices, context.tabletSettings.pad.name, &Device::name);
+            assert(pad != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
+            context.pad = *pad;
 
-        TRY(apply_settings_from_context_to_device(context));
+            context.display = *std::ranges::find(context.displays, context.tabletSettings.display.name, &Display::name);
 
-        fmt::println("Device settings loaded successfully");
+            TRY(apply_settings_from_context_to_device(context));
 
-        return {};
+            fmt::println("Device settings loaded successfully");
+
+            return {};
+        }
     }
 
     if (!std::filesystem::exists(APPLICATION_SETTINGS_FILE))
@@ -400,10 +392,14 @@ Result<void> safe_main(std::span<char const*> const& arguments)
     }
     else
     {
-        if (!cli.is_used("--no-gui"))
-            TRY(run_gui(context));
-        else
+        if (std::ranges::find(arguments, "--no-gui"sv) != arguments.end())
+        {
             TRY(run_no_gui(context));
+        }
+        else
+        {
+            TRY(run_gui(context));
+        }
     }
 
     return {};

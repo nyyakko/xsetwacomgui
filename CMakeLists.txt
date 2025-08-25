@@ -21,7 +21,6 @@ CPMAddPackage(URI "gh:nyyakko/imgui#master"          EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:nyyakko/LibCoro#master"        EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:nyyakko/LibError#master"       EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:nyyakko/LibExec#master"        EXCLUDE_FROM_ALL YES)
-CPMAddPackage(URI "gh:p-ranav/argparse@3.2"          EXCLUDE_FROM_ALL YES)
 
 include(cmake/static_analyzers.cmake)
 include(GNUInstallDirs)
@@ -30,7 +29,6 @@ set(xsetwacomgui_CompilerOptions ${xsetwacomgui_CompilerOptions} -Wno-gnu-statem
 set(xsetwacomgui_LinkerOptions ${xsetwacomgui_LinkerOptions})
 
 set(xsetwacomgui_ExternalLibraries
-    argparse::argparse
     fmt::fmt
     freetype
     FunctionalPlus::fplus
