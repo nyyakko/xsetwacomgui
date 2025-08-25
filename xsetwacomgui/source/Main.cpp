@@ -3,17 +3,16 @@
 #include <spdlog/spdlog.h>
 
 #include "core/Context.hpp"
-#include "platform/udev/UDevDevice.hpp"
 #include "core/ipc/Client.hpp"
 #include "core/ipc/Server.hpp"
 #include "GoddessWindow.hpp"
 #include "MainWindow.hpp"
 #include "platform/Daemon.hpp"
+#include "platform/monitor/UDevDevice.hpp"
 #include "SettingsWindow.hpp"
 #include "ui/Localisation.hpp"
 #include "ui/Scaling.hpp"
 
-#include <magic_enum/magic_enum.hpp>
 #include <argparse/argparse.hpp>
 #include <fplus/fplus.hpp>
 #include <GLFW/glfw3.h>
@@ -23,6 +22,7 @@
 #include <imgui/imgui_impl_glfw.hpp>
 #include <imgui/imgui_impl_opengl3.hpp>
 #include <liberror/Try.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <scn/scan.h>
 
 #include <sys/poll.h>

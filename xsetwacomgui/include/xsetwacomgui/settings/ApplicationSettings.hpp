@@ -29,4 +29,3 @@ public:
 liberror::Result<ApplicationSettings, SettingsError> load_application_settings();
 void save_application_settings(ApplicationSettings const& settings);
 liberror::Result<void> migrate_application_settings(ApplicationSettings const& settings);
-

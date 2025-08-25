@@ -1,6 +1,6 @@
 #pragma once
 
-#include "platform/Display.hpp"
+#include "Display.hpp"
 
 #include <liberror/Result.hpp>
 

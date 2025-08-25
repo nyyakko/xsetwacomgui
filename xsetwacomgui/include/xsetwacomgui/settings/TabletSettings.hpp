@@ -1,9 +1,9 @@
 #pragma once
 
 #include "core/SettingsError.hpp"
-#include "platform/Device.hpp"
-#include "platform/Display.hpp"
 #include "platform/Environment.hpp"
+#include "platform/hardware/X11/Device.hpp"
+#include "platform/hardware/X11/Display.hpp"
 
 #include <imgui/imgui_internal.hpp>
 

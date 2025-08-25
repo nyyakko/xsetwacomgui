@@ -1,7 +1,8 @@
 #include <spdlog/spdlog.h>
 
 #include "settings/TabletSettings.hpp"
-#include "platform/Device.hpp"
+
+#include "platform/hardware/X11/Device.hpp"
 
 #include <fmt/format.h>
 #include <liberror/Result.hpp>
@@ -79,7 +80,6 @@ Result<TabletSettings, SettingsError> load_tablet_settings()
     }
     catch (std::exception const& error)
     {
-        spdlog::error("{}", error.what());
         return make_error<SettingsError>(SettingsError::Type::READ_FAILURE);
     }
 
