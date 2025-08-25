@@ -56,7 +56,6 @@ Result<void> IPCClient::configure(Mode mode)
 
     auto flags = O_RDONLY | O_CREAT | (mode == Mode::ASYNC ? O_NONBLOCK : 0);
     auto clientFd = mq_open(name_.data(), flags, 0660, &attributes);
-
     if (clientFd < 0)
     {
         return make_error("IPCClient::{}: mq_open failed: {}", __FUNCTION__, strerror(errno));
@@ -77,7 +76,6 @@ Result<void> IPCClient::connect()
     }
 
     mqd_t serverFd = -1;
-
     while (serverFd = mq_open(SERVER_NAME, O_WRONLY), serverFd < 0)
     {
         spdlog::warn("Failed to connect to IPC server, retrying...");
@@ -85,7 +83,6 @@ Result<void> IPCClient::connect()
     }
 
     auto request = fmt::format("CONN {}", this->name_.data());
-
     if (mq_send(serverFd, request.data(), request.size(), 0) < 0)
     {
         return make_error("IPCClient::{}: mq_send failed: {}", __FUNCTION__, strerror(errno));
@@ -103,7 +100,6 @@ Result<void> IPCClient::disconnect()
     }
 
     auto request = fmt::format("QUIT {}", this->name_.data());
-
     if (mq_send(serverFd, request.data(), request.size(), 0) < 0)
     {
         return make_error("IPCClient::{}: mq_send failed: {}", __FUNCTION__, strerror(errno));
