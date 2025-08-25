@@ -16,8 +16,7 @@ struct Display
     int id;
     bool primary;
     Area area;
-    std::string name;
-    std::string nameFormatted = "";
+    std::string name = "";
 };
 
 liberror::Result<std::vector<Display>> get_available_displays();

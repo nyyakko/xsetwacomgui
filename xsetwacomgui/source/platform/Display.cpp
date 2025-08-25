@@ -37,10 +37,9 @@ Result<std::vector<Display>> get_available_displays()
                 .width = static_cast<float>(std::atof(iterator->str(4).data())),
                 .height = static_cast<float>(std::atof(iterator->str(5).data())),
             },
-            .name = iterator->str(3)
         };
 
-        display.nameFormatted = fmt::format("{} ({}x{})", display.name, display.area.width, display.area.height);
+        display.name = fmt::format("{} ({}x{})", iterator->str(3), display.area.width, display.area.height);
 
         displays.push_back(display);
     }

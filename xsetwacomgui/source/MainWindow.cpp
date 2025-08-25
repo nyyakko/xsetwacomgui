@@ -356,7 +356,7 @@ static Result<void> render_display_tab(Context& context)
     {
         ImGui::AlignTextToFramePadding();
         ImGui::Text("%s", TRY(Localisation::get(context.applicationSettings.language, Localisation::Window_Main_Tabs_Display_Display)));
-        auto displaysNames = fplus::transform([] (auto const& display) { return display.nameFormatted.data(); }, context.displays);
+        auto displaysNames = fplus::transform([] (auto const& display) { return display.name.data(); }, context.displays);
         ImGui::SetNextItemWidth(300_scaled + ImGui::GetStyle().WindowPadding.x);
         static int displayIndex = context.tabletSettings.display.name == "INVALID" ? 0 : static_cast<int>(
             std::distance(context.displays.begin(), std::ranges::find(context.displays, context.tabletSettings.display.name, &Display::name))
