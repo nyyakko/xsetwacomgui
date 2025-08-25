@@ -1,3 +1,4 @@
+#include <random>
 #include <spdlog/spdlog.h>
 
 #include "core/ipc/Client.hpp"
@@ -47,7 +48,11 @@ Result<void> IPCClient::configure(Mode mode)
     attributes.mq_msgsize = 32;
     attributes.mq_curmsgs = 0;
 
-    name_ = fmt::format("{}-{}", CLIENT_NAME, getpid());
+    std::random_device device;
+    std::mt19937 generator(device());
+    std::uniform_int_distribution<> distribution(1, 32);
+
+    name_ = fmt::format("{}-{}", CLIENT_NAME, distribution(generator));
 
     auto flags = O_RDONLY | O_CREAT | (mode == Mode::ASYNC ? O_NONBLOCK : 0);
     auto clientFd = mq_open(name_.data(), flags, 0660, &attributes);

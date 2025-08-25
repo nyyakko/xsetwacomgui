@@ -100,7 +100,7 @@ void IPCServer::stop()
 void IPCServer::give_up_and_die()
 {
     stop();
-    std::abort();
+    std::exit(EXIT_FAILURE);
 }
 
 Task<void> IPCServer::message_receiver()
