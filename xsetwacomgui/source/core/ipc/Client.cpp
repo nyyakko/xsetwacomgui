@@ -1,4 +1,3 @@
-#include <random>
 #include <spdlog/spdlog.h>
 
 #include "core/ipc/Client.hpp"
@@ -6,6 +5,7 @@
 #include <mqueue.h>
 #include <unistd.h>
 
+#include <random>
 #include <csignal>
 
 using namespace liberror;
