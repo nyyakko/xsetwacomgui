@@ -18,7 +18,9 @@ void get_help(std::span<char const*> const& arguments)
 
     if (auto posConfig = std::ranges::find(arguments, "config"sv); posConfig != arguments.end())
     {
-        if (auto posHelp = std::ranges::find(arguments, "--help"sv); posHelp != arguments.end() && std::distance(posConfig, posHelp) == 1)
+        auto commandArguments = arguments.subspan(size_t(std::distance(arguments.begin(), posConfig)));
+
+        if (auto posHelp = std::ranges::find(commandArguments, "--help"sv); posHelp != arguments.end())
         {
             return get_config_help();
         }
