@@ -1,4 +1,4 @@
-# Listening Device Connections
+# Headless Execution
 
 Because its annoying to have to reopen xsetwacomgui to have the settings
 applied every time you reconnect your device, you might wanna start the
