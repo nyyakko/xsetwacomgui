@@ -78,7 +78,7 @@ Result<void> IPCClient::connect()
     mqd_t serverFd = -1;
     while (serverFd = mq_open(SERVER_NAME, O_WRONLY), serverFd < 0)
     {
-        spdlog::warn("Failed to connect to IPC server, retrying...");
+        spdlog::warn("IPCClient::{}: timed out, retrying...", __FUNCTION__);
         std::this_thread::sleep_for(500ms);
     }
 
