@@ -9,11 +9,13 @@
 #include "GoddessWindow.hpp"
 #include "MainWindow.hpp"
 #include "platform/Daemon.hpp"
+#include "platform/Environment.hpp"
 #include "platform/monitor/UDevDevice.hpp"
 #include "SettingsWindow.hpp"
 #include "ui/Localisation.hpp"
 #include "ui/Scaling.hpp"
 
+#include <fplus/container_common.hpp>
 #include <fplus/fplus.hpp>
 #include <GLFW/glfw3.h>
 #include <GL/gl.h>
@@ -22,6 +24,7 @@
 #include <imgui/imgui_impl_glfw.hpp>
 #include <imgui/imgui_impl_opengl3.hpp>
 #include <liberror/Try.hpp>
+#include <libexec/Execute.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <scn/scan.h>
 
@@ -31,6 +34,17 @@
 
 using namespace liberror;
 using namespace std::literals;
+
+Result<void> push_system_toast(std::string_view message)
+{
+    std::string icon = get_application_icon_path() / "64x64" / "apps" / NAME".png";
+    fmt::println("{}", icon);
+    auto [out, err] = TRY(libexec::execute("notify-send", fplus::split(' ', false, fmt::format("XSetWacomGUI {} --icon {}", message, icon))));
+
+    if (!err.empty()) return make_error(err);
+
+    return {};
+}
 
 Result<void> run_gui(Context& context)
 {
@@ -280,13 +294,16 @@ Result<void> run_no_gui(Context& context)
                     {
                     case SettingsError::Type::WRITE_FAILURE: break;
                     case SettingsError::Type::FILE_NOT_FOUND: {
-                        return make_error("No saved device settings could be found, reading directly from xsetwacom instead");
+                        TRY(push_system_toast("No saved device settings could be found, reading directly from xsetwacom instead"));
+                        break;
                     }
                     case SettingsError::Type::READ_FAILURE: {
-                        return make_error("Failed to load device settings");
+                        TRY(push_system_toast("Failed to load device settings"));
+                        break;
                     }
                     case SettingsError::Type::OUTDATED_SCHEMA: {
-                        return make_error("Outdated tablet settings file");
+                        TRY(push_system_toast("Outdated tablet settings file"));
+                        break;
                     }
                     }
                 }

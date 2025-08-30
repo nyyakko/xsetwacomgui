@@ -29,3 +29,14 @@ std::filesystem::path get_application_data_path()
 #endif
 }
 
+std::filesystem::path get_application_icon_path()
+{
+#if DEBUG
+    return std::filesystem::path(HOME) / "resources" / "icons";
+#else
+    auto dataHome = getenv("XDG_DATA_HOME");
+    if (dataHome) return std::filesystem::path(dataHome) / "icons" / "hicolor";
+    return get_system_home_path() / ".local" / "share" / "icons" / "hicolor";
+#endif
+}
+
