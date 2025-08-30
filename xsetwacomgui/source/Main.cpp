@@ -211,7 +211,29 @@ Result<void> run_no_gui(Context& context)
     TRY(IPCClient::the().configure(IPCClient::Mode::SYNC));
     TRY(IPCClient::the().connect());
 
-    using namespace std::literals;
+    if (!context.devices.empty())
+    {
+        auto result = load_tablet_settings();
+
+        if (!result) return make_error("Failed to load device settings");
+        if (context.devices.empty()) return make_error("Failed to load devices");
+
+        context.tabletSettings = *result;
+
+        auto stylus = std::ranges::find(context.devices, context.tabletSettings.stylus.name, &Device::name);
+        assert(stylus != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
+        context.stylus = *stylus;
+
+        auto pad = std::ranges::find(context.devices, context.tabletSettings.pad.name, &Device::name);
+        assert(pad != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
+        context.pad = *pad;
+
+        context.display = *std::ranges::find(context.displays, context.tabletSettings.display.name, &Display::name);
+
+        TRY(apply_settings_from_context_to_device(context));
+
+        fmt::println("Device settings loaded successfully");
+    }
 
     while (true)
     {
