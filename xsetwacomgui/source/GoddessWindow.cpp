@@ -1,18 +1,17 @@
 #include "GoddessWindow.hpp"
 
-#include "platform/Environment.hpp"
-#include <algorithm>
-#include <fmt/core.h>
-
 #define STB_IMAGE_IMPLEMENTATION
 #include "external/stb_image/stb_image.h"
+#include "platform/Environment.hpp"
 
+#include <fmt/core.h>
 #include <GLFW/glfw3.h>
 #include <GL/gl.h>
 #include <imgui/imgui.hpp>
 #include <imgui/imgui_impl_glfw.hpp>
 #include <imgui/imgui_impl_opengl3.hpp>
 
+#include <algorithm>
 #include <limits>
 #include <random>
 
