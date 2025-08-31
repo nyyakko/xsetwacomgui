@@ -9,6 +9,7 @@
 #include <csignal>
 
 using namespace liberror;
+using namespace libcoro;
 
 static constexpr auto SERVER_NAME = "/" NAME "-server";
 static constexpr auto CLIENT_NAME = "/" NAME "-client";
@@ -78,7 +79,7 @@ Result<void> IPCClient::connect()
     mqd_t serverFd = -1;
     while (serverFd = mq_open(SERVER_NAME, O_WRONLY), serverFd < 0)
     {
-        spdlog::warn("IPCClient::{}: connection timed out, retrying...", __FUNCTION__);
+        spdlog::warn("IPCClient::{}: timed out, retrying...", __FUNCTION__);
 
         static int retry = 0;
 
@@ -116,7 +117,7 @@ Result<void> IPCClient::disconnect()
     return {};
 }
 
-libcoro::Generator<std::array<char, 32>> IPCClient::receive_message_async()
+Generator<std::array<char, 32>> IPCClient::receive_message_async()
 {
     while (true)
     {
