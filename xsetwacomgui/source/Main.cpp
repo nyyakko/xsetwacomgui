@@ -261,7 +261,26 @@ Result<void> run_no_gui(Context& context)
             case UDevDevice::Action::UNBIND: {
                 auto devicesFiltered = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::STYLUS; }, context.devices);
                 auto hadMoreThanOneDevice = devicesFiltered.size() > 1;
-                context.devices = TRY(get_available_devices());
+
+                while (context.devices = TRY(get_available_devices()), context.devices.empty())
+                {
+                    spdlog::info("No devices were found, retrying...");
+
+                    static int retry = 0;
+
+                    if (retry++ == 3)
+                    {
+                        break;
+                    }
+
+                    std::this_thread::sleep_for(250ms);
+                }
+
+                if (context.devices.empty())
+                {
+                    push_system_toast("No drawing device detected. Please reconnect to apply the saved configuration.");
+                    break;
+                }
 
                 if (hadMoreThanOneDevice) break;
 
@@ -280,7 +299,26 @@ Result<void> run_no_gui(Context& context)
             case UDevDevice::Action::BIND: {
                 auto devicesFiltered = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::STYLUS; }, context.devices);
                 auto hadAtleastOneDevice = !devicesFiltered.empty();
-                context.devices = TRY(get_available_devices());
+
+                while (context.devices = TRY(get_available_devices()), context.devices.empty())
+                {
+                    spdlog::info("No devices were found, retrying...");
+
+                    static int retry = 0;
+
+                    if (retry++ == 3)
+                    {
+                        break;
+                    }
+
+                    std::this_thread::sleep_for(250ms);
+                }
+
+                if (context.devices.empty())
+                {
+                    push_system_toast("No drawing device detected. Please reconnect to apply the saved configuration.");
+                    break;
+                }
 
                 if (hadAtleastOneDevice) break;
 
