@@ -266,9 +266,7 @@ Result<void> run_no_gui(Context& context)
                 {
                     spdlog::info("No devices were found, retrying...");
 
-                    static int retry = 0;
-
-                    if (retry++ == 3)
+                    if (static auto retry = 0; retry++ == 3)
                     {
                         break;
                     }
@@ -304,9 +302,7 @@ Result<void> run_no_gui(Context& context)
                 {
                     spdlog::info("No devices were found, retrying...");
 
-                    static int retry = 0;
-
-                    if (retry++ == 3)
+                    if (static auto retry = 0; retry++ == 3)
                     {
                         break;
                     }
