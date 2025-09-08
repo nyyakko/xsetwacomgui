@@ -261,24 +261,7 @@ Result<void> run_no_gui(Context& context)
             case UDevDevice::Action::UNBIND: {
                 auto devicesFiltered = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::STYLUS; }, context.devices);
                 auto hadMoreThanOneDevice = devicesFiltered.size() > 1;
-
-                while (context.devices = TRY(get_available_devices()), context.devices.empty())
-                {
-                    spdlog::info("No devices were found, retrying...");
-
-                    if (static auto retry = 0; retry++ == 3)
-                    {
-                        break;
-                    }
-
-                    std::this_thread::sleep_for(250ms);
-                }
-
-                if (context.devices.empty())
-                {
-                    push_system_toast("No drawing device detected. Please reconnect to apply the saved configuration.");
-                    break;
-                }
+                context.devices = TRY(get_available_devices());
 
                 if (hadMoreThanOneDevice) break;
 
