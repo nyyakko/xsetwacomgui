@@ -91,10 +91,13 @@ Result<void> migrate_application_settings(ApplicationSettings const& settings)
 
     save_application_settings(settings);
 
-    TRY(libexec::execute("xdg-open", { get_application_config_path() }, libexec::Mode::DETACHED));
-    auto [out, err] = TRY(libexec::execute("git", { "diff", oldSettingsSchema, newSettingsSchema }));
+    auto execResult = TRY(libexec::execute("xdg-open", { get_application_config_path() }, libexec::Mode::DETACHED));
+    if (!execResult.second.empty()) return make_error(execResult.second);
+
+    execResult = TRY(libexec::execute("git", { "diff", oldSettingsSchema, newSettingsSchema }));
+    if (!execResult.second.empty()) return make_error(execResult.second);
     std::ofstream stream(get_application_config_path() / "conflict.diff");
-    stream << out;
+    stream << execResult.first;
 
     return {};
 }
