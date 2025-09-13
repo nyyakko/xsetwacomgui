@@ -38,7 +38,7 @@ using namespace std::literals;
 Result<void> push_system_toast(std::string_view message)
 {
     static auto icon = get_application_icon_path() / "64x64" / "apps" / NAME".png";
-    auto [out, err] = TRY(libexec::execute("notify-send", fplus::split(' ', false, fmt::format("XSetWacomGUI {} --icon {}", message, icon.string()))));
+    auto [out, err] = TRY(libexec::execute("notify-send", { "XSetWacomGUI", message.data(), "--icon", icon.string() }));
     if (!err.empty()) return make_error(err);
     return {};
 }
@@ -261,12 +261,12 @@ Result<void> run_no_gui(Context& context)
 
                 while (context.devices = TRY(get_available_devices()), context.devices.empty())
                 {
-                    spdlog::info("No devices were found, retrying...");
-
                     if (static auto retry = 0; retry++ == 3)
                     {
                         break;
                     }
+
+                    spdlog::info("No devices were found, retrying...");
 
                     std::this_thread::sleep_for(250ms);
                 }
