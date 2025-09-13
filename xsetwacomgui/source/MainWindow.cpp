@@ -32,7 +32,7 @@ static Result<void> render_region_mappers(Context& context)
     ImDrawList* drawList = ImGui::GetWindowDrawList();
 
     static ImVec2 displayAreaAnchors[4] { { -1, -1 }, { -1, -1 }, { -1, -1 }, { -1, -1 } };
-    static Display::Area displayDefaultArea = context.displays.empty() ? Display::Area {} : Display::Area { 0, 0, context.display.area.width, context.display.area.height };
+    static auto displayDefaultArea = context.displays.empty() ? Display::Area {} : Display::Area { 0, 0, context.display.area.width, context.display.area.height };
 
     if (context.hasChangedDisplayArea && context.tabletSettings.display.forceFullArea && context.tabletSettings.display.name != "INVALID")
     {
@@ -157,7 +157,7 @@ static Result<void> render_tablet_tab(Context& context)
 {
     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - (250_scaled + 300_scaled + ImGui::GetStyle().WindowPadding.x))/2);
 
-    static Device::Area deviceDefaultArea = context.devices.empty() ? Device::Area {} : TRY(get_stylus_default_area(context.stylus));
+    static auto deviceDefaultArea = context.devices.empty() ? Device::Area {} : TRY(get_stylus_default_area(context.stylus));
 
     if (context.hasChangedDevice && context.tabletSettings.stylus.name != "INVALID")
     {
@@ -245,7 +245,7 @@ static Result<void> render_tablet_tab(Context& context)
                 TRY(Localisation::get(context.applicationSettings.language, Localisation::Window_Main_Tabs_Tablet_Orientation_Right)),
             };
             ImGui::SetNextItemWidth(150_scaled);
-            static int orientationIndex = static_cast<int>(context.tabletSettings.stylus.handedness);
+            static auto orientationIndex = static_cast<int>(context.tabletSettings.stylus.handedness);
 
             if (context.hasChangedDeviceHandedness)
             {
@@ -345,7 +345,7 @@ static Result<void> render_display_tab(Context& context)
 {
     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - (300_scaled + ImGui::GetStyle().WindowPadding.x))/2);
 
-    static Display::Area displayDefaultArea = context.displays.empty() ? Display::Area {} : Display::Area { 0, 0, context.display.area.width, context.display.area.height };
+    static auto displayDefaultArea = context.displays.empty() ? Display::Area {} : Display::Area { 0, 0, context.display.area.width, context.display.area.height };
 
     if (context.hasChangedDisplay && context.tabletSettings.display.name != "INVALID")
     {
@@ -469,25 +469,6 @@ Result<void> render_main_window(Context& context)
 
         switch (*action)
         {
-            case UDevDevice::Action::UNBIND: {
-                auto devicesFiltered = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::STYLUS; }, context.devices);
-                auto hadMoreThanOneDevice = devicesFiltered.size() > 1;
-                context.devices = TRY(get_available_devices());
-
-                if (hadMoreThanOneDevice) break;
-
-                auto maybeDevice = std::ranges::find(context.devices, context.tabletSettings.stylus.name, &Device::name);
-
-                if (maybeDevice == context.devices.end())
-                {
-                    context.display = {};
-                    context.stylus = {};
-                    context.pad = {};
-                    context.tabletSettings = {};
-                }
-
-                break;
-            }
             case UDevDevice::Action::BIND: {
                 auto devicesFiltered = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::STYLUS; }, context.devices);
                 auto hadAtleastOneDevice = !devicesFiltered.empty();
@@ -548,6 +529,25 @@ Result<void> render_main_window(Context& context)
                     context.hasChangedDisplay = true;
 
                     TRY(apply_settings_from_context_to_device(context));
+                }
+
+                break;
+            }
+            case UDevDevice::Action::UNBIND: {
+                auto devicesFiltered = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::STYLUS; }, context.devices);
+                auto hadMoreThanOneDevice = devicesFiltered.size() > 1;
+                context.devices = TRY(get_available_devices());
+
+                if (hadMoreThanOneDevice) break;
+
+                auto maybeDevice = std::ranges::find(context.devices, context.tabletSettings.stylus.name, &Device::name);
+
+                if (maybeDevice == context.devices.end())
+                {
+                    context.display = {};
+                    context.stylus = {};
+                    context.pad = {};
+                    context.tabletSettings = {};
                 }
 
                 break;

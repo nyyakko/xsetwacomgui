@@ -37,12 +37,9 @@ using namespace std::literals;
 
 Result<void> push_system_toast(std::string_view message)
 {
-    std::string icon = get_application_icon_path() / "64x64" / "apps" / NAME".png";
-    fmt::println("{}", icon);
-    auto [out, err] = TRY(libexec::execute("notify-send", fplus::split(' ', false, fmt::format("XSetWacomGUI {} --icon {}", message, icon))));
-
+    static auto icon = get_application_icon_path() / "64x64" / "apps" / NAME".png";
+    auto [out, err] = TRY(libexec::execute("notify-send", fplus::split(' ', false, fmt::format("XSetWacomGUI {} --icon {}", message, icon.string()))));
     if (!err.empty()) return make_error(err);
-
     return {};
 }
 
@@ -258,25 +255,6 @@ Result<void> run_no_gui(Context& context)
 
         switch (*action)
         {
-            case UDevDevice::Action::UNBIND: {
-                auto devicesFiltered = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::STYLUS; }, context.devices);
-                auto hadMoreThanOneDevice = devicesFiltered.size() > 1;
-                context.devices = TRY(get_available_devices());
-
-                if (hadMoreThanOneDevice) break;
-
-                auto maybeDevice = std::ranges::find(context.devices, context.tabletSettings.stylus.name, &Device::name);
-
-                if (maybeDevice == context.devices.end())
-                {
-                    context.display = {};
-                    context.stylus = {};
-                    context.pad = {};
-                    context.tabletSettings = {};
-                }
-
-                break;
-            }
             case UDevDevice::Action::BIND: {
                 auto devicesFiltered = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::STYLUS; }, context.devices);
                 auto hadAtleastOneDevice = !devicesFiltered.empty();
@@ -328,13 +306,13 @@ Result<void> run_no_gui(Context& context)
                 {
                     context.tabletSettings = *result;
 
-                    auto stylus = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::STYLUS; }, context.devices).back();
-                    assert(stylus.name == context.tabletSettings.stylus.name && "FIXME: assuming device connected is the same as the one saved in the settings file");
-                    context.stylus = stylus;
+                    auto stylus = std::ranges::find(context.devices, context.tabletSettings.stylus.name, &Device::name);
+                    assert(stylus != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
+                    context.stylus = *stylus;
 
-                    auto pad = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::PAD; }, context.devices).back();
-                    assert(pad.name == context.tabletSettings.pad.name && "FIXME: assuming device connected is the same as the one saved in the settings file");
-                    context.pad = pad;
+                    auto pad = std::ranges::find(context.devices, context.tabletSettings.pad.name, &Device::name);
+                    assert(pad != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
+                    context.pad = *pad;
 
                     context.hasChangedDevice = true;
                     context.hasChangedDeviceHandedness = true;
@@ -344,6 +322,25 @@ Result<void> run_no_gui(Context& context)
                     TRY(apply_settings_from_context_to_device(context));
 
                     spdlog::info("Device settings loaded successfully");
+                }
+
+                break;
+            }
+            case UDevDevice::Action::UNBIND: {
+                auto devicesFiltered = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::STYLUS; }, context.devices);
+                auto hadMoreThanOneDevice = devicesFiltered.size() > 1;
+                context.devices = TRY(get_available_devices());
+
+                if (hadMoreThanOneDevice) break;
+
+                auto maybeDevice = std::ranges::find(context.devices, context.tabletSettings.stylus.name, &Device::name);
+
+                if (maybeDevice == context.devices.end())
+                {
+                    context.display = {};
+                    context.stylus = {};
+                    context.pad = {};
+                    context.tabletSettings = {};
                 }
 
                 break;
