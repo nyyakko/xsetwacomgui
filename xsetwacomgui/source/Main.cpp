@@ -1,4 +1,3 @@
-#include <algorithm>
 #define IMGUI_DEFINE_MATH_OPERATORS
 
 #include <spdlog/spdlog.h>
