@@ -16,11 +16,11 @@ static std::vector<char const*>& the_action_names()
 {
     static auto actions = magic_enum::enum_names<X11Action>();
     static auto actionNames = [] {
-        std::vector<char const*> actionNames {};
-        std::transform(actions.begin(), actions.end(), std::back_inserter(actionNames), [] (auto& action) {
+        std::vector<char const*> result {};
+        std::transform(actions.begin(), actions.end(), std::back_inserter(result), [] (auto& action) {
             return action.data();
         });
-        return actionNames;
+        return result;
     }();
     return actionNames;
 }

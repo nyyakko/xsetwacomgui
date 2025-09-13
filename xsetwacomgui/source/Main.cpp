@@ -247,6 +247,8 @@ Result<void> run_no_gui(Context& context)
         fmt::println("Device settings loaded successfully");
     }
 
+    push_system_toast(TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Devices_Missing)));
+
     while (true)
     {
         auto message = TRY(IPCClient::the().receive_message());
