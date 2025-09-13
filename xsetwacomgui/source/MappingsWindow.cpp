@@ -1,6 +1,6 @@
 #include "MappingsWindow.hpp"
 
-#include "platform/hardware/X11/Device.hpp"
+#include "platform/hid/X11/Device.hpp"
 #include "ui/Localisation.hpp"
 #include "ui/Scaling.hpp"
 

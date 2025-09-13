@@ -2,8 +2,8 @@
 
 #include "core/ipc/Server.hpp"
 
-#include "platform/monitor/UDevDevice.hpp"
-#include "platform/monitor/UDevMonitor.hpp"
+#include "platform/udev/UDevDevice.hpp"
+#include "platform/udev/UDevMonitor.hpp"
 
 #include <libcoro/Task.hpp>
 #include <liberror/Try.hpp>

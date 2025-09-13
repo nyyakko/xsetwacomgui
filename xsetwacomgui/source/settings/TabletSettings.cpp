@@ -2,7 +2,7 @@
 
 #include "settings/TabletSettings.hpp"
 
-#include "platform/hardware/X11/Device.hpp"
+#include "platform/hid/X11/Device.hpp"
 
 #include <fmt/format.h>
 #include <liberror/Result.hpp>

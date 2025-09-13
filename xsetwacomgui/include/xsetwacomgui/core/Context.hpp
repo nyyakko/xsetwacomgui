@@ -2,7 +2,7 @@
 
 #include "settings/ApplicationSettings.hpp"
 #include "settings/TabletSettings.hpp"
-#include "platform/hardware/X11/Display.hpp"
+#include "platform/hid/X11/Display.hpp"
 
 struct Context
 {

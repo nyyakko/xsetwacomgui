@@ -10,7 +10,7 @@
 #include "MainWindow.hpp"
 #include "platform/Daemon.hpp"
 #include "platform/Environment.hpp"
-#include "platform/monitor/UDevDevice.hpp"
+#include "platform/udev/UDevDevice.hpp"
 #include "SettingsWindow.hpp"
 #include "ui/Localisation.hpp"
 #include "ui/Scaling.hpp"

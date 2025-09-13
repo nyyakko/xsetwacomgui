@@ -2,8 +2,8 @@
 
 #include "core/SettingsError.hpp"
 #include "platform/Environment.hpp"
-#include "platform/hardware/X11/Device.hpp"
-#include "platform/hardware/X11/Display.hpp"
+#include "platform/hid/X11/Device.hpp"
+#include "platform/hid/X11/Display.hpp"
 
 #include <imgui/imgui_internal.hpp>
 

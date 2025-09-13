@@ -1,4 +1,4 @@
-#include "platform/hardware/X11/Display.hpp"
+#include "platform/hid/X11/Display.hpp"
 
 #include <fmt/format.h>
 #include <fplus/split.hpp>

@@ -3,7 +3,7 @@
 
 #include "core/ipc/Client.hpp"
 #include "MappingsWindow.hpp"
-#include "platform/monitor/UDevDevice.hpp"
+#include "platform/udev/UDevDevice.hpp"
 #include "ui/Localisation.hpp"
 #include "ui/Scaling.hpp"
 #include "ui/widgets/AreaMapper.hpp"

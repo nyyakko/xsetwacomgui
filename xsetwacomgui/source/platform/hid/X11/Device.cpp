@@ -1,4 +1,4 @@
-#include "platform/hardware/X11/Device.hpp"
+#include "platform/hid/X11/Device.hpp"
 
 #include <fmt/core.h>
 #include <fmt/format.h>
