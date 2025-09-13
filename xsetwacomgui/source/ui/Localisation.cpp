@@ -40,6 +40,7 @@ Result<char const*> Localisation::get(std::string_view language, Message id)
                 { Localisation::Toast_Device_Settings_Load_Failed, json["toast"]["deviceSettingsLoadFailed"].get<std::string>() },
                 { Localisation::Toast_Device_Settings_Load_Success, json["toast"]["deviceSettingsLoadSuccess"].get<std::string>() },
                 { Localisation::Toast_Device_Settings_Missing, json["toast"]["deviceSettingsMissing"].get<std::string>() },
+                { Localisation::Toast_Device_Settings_Outdated_Schema, json["toast"]["deviceSettingsOutdatedSchema"].get<std::string>() },
 
                 { Localisation::MenuBar_Settings_Title, json["menubar"]["settings"]["title"].get<std::string>() },
                 { Localisation::MenuBar_Settings_Entry_Application, json["window"]["settings"]["title"].get<std::string>() },

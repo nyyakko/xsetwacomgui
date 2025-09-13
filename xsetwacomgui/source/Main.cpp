@@ -273,7 +273,7 @@ Result<void> run_no_gui(Context& context)
 
                 if (context.devices.empty())
                 {
-                    push_system_toast("No drawing device detected. Please reconnect to apply the saved configuration.");
+                    push_system_toast(TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Devices_Missing)));
                     break;
                 }
 
@@ -289,15 +289,15 @@ Result<void> run_no_gui(Context& context)
                     {
                     case SettingsError::Type::WRITE_FAILURE: break;
                     case SettingsError::Type::FILE_NOT_FOUND: {
-                        TRY(push_system_toast("No saved device settings could be found, reading directly from xsetwacom instead"));
+                        TRY(push_system_toast(TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Device_Settings_Missing))));
                         break;
                     }
                     case SettingsError::Type::READ_FAILURE: {
-                        TRY(push_system_toast("Failed to load device settings"));
+                        TRY(push_system_toast(TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Device_Settings_Load_Failed))));
                         break;
                     }
                     case SettingsError::Type::OUTDATED_SCHEMA: {
-                        TRY(push_system_toast("Outdated tablet settings file"));
+                        TRY(push_system_toast(TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Device_Settings_Outdated_Schema))));
                         break;
                     }
                     }

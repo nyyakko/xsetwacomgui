@@ -12,6 +12,7 @@
         "deviceSettingsLoadFailed": "Failed to load device settings",
         "deviceSettingsLoadSuccess": "Device settings loaded successfully",
         "deviceSettingsMissing": "No saved device settings could be found, reading directly from xsetwacom instead",
+        "deviceSettingsOutdatedSchema": "The schema of the present tablet configuration file is outdated",
         "devicesMissing": "No devices were found"
     },
 

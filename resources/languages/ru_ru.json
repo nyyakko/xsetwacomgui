@@ -12,6 +12,7 @@
         "deviceSettingsLoadFailed": "Не удалось загрузить настройки устройства",
         "deviceSettingsLoadSuccess": "Настройки устройства загружены",
         "deviceSettingsMissing": "Не найдены настройки устройства, будут загружены данные из xsetwacom",
+        "deviceSettingsOutdatedSchema": "OUTDATED SCHEMA (FIXME)",
         "devicesMissing": "Устройства не обнаружены"
     },
 

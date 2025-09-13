@@ -12,6 +12,7 @@
         "deviceSettingsLoadFailed": "Não foi possível carregar as configurações do tablet",
         "deviceSettingsLoadSuccess": "As configurações do tablet foram carregadas com sucesso",
         "deviceSettingsMissing": "Não foi possível encontrar configurações salvas para o tablet, carregando diretamente do xsetwacom",
+        "deviceSettingsOutdatedSchema": "O schema do arquivo de configuração do tablet presente está desatualizado",
         "devicesMissing": "Nenhum tablet foi encontrado"
     },
 
