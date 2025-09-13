@@ -522,10 +522,10 @@ Result<void> render_main_window(Context& context)
                     assert(pad != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
                     context.pad = *pad;
 
-                    context.display = *std::ranges::find(context.displays, context.tabletSettings.display.name, &Display::name);
-
                     context.hasChangedDevice = true;
                     context.hasChangedDeviceHandedness = true;
+
+                    context.display = *std::ranges::find(context.displays, context.tabletSettings.display.name, &Display::name);
                     context.hasChangedDisplay = true;
 
                     TRY(apply_settings_from_context_to_device(context));

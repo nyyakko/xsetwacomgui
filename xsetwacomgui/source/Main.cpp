@@ -316,6 +316,7 @@ Result<void> run_no_gui(Context& context)
 
                     context.hasChangedDevice = true;
                     context.hasChangedDeviceHandedness = true;
+
                     context.display = *std::ranges::find(context.displays, context.tabletSettings.display.name, &Display::name);
                     context.hasChangedDisplay = true;
 
