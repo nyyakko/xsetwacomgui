@@ -1,7 +1,6 @@
 #pragma once
 
 #include <liberror/Result.hpp>
-#include <libwacom/Device.hpp>
 
 #include "core/Context.hpp"
 

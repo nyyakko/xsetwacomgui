@@ -12,17 +12,16 @@
         "deviceSettingsLoadFailed": "Failed to load device settings",
         "deviceSettingsLoadSuccess": "Device settings loaded successfully",
         "deviceSettingsMissing": "No saved device settings could be found, reading directly from xsetwacom instead",
+        "deviceSettingsOutdatedSchema": "The schema of the present tablet configuration file is outdated",
         "devicesMissing": "No devices were found"
     },
 
     "menubar": {
         "settings": {
-            "title": "Settings",
-            "applicationSettings": "Application Settings"
+            "title": "Settings"
         },
         "other": {
-            "title": "Other",
-            "goddess": "Goddess"
+            "title": "Other"
         }
     },
 
@@ -65,6 +64,7 @@
             }
         },
         "settings": {
+            "title": "Application Settings",
             "tabs": {
                 "appearance": {
                     "title": "Appearance",
@@ -83,6 +83,22 @@
                     "language": "Language"
                 }
             }
+        },
+        "mappings": {
+            "title": "Mappings",
+            "tabs": {
+                "stylus": {
+                    "title": "Stylus",
+                    "button": "Button"
+                },
+                "pad": {
+                    "title": "Pad",
+                    "button": "Button"
+                }
+            }
+        },
+        "goddess": {
+            "title": "Goddess"
         }
     }
 }

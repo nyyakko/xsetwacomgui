@@ -2,17 +2,18 @@
 
 #include "settings/ApplicationSettings.hpp"
 #include "settings/TabletSettings.hpp"
-#include "platform/Display.hpp"
+#include "platform/hid/X11/Display.hpp"
 
 struct Context
 {
     ApplicationSettings& applicationSettings;
     TabletSettings& tabletSettings;
 
-    std::vector<libwacom::Device>& devices;
+    std::vector<Device>& devices;
     std::vector<Display>& displays;
 
-    libwacom::Device device {};
+    Device stylus {};
+    Device pad {};
     Display display {};
 
     bool handleOutdatedDeviceSettings = false;
@@ -29,3 +30,6 @@ struct Context
     bool hasChangedFontStyle = false;
     bool hasChangedTheme = false;
 };
+
+liberror::Result<void> apply_settings_from_driver_to_context(Context& context);
+liberror::Result<void> apply_settings_from_context_to_device(Context const& context);

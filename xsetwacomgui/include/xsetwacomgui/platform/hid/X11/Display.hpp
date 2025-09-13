@@ -4,14 +4,19 @@
 #include <vector>
 
 #include <liberror/Result.hpp>
-#include <libwacom/Device.hpp>
 
 struct Display
 {
+    struct Area
+    {
+        float offsetX, offsetY;
+        float width, height;
+    };
+
     int id;
     bool primary;
-    libwacom::Area area;
-    std::string name;
+    Area area;
+    std::string name = "";
 };
 
 liberror::Result<std::vector<Display>> get_available_displays();

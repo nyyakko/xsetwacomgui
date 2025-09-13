@@ -12,17 +12,16 @@
         "deviceSettingsLoadFailed": "Não foi possível carregar as configurações do tablet",
         "deviceSettingsLoadSuccess": "As configurações do tablet foram carregadas com sucesso",
         "deviceSettingsMissing": "Não foi possível encontrar configurações salvas para o tablet, carregando diretamente do xsetwacom",
+        "deviceSettingsOutdatedSchema": "O schema do arquivo de configuração do tablet presente está desatualizado",
         "devicesMissing": "Nenhum tablet foi encontrado"
     },
 
     "menubar": {
         "settings": {
-            "title": "Configurações",
-            "applicationSettings": "Configurações da Aplicação"
+            "title": "Configurações"
         },
         "other": {
-            "title": "Outros",
-            "goddess": "Deusa"
+            "title": "Outros"
         }
     },
 
@@ -65,6 +64,7 @@
             }
         },
         "settings": {
+            "title": "Configurações da Aplicação",
             "tabs": {
                 "appearance": {
                     "title": "Aparência",
@@ -83,6 +83,22 @@
                     "language": "Língua"
                 }
             }
+        },
+        "mappings": {
+            "title": "Mapeamentos",
+            "tabs": {
+                "stylus": {
+                    "title": "Caneta",
+                    "button": "Botão"
+                },
+                "pad": {
+                    "title": "Mesa",
+                    "button": "Botão"
+                }
+            }
+        },
+        "goddess": {
+            "title": "Deusa"
         }
     }
 }

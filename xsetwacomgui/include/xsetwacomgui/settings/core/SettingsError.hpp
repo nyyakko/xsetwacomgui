@@ -1,16 +1,18 @@
 #pragma once
 
-#include <libenum/Enum.hpp>
+#include <string_view>
+#include <utility>
 
 class [[nodiscard]] SettingsError
 {
 public:
-    ENUM_CLASS(Type,
+    enum class Type
+    {
         FILE_NOT_FOUND,
         READ_FAILURE,
         WRITE_FAILURE,
         OUTDATED_SCHEMA
-    )
+    };
 
 public:
     using message_t = Type;

@@ -1,28 +1,31 @@
 #include "settings/ApplicationSettings.hpp"
 
+#include <magic_enum/magic_enum.hpp>
 #include <fmt/format.h>
 #include <liberror/Result.hpp>
 #include <liberror/Try.hpp>
 #include <libexec/Execute.hpp>
 #include <nlohmann/json.hpp>
 
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <sstream>
-#include <cstdlib>
 
-liberror::Result<void, SettingsError> load_application_settings(ApplicationSettings& settings)
+using namespace liberror;
+
+Result<ApplicationSettings, SettingsError> load_application_settings()
 {
+    ApplicationSettings settings {};
+
     if (!std::filesystem::exists(APPLICATION_SETTINGS_FILE))
     {
-        return liberror::make_error<SettingsError>(SettingsError::Type::FILE_NOT_FOUND);
+        return make_error<SettingsError>(SettingsError::Type::FILE_NOT_FOUND);
     }
 
     std::ifstream stream(APPLICATION_SETTINGS_FILE);
     std::stringstream content;
     content << stream.rdbuf();
-
-    auto previousSettings = settings;
 
     try
     {
@@ -30,11 +33,10 @@ liberror::Result<void, SettingsError> load_application_settings(ApplicationSetti
 
         if (json["version"].is_null() || json["version"].get<std::string>() != ApplicationSettings::SCHEMA_VERSION)
         {
-            settings = previousSettings;
-            return liberror::make_error<SettingsError>(SettingsError::Type::OUTDATED_SCHEMA);
+            return make_error<SettingsError>(SettingsError::Type::OUTDATED_SCHEMA);
         }
 
-        settings.theme       = ApplicationSettings::Theme::from_string((json["appearance"]["theme"].get<std::string>()));
+        settings.theme       = *magic_enum::enum_cast<ApplicationSettings::Theme>(json["appearance"]["theme"].get<std::string>());
         settings.font.path   = json["appearance"]["font"]["path"].get<std::string>();
         settings.font.family = json["appearance"]["font"]["family"].get<std::string>();
         settings.font.style  = json["appearance"]["font"]["style"].get<std::string>();
@@ -43,11 +45,10 @@ liberror::Result<void, SettingsError> load_application_settings(ApplicationSetti
     }
     catch (std::exception const& error)
     {
-        settings = previousSettings;
-        return liberror::make_error<SettingsError>(SettingsError::Type::READ_FAILURE);
+        return make_error<SettingsError>(SettingsError::Type::READ_FAILURE);
     }
 
-    return {};
+    return settings;
 }
 
 void save_application_settings(ApplicationSettings const& settings)
@@ -56,7 +57,7 @@ void save_application_settings(ApplicationSettings const& settings)
         { "version", ApplicationSettings::SCHEMA_VERSION },
         {
             "appearance", {
-                { "theme", settings.theme.to_string() },
+                { "theme", magic_enum::enum_name<ApplicationSettings::Theme>(settings.theme) },
                 { "font", {
                         { "path", settings.font.path },
                         { "family", settings.font.family },
@@ -81,7 +82,7 @@ void save_application_settings(ApplicationSettings const& settings)
     stream << std::setw(4) << json;
 }
 
-liberror::Result<void> migrate_application_settings(ApplicationSettings const& settings)
+Result<void> migrate_application_settings(ApplicationSettings const& settings)
 {
     static auto newSettingsSchema = get_application_config_path() / "application_settings.json";
     static auto oldSettingsSchema = get_application_config_path() / "application_settings.old.json";
@@ -90,10 +91,13 @@ liberror::Result<void> migrate_application_settings(ApplicationSettings const& s
 
     save_application_settings(settings);
 
-    TRY(libexec::execute("xdg-open", { get_application_config_path() }, libexec::Mode::DETACHED));
-    auto [out, err] = TRY(libexec::execute("git", { "diff", oldSettingsSchema, newSettingsSchema }));
+    auto execResult = TRY(libexec::execute("xdg-open", { get_application_config_path() }, libexec::Mode::DETACHED));
+    if (!execResult.second.empty()) return make_error(execResult.second);
+
+    execResult = TRY(libexec::execute("git", { "diff", oldSettingsSchema, newSettingsSchema }));
+    if (!execResult.second.empty()) return make_error(execResult.second);
     std::ofstream stream(get_application_config_path() / "conflict.diff");
-    stream << out;
+    stream << execResult.first;
 
     return {};
 }
