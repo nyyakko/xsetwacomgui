@@ -231,11 +231,11 @@ Result<void> run_no_gui(Context& context)
 
         auto stylus = std::ranges::find(context.devices, context.tabletSettings.stylus.name, &Device::name);
         assert(stylus != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
-        context.stylus = *stylus;
+        context.tablet.stylus = *stylus;
 
         auto pad = std::ranges::find(context.devices, context.tabletSettings.pad.name, &Device::name);
         assert(pad != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
-        context.pad = *pad;
+        context.tablet.pad = *pad;
 
         context.display = *std::ranges::find(context.displays, context.tabletSettings.display.name, &Display::name);
 
@@ -303,11 +303,11 @@ Result<void> run_no_gui(Context& context)
 
                     auto stylus = std::ranges::find(context.devices, context.tabletSettings.stylus.name, &Device::name);
                     assert(stylus != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
-                    context.stylus = *stylus;
+                    context.tablet.stylus = *stylus;
 
                     auto pad = std::ranges::find(context.devices, context.tabletSettings.pad.name, &Device::name);
                     assert(pad != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
-                    context.pad = *pad;
+                    context.tablet.pad = *pad;
 
                     context.hasChangedDevice = true;
                     context.hasChangedDeviceHandedness = true;
@@ -332,8 +332,8 @@ Result<void> run_no_gui(Context& context)
                 if (maybeDevice == context.devices.end())
                 {
                     context.display = {};
-                    context.stylus = {};
-                    context.pad = {};
+                    context.tablet.stylus = {};
+                    context.tablet.pad = {};
                     context.tabletSettings = {};
                 }
 
@@ -361,12 +361,12 @@ Result<void> safe_main(std::span<char const*> const& arguments)
         return make_error("Failed to create settings directory");
     }
 
-    ApplicationSettings applicationSettings {};
-    TabletSettings tabletSettings {};
-    auto displays = MUST(get_available_displays());
-    auto devices = TRY(get_available_devices());
-
-    Context context { applicationSettings, tabletSettings, devices, displays };
+    Context context {
+        {},
+        {},
+        TRY(get_available_devices()),
+        MUST(get_available_displays())
+    };
 
     if (auto posConfig = std::ranges::find(arguments, "config"sv); posConfig != arguments.end())
     {
@@ -383,11 +383,11 @@ Result<void> safe_main(std::span<char const*> const& arguments)
 
             auto stylus = std::ranges::find(context.devices, context.tabletSettings.stylus.name, &Device::name);
             assert(stylus != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
-            context.stylus = *stylus;
+            context.tablet.stylus = *stylus;
 
             auto pad = std::ranges::find(context.devices, context.tabletSettings.pad.name, &Device::name);
             assert(pad != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
-            context.pad = *pad;
+            context.tablet.pad = *pad;
 
             context.display = *std::ranges::find(context.displays, context.tabletSettings.display.name, &Display::name);
 
@@ -401,7 +401,7 @@ Result<void> safe_main(std::span<char const*> const& arguments)
 
     if (!std::filesystem::exists(APPLICATION_SETTINGS_FILE))
     {
-        save_application_settings(applicationSettings);
+        save_application_settings(context.applicationSettings);
     }
     else
     {
@@ -419,8 +419,8 @@ Result<void> safe_main(std::span<char const*> const& arguments)
 
             if (choice)
             {
-                if (choice->value() == 1) save_application_settings(applicationSettings);
-                else if (choice->value() == 2) migrate_application_settings(applicationSettings);
+                if (choice->value() == 1) save_application_settings(context.applicationSettings);
+                else if (choice->value() == 2) migrate_application_settings(context.applicationSettings);
             }
 
             fmt::println("Done. Restart the application.");

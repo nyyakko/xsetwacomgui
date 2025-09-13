@@ -25,7 +25,7 @@ static std::vector<char const*>& the_action_names()
     return actionNames;
 }
 
-Result<void> render_stylus_tab(Context const& context)
+Result<void> render_stylus_tab(Context& context)
 {
     for (auto const& mapping : context.tabletSettings.stylus.mappings)
     {
@@ -46,7 +46,7 @@ Result<void> render_stylus_tab(Context const& context)
     return {};
 }
 
-Result<void> render_pad_tab(Context const& context)
+Result<void> render_pad_tab(Context& context)
 {
     for (auto const& mapping : context.tabletSettings.pad.mappings)
     {

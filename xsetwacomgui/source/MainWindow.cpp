@@ -88,7 +88,7 @@ static Result<void> render_region_mappers(Context& context)
     }
 
     static ImVec2 deviceAreaAnchors[4] { { -1, -1 }, { -1, -1 }, { -1, -1 }, { -1, -1 } };
-    static Device::Area deviceDefaultArea = context.devices.empty() ? Device::Area {} : TRY(get_stylus_default_area(context.stylus));
+    static Device::Area deviceDefaultArea = context.devices.empty() ? Device::Area {} : TRY(get_stylus_default_area(context.tablet.stylus));
 
     if (context.hasChangedDeviceArea && context.tabletSettings.stylus.forceFullArea && context.tabletSettings.stylus.name != "INVALID")
     {
@@ -97,7 +97,7 @@ static Result<void> render_region_mappers(Context& context)
 
     if (context.hasChangedDevice && context.tabletSettings.stylus.name != "INVALID")
     {
-        deviceDefaultArea = TRY(get_stylus_default_area(context.stylus));
+        deviceDefaultArea = TRY(get_stylus_default_area(context.tablet.stylus));
     }
 
     if (!context.devices.empty() && context.tabletSettings.stylus.name != "INVALID")
@@ -157,11 +157,11 @@ static Result<void> render_tablet_tab(Context& context)
 {
     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - (250_scaled + 300_scaled + ImGui::GetStyle().WindowPadding.x))/2);
 
-    static auto deviceDefaultArea = context.devices.empty() ? Device::Area {} : TRY(get_stylus_default_area(context.stylus));
+    static auto deviceDefaultArea = context.devices.empty() ? Device::Area {} : TRY(get_stylus_default_area(context.tablet.stylus));
 
     if (context.hasChangedDevice && context.tabletSettings.stylus.name != "INVALID")
     {
-        deviceDefaultArea = TRY(get_stylus_default_area(context.stylus));
+        deviceDefaultArea = TRY(get_stylus_default_area(context.tablet.stylus));
     }
 
     ImGui::BeginGroup();
@@ -186,9 +186,9 @@ static Result<void> render_tablet_tab(Context& context)
 
         if (context.hasChangedDevice)
         {
-            context.stylus = context.devices.at(static_cast<size_t>(deviceIndex));
-            context.tabletSettings.stylus.name = context.stylus.name;
-            context.tabletSettings.stylus.area = TRY(get_stylus_default_area(context.stylus));
+            context.tablet.stylus = context.devices.at(static_cast<size_t>(deviceIndex));
+            context.tabletSettings.stylus.name = context.tablet.stylus.name;
+            context.tabletSettings.stylus.area = TRY(get_stylus_default_area(context.tablet.stylus));
             context.tabletSettings.stylus.pressure = { 0, 0, 1, 1 };
             context.tabletSettings.stylus.forceFullArea = false;
             context.tabletSettings.stylus.forceAspectRatio = false;
@@ -514,11 +514,11 @@ Result<void> render_main_window(Context& context)
 
                     auto stylus = std::ranges::find(context.devices, context.tabletSettings.stylus.name, &Device::name);
                     assert(stylus != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
-                    context.stylus = *stylus;
+                    context.tablet.stylus = *stylus;
 
                     auto pad = std::ranges::find(context.devices, context.tabletSettings.pad.name, &Device::name);
                     assert(pad != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
-                    context.pad = *pad;
+                    context.tablet.pad = *pad;
 
                     context.hasChangedDevice = true;
                     context.hasChangedDeviceHandedness = true;
@@ -541,8 +541,8 @@ Result<void> render_main_window(Context& context)
                 if (maybeDevice == context.devices.end())
                 {
                     context.display = {};
-                    context.stylus = {};
-                    context.pad = {};
+                    context.tablet.stylus = {};
+                    context.tablet.pad = {};
                     context.tabletSettings = {};
                 }
 
@@ -651,11 +651,11 @@ Result<void> render_main_window(Context& context)
 
             auto stylus = std::ranges::find(context.devices, context.tabletSettings.stylus.name, &Device::name);
             assert(stylus != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
-            context.stylus = *stylus;
+            context.tablet.stylus = *stylus;
 
             auto pad = std::ranges::find(context.devices, context.tabletSettings.pad.name, &Device::name);
             assert(pad != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
-            context.pad = *pad;
+            context.tablet.pad = *pad;
 
             context.display = *std::ranges::find(context.displays, context.tabletSettings.display.name, &Display::name);
 
