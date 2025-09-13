@@ -1,3 +1,4 @@
+#include <spdlog/fmt/bundled/base.h>
 #include <spdlog/spdlog.h>
 
 #include "core/ipc/Client.hpp"
@@ -117,7 +118,7 @@ Result<void> IPCClient::disconnect()
     return {};
 }
 
-Generator<std::array<char, 32>> IPCClient::receive_message_async()
+Generator<std::optional<std::array<char, 32>>> IPCClient::receive_message_async()
 {
     while (true)
     {
@@ -127,7 +128,10 @@ Generator<std::array<char, 32>> IPCClient::receive_message_async()
 
         if (bytesRead >= 0 || errno == EAGAIN)
         {
-            co_yield buffer;
+            if (bytesRead < 0 && errno == EAGAIN)
+                co_yield std::nullopt;
+            else
+                co_yield buffer;
         }
         else
         {

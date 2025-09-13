@@ -7,6 +7,8 @@
 
 #include <mqueue.h>
 
+#include <optional>
+
 class IPCClient
 {
 public:
@@ -44,7 +46,7 @@ public:
     liberror::Result<void> connect();
     liberror::Result<void> disconnect();
 
-    libcoro::Generator<std::array<char, 32>> receive_message_async();
+    libcoro::Generator<std::optional<std::array<char, 32>>> receive_message_async();
     liberror::Result<std::array<char, 32>> receive_message();
 
 private:

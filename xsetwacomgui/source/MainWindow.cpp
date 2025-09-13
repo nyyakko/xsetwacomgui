@@ -463,8 +463,10 @@ Result<void> render_main_window(Context& context)
     auto message = messageReceiver.next();
 
     if (!std::string_view(message.data()).empty())
+    if (message.has_value())
     {
         auto action = magic_enum::enum_cast<UDevDevice::Action>(message.data());
+        auto action = magic_enum::enum_cast<UDevDevice::Action>(message->data());
         assert(action && "INVALID ACTION");
 
         switch (*action)
@@ -707,7 +709,6 @@ Result<void> render_main_window(Context& context)
     ImGui::SetCursorPos(previousCursorPosition);
     ImGui::EndDisabled();
 
-    if (!std::string_view(message.data()).empty())
     {
         context.hasChangedDevice = false;
         context.hasChangedDisplay = false;
