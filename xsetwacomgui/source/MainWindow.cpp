@@ -462,21 +462,17 @@ Result<void> render_main_window(Context& context)
     static auto messageReceiver = IPCClient::the().receive_message_async();
     auto message = messageReceiver.next();
 
-    if (!std::string_view(message.data()).empty())
     if (message.has_value())
     {
-        auto action = magic_enum::enum_cast<UDevDevice::Action>(message.data());
         auto action = magic_enum::enum_cast<UDevDevice::Action>(message->data());
         assert(action && "INVALID ACTION");
 
         switch (*action)
         {
             case UDevDevice::Action::BIND: {
-                auto devicesFiltered = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::STYLUS; }, context.devices);
-                auto hadAtleastOneDevice = !devicesFiltered.empty();
-                context.devices = TRY(get_available_devices());
+                if (std::ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) >= 1) break;
 
-                if (hadAtleastOneDevice) break;
+                context.devices = TRY(get_available_devices());
 
                 auto result = load_tablet_settings();
 
@@ -536,11 +532,9 @@ Result<void> render_main_window(Context& context)
                 break;
             }
             case UDevDevice::Action::UNBIND: {
-                auto devicesFiltered = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::STYLUS; }, context.devices);
-                auto hadMoreThanOneDevice = devicesFiltered.size() > 1;
-                context.devices = TRY(get_available_devices());
+                if (std::ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) > 1) break;
 
-                if (hadMoreThanOneDevice) break;
+                context.devices = TRY(get_available_devices());
 
                 auto maybeDevice = std::ranges::find(context.devices, context.tabletSettings.stylus.name, &Device::name);
 
@@ -709,6 +703,7 @@ Result<void> render_main_window(Context& context)
     ImGui::SetCursorPos(previousCursorPosition);
     ImGui::EndDisabled();
 
+    if (message.has_value())
     {
         context.hasChangedDevice = false;
         context.hasChangedDisplay = false;

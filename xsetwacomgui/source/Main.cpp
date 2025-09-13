@@ -1,3 +1,4 @@
+#include <algorithm>
 #define IMGUI_DEFINE_MATH_OPERATORS
 
 #include <spdlog/spdlog.h>
@@ -256,8 +257,7 @@ Result<void> run_no_gui(Context& context)
         switch (*action)
         {
             case UDevDevice::Action::BIND: {
-                auto devicesFiltered = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::STYLUS; }, context.devices);
-                auto hadAtleastOneDevice = !devicesFiltered.empty();
+                if (std::ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) >= 1) break;
 
                 while (context.devices = TRY(get_available_devices()), context.devices.empty())
                 {
@@ -276,8 +276,6 @@ Result<void> run_no_gui(Context& context)
                     push_system_toast(TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Devices_Missing)));
                     break;
                 }
-
-                if (hadAtleastOneDevice) break;
 
                 auto result = load_tablet_settings();
 
@@ -328,11 +326,9 @@ Result<void> run_no_gui(Context& context)
                 break;
             }
             case UDevDevice::Action::UNBIND: {
-                auto devicesFiltered = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::STYLUS; }, context.devices);
-                auto hadMoreThanOneDevice = devicesFiltered.size() > 1;
-                context.devices = TRY(get_available_devices());
+                if (std::ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) > 1) break;
 
-                if (hadMoreThanOneDevice) break;
+                context.devices = TRY(get_available_devices());
 
                 auto maybeDevice = std::ranges::find(context.devices, context.tabletSettings.stylus.name, &Device::name);
 
