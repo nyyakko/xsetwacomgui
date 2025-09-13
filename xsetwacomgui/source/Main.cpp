@@ -103,10 +103,7 @@ Result<void> run_gui(Context& context)
     {
         glClear(GL_COLOR_BUFFER_BIT);
 
-        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        {
-            break;
-        }
+        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) break;
 
         if (context.applicationSettings.theme == ApplicationSettings::Theme::DARK)
         {
