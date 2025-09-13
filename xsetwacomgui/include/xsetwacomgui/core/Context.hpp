@@ -4,6 +4,12 @@
 #include "settings/TabletSettings.hpp"
 #include "platform/hid/X11/Display.hpp"
 
+struct Settings
+{
+    ApplicationSettings application;
+    TabletSettings tablet;
+};
+
 struct Tablet
 {
     Device stylus;
@@ -12,8 +18,7 @@ struct Tablet
 
 struct Context
 {
-    ApplicationSettings applicationSettings;
-    TabletSettings tabletSettings;
+    Settings settings;
 
     std::vector<Device> devices;
     std::vector<Display> displays;

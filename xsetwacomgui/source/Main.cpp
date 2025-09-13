@@ -58,7 +58,7 @@ Result<void> run_gui(Context& context)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-    set_scale(context.applicationSettings.scale);
+    set_scale(context.settings.application.scale);
 
 #ifdef DEBUG
     auto window = glfwCreateWindow(static_cast<int>(800_scaled), static_cast<int>(815_scaled), NAME " - DEBUG BUILD", nullptr, nullptr);
@@ -94,9 +94,9 @@ Result<void> run_gui(Context& context)
     rangeBuilder.AddRanges(rangesData);
     rangeBuilder.BuildRanges(&ranges);
 
-    if (context.applicationSettings.font.family != "Default")
+    if (context.settings.application.font.family != "Default")
     {
-        font = io.Fonts->AddFontFromFileTTF(context.applicationSettings.font.path.string().data(), 20_scaled, nullptr, ranges.Data);
+        font = io.Fonts->AddFontFromFileTTF(context.settings.application.font.path.string().data(), 20_scaled, nullptr, ranges.Data);
     }
 
     while (!glfwWindowShouldClose(window))
@@ -105,7 +105,7 @@ Result<void> run_gui(Context& context)
 
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) break;
 
-        if (context.applicationSettings.theme == ApplicationSettings::Theme::DARK)
+        if (context.settings.application.theme == ApplicationSettings::Theme::DARK)
         {
             ImGui::StyleColorsDark();
         }
@@ -132,9 +132,9 @@ Result<void> run_gui(Context& context)
 
                 if (ImGui::BeginMenuBar())
                 {
-                    if (ImGui::BeginMenu(TRY(Localisation::get(context.applicationSettings.language, Localisation::MenuBar_Settings_Title))))
+                    if (ImGui::BeginMenu(TRY(Localisation::get(context.settings.application.language, Localisation::MenuBar_Settings_Title))))
                     {
-                        if (ImGui::MenuItem(TRY(Localisation::get(context.applicationSettings.language, Localisation::MenuBar_Settings_Entry_Application))))
+                        if (ImGui::MenuItem(TRY(Localisation::get(context.settings.application.language, Localisation::MenuBar_Settings_Entry_Application))))
                         {
                             isApplicationSettingsOpen = true;
                         }
@@ -142,9 +142,9 @@ Result<void> run_gui(Context& context)
                         ImGui::EndMenu();
                     }
 
-                    if (ImGui::BeginMenu(TRY(Localisation::get(context.applicationSettings.language, Localisation::MenuBar_Other_Title))))
+                    if (ImGui::BeginMenu(TRY(Localisation::get(context.settings.application.language, Localisation::MenuBar_Other_Title))))
                     {
-                        if (ImGui::MenuItem(TRY(Localisation::get(context.applicationSettings.language, Localisation::MenuBar_Other_Entry_Goddess))))
+                        if (ImGui::MenuItem(TRY(Localisation::get(context.settings.application.language, Localisation::MenuBar_Other_Entry_Goddess))))
                         {
                             isGoddessOpen = true;
                         }
@@ -161,7 +161,7 @@ Result<void> run_gui(Context& context)
                     ImGui::SetNextWindowSize({ applicationSettingsWidth, applicationSettingsHeight });
                     ImGui::SetNextWindowPos({ (static_cast<float>(windowWidth) - applicationSettingsWidth)/2, (static_cast<float>(windowHeight) - applicationSettingsHeight)/2 });
                     ImGui::Begin(
-                        TRY(Localisation::get(context.applicationSettings.language, Localisation::MenuBar_Settings_Entry_Application)),
+                        TRY(Localisation::get(context.settings.application.language, Localisation::MenuBar_Settings_Entry_Application)),
                         &isApplicationSettingsOpen,
                         ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
                     );
@@ -177,7 +177,7 @@ Result<void> run_gui(Context& context)
                     ImGui::SetNextWindowSize({ goddessWidth, goddessHeight });
                     ImGui::SetNextWindowPos({ (static_cast<float>(windowWidth) - goddessWidth)/2, (static_cast<float>(windowHeight) - goddessHeight)/2 });
                     ImGui::Begin(
-                        TRY(Localisation::get(context.applicationSettings.language, Localisation::MenuBar_Other_Entry_Goddess)),
+                        TRY(Localisation::get(context.settings.application.language, Localisation::MenuBar_Other_Entry_Goddess)),
                         &isGoddessOpen,
                         ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
                     );
@@ -227,17 +227,17 @@ Result<void> run_no_gui(Context& context)
         if (!result) return make_error("Failed to load device settings");
         if (context.devices.empty()) return make_error("Failed to load devices");
 
-        context.tabletSettings = *result;
+        context.settings.tablet = *result;
 
-        auto stylus = std::ranges::find(context.devices, context.tabletSettings.stylus.name, &Device::name);
+        auto stylus = std::ranges::find(context.devices, context.settings.tablet.stylus.name, &Device::name);
         assert(stylus != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
         context.tablet.stylus = *stylus;
 
-        auto pad = std::ranges::find(context.devices, context.tabletSettings.pad.name, &Device::name);
+        auto pad = std::ranges::find(context.devices, context.settings.tablet.pad.name, &Device::name);
         assert(pad != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
         context.tablet.pad = *pad;
 
-        context.display = *std::ranges::find(context.displays, context.tabletSettings.display.name, &Display::name);
+        context.display = *std::ranges::find(context.displays, context.settings.tablet.display.name, &Display::name);
 
         TRY(apply_settings_from_context_to_device(context));
 
@@ -270,7 +270,7 @@ Result<void> run_no_gui(Context& context)
 
                 if (context.devices.empty())
                 {
-                    push_system_toast(TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Devices_Missing)));
+                    push_system_toast(TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Devices_Missing)));
                     break;
                 }
 
@@ -284,36 +284,32 @@ Result<void> run_no_gui(Context& context)
                     {
                     case SettingsError::Type::WRITE_FAILURE: break;
                     case SettingsError::Type::FILE_NOT_FOUND: {
-                        TRY(push_system_toast(TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Device_Settings_Missing))));
+                        TRY(push_system_toast(TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Missing))));
                         break;
                     }
                     case SettingsError::Type::READ_FAILURE: {
-                        TRY(push_system_toast(TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Device_Settings_Load_Failed))));
+                        TRY(push_system_toast(TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Load_Failed))));
                         break;
                     }
                     case SettingsError::Type::OUTDATED_SCHEMA: {
-                        TRY(push_system_toast(TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Device_Settings_Outdated_Schema))));
+                        TRY(push_system_toast(TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Outdated_Schema))));
                         break;
                     }
                     }
                 }
                 else
                 {
-                    context.tabletSettings = *result;
+                    context.settings.tablet = *result;
 
-                    auto stylus = std::ranges::find(context.devices, context.tabletSettings.stylus.name, &Device::name);
+                    auto stylus = std::ranges::find(context.devices, context.settings.tablet.stylus.name, &Device::name);
                     assert(stylus != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
                     context.tablet.stylus = *stylus;
 
-                    auto pad = std::ranges::find(context.devices, context.tabletSettings.pad.name, &Device::name);
+                    auto pad = std::ranges::find(context.devices, context.settings.tablet.pad.name, &Device::name);
                     assert(pad != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
                     context.tablet.pad = *pad;
 
-                    context.hasChangedDevice = true;
-                    context.hasChangedDeviceHandedness = true;
-
-                    context.display = *std::ranges::find(context.displays, context.tabletSettings.display.name, &Display::name);
-                    context.hasChangedDisplay = true;
+                    context.display = *std::ranges::find(context.displays, context.settings.tablet.display.name, &Display::name);
 
                     TRY(apply_settings_from_context_to_device(context));
 
@@ -327,14 +323,13 @@ Result<void> run_no_gui(Context& context)
 
                 context.devices = TRY(get_available_devices());
 
-                auto maybeDevice = std::ranges::find(context.devices, context.tabletSettings.stylus.name, &Device::name);
+                auto maybeDevice = std::ranges::find(context.devices, context.settings.tablet.stylus.name, &Device::name);
 
                 if (maybeDevice == context.devices.end())
                 {
                     context.display = {};
-                    context.tablet.stylus = {};
-                    context.tablet.pad = {};
-                    context.tabletSettings = {};
+                    context.tablet = {};
+                    context.settings.tablet = {};
                 }
 
                 break;
@@ -363,7 +358,6 @@ Result<void> safe_main(std::span<char const*> const& arguments)
 
     Context context {
         {},
-        {},
         TRY(get_available_devices()),
         MUST(get_available_displays())
     };
@@ -379,17 +373,17 @@ Result<void> safe_main(std::span<char const*> const& arguments)
             if (!result) return make_error("Failed to load device settings");
             if (context.devices.empty()) return make_error("Failed to load devices");
 
-            context.tabletSettings = *result;
+            context.settings.tablet = *result;
 
-            auto stylus = std::ranges::find(context.devices, context.tabletSettings.stylus.name, &Device::name);
+            auto stylus = std::ranges::find(context.devices, context.settings.tablet.stylus.name, &Device::name);
             assert(stylus != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
             context.tablet.stylus = *stylus;
 
-            auto pad = std::ranges::find(context.devices, context.tabletSettings.pad.name, &Device::name);
+            auto pad = std::ranges::find(context.devices, context.settings.tablet.pad.name, &Device::name);
             assert(pad != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
             context.tablet.pad = *pad;
 
-            context.display = *std::ranges::find(context.displays, context.tabletSettings.display.name, &Display::name);
+            context.display = *std::ranges::find(context.displays, context.settings.tablet.display.name, &Display::name);
 
             TRY(apply_settings_from_context_to_device(context));
 
@@ -401,7 +395,7 @@ Result<void> safe_main(std::span<char const*> const& arguments)
 
     if (!std::filesystem::exists(APPLICATION_SETTINGS_FILE))
     {
-        save_application_settings(context.applicationSettings);
+        save_application_settings(context.settings.application);
     }
     else
     {
@@ -419,8 +413,8 @@ Result<void> safe_main(std::span<char const*> const& arguments)
 
             if (choice)
             {
-                if (choice->value() == 1) save_application_settings(context.applicationSettings);
-                else if (choice->value() == 2) migrate_application_settings(context.applicationSettings);
+                if (choice->value() == 1) save_application_settings(context.settings.application);
+                else if (choice->value() == 2) migrate_application_settings(context.settings.application);
             }
 
             fmt::println("Done. Restart the application.");
@@ -429,7 +423,7 @@ Result<void> safe_main(std::span<char const*> const& arguments)
         }
         else
         {
-            context.applicationSettings = *result;
+            context.settings.application = *result;
         }
     }
 

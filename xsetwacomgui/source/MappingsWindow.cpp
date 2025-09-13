@@ -27,9 +27,9 @@ static std::vector<char const*>& the_action_names()
 
 Result<void> render_stylus_tab(Context& context)
 {
-    for (auto const& mapping : context.tabletSettings.stylus.mappings)
+    for (auto const& mapping : context.settings.tablet.stylus.mappings)
     {
-        ImGui::Text("%s %d", TRY(Localisation::get(context.applicationSettings.language, Localisation::Window_Mappings_Tabs_Stylus_Button)), mapping.first);
+        ImGui::Text("%s %d", TRY(Localisation::get(context.settings.application.language, Localisation::Window_Mappings_Tabs_Stylus_Button)), mapping.first);
         ImGui::SameLine();
 
         static std::array<int, 9> actionIndexes {};
@@ -39,7 +39,7 @@ Result<void> render_stylus_tab(Context& context)
         ImGui::SetNextItemWidth(180_scaled);
         if (ImGui::Combo(fmt::format("##Actions##Stylus##{}", mapping.first).data(), &actionIndexes[size_t(mapping.first)], the_action_names().data(), int(the_action_names().size())))
         {
-            context.tabletSettings.stylus.mappings.at(mapping.first) = *magic_enum::enum_cast<X11Action>(actionIndexes[size_t(mapping.first)]+1);
+            context.settings.tablet.stylus.mappings.at(mapping.first) = *magic_enum::enum_cast<X11Action>(actionIndexes[size_t(mapping.first)]+1);
         }
     }
 
@@ -48,9 +48,9 @@ Result<void> render_stylus_tab(Context& context)
 
 Result<void> render_pad_tab(Context& context)
 {
-    for (auto const& mapping : context.tabletSettings.pad.mappings)
+    for (auto const& mapping : context.settings.tablet.pad.mappings)
     {
-        ImGui::Text("%s %d", TRY(Localisation::get(context.applicationSettings.language, Localisation::Window_Mappings_Tabs_Pad_Button)), mapping.first);
+        ImGui::Text("%s %d", TRY(Localisation::get(context.settings.application.language, Localisation::Window_Mappings_Tabs_Pad_Button)), mapping.first);
         ImGui::SameLine();
 
         static std::array<int, 9> actionIndexes {};
@@ -60,7 +60,7 @@ Result<void> render_pad_tab(Context& context)
         ImGui::SetNextItemWidth(180_scaled);
         if (ImGui::Combo(fmt::format("##Actions##Pad##{}", mapping.first).data(), &actionIndexes[size_t(mapping.first)], the_action_names().data(), int(the_action_names().size())))
         {
-            context.tabletSettings.pad.mappings.at(mapping.first) = *magic_enum::enum_cast<X11Action>(actionIndexes[size_t(mapping.first)]+1);
+            context.settings.tablet.pad.mappings.at(mapping.first) = *magic_enum::enum_cast<X11Action>(actionIndexes[size_t(mapping.first)]+1);
         }
     }
 
@@ -72,13 +72,13 @@ Result<void> render_mappings_window(Context& context)
 {
     if (ImGui::BeginTabBar("##Tabs_3"))
     {
-        if (ImGui::BeginTabItem(TRY(Localisation::get(context.applicationSettings.language, Localisation::Window_Mappings_Tabs_Stylus_Title))))
+        if (ImGui::BeginTabItem(TRY(Localisation::get(context.settings.application.language, Localisation::Window_Mappings_Tabs_Stylus_Title))))
         {
             TRY(render_stylus_tab(context));
             ImGui::EndTabItem();
         }
 
-        if (ImGui::BeginTabItem(TRY(Localisation::get(context.applicationSettings.language, Localisation::Window_Mappings_Tabs_Pad_Title))))
+        if (ImGui::BeginTabItem(TRY(Localisation::get(context.settings.application.language, Localisation::Window_Mappings_Tabs_Pad_Title))))
         {
             TRY(render_pad_tab(context));
             ImGui::EndTabItem();
@@ -89,13 +89,13 @@ Result<void> render_mappings_window(Context& context)
 
     auto previousCursorPosition = ImGui::GetCursorPos();
     ImGui::SetCursorPosY(ImGui::GetWindowHeight() - (25_scaled + ImGui::GetStyle().WindowPadding.x));
-    if (ImGui::Button(TRY(Localisation::get(context.applicationSettings.language, Localisation::Save_Apply)), { 150_scaled, 25_scaled }))
+    if (ImGui::Button(TRY(Localisation::get(context.settings.application.language, Localisation::Save_Apply)), { 150_scaled, 25_scaled }))
     {
         ImGui::PushToast(
-            TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Success)),
-            TRY(Localisation::get(context.applicationSettings.language, Localisation::Toast_Device_Settings_Saved))
+            TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),
+            TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Saved))
         );
-        save_tablet_settings(context.tabletSettings);
+        save_tablet_settings(context.settings.tablet);
         TRY(apply_settings_from_context_to_device(context));
     }
     ImGui::SetCursorPos(previousCursorPosition);
