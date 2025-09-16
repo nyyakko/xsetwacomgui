@@ -12,7 +12,7 @@
         "deviceSettingsLoadFailed": "Не удалось загрузить настройки устройства",
         "deviceSettingsLoadSuccess": "Настройки устройства загружены",
         "deviceSettingsMissing": "Не найдены настройки устройства, будут загружены данные из xsetwacom",
-        "deviceSettingsOutdatedSchema": "OUTDATED SCHEMA (FIXME)",
+        "deviceSettingsOutdatedSchema": "Формат настроек планшета устарел",
         "devicesMissing": "Устройства не обнаружены"
     },
 
@@ -85,15 +85,15 @@
             }
         },
         "mappings": {
-            "title": "MAPPINGS (FIXME)",
+            "title": "Переназначения",
             "tabs": {
                 "stylus": {
-                    "title": "STYLUS (FIXME)",
-                    "button": "BUTTON (FIXME)"
+                    "title": "Перо",
+                    "button": "Кнопка"
                 },
                 "pad": {
-                    "title": "PAD (FIXME)",
-                    "button": "BUTTON (FIXME)"
+                    "title": "Сенсорная панель",
+                    "button": "Кнопка"
                 }
             }
         },
