@@ -65,7 +65,6 @@ Result<void> render_pad_tab(Context& context)
     }
 
     return {};
-
 }
 
 Result<void> render_mappings_window(Context& context)
@@ -101,5 +100,4 @@ Result<void> render_mappings_window(Context& context)
     ImGui::SetCursorPos(previousCursorPosition);
 
     return {};
-
 }
