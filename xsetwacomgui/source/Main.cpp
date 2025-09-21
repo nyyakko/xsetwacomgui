@@ -48,10 +48,7 @@ Result<void> run_gui(Context& context)
     TRY(IPCClient::the().configure(IPCClient::Mode::ASYNC));
     TRY(IPCClient::the().connect());
 
-    if (!glfwInit())
-    {
-        return make_error("Failed to initialize glfw");
-    }
+    if (!glfwInit()) return make_error("Failed to initialize glfw");
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -257,13 +254,8 @@ Result<void> run_no_gui(Context& context)
 
                 while (context.devices = TRY(get_available_devices()), context.devices.empty())
                 {
-                    if (static auto retry = 0; retry++ == 3)
-                    {
-                        break;
-                    }
-
+                    if (static auto retry = 0; retry++ == 3) break;
                     spdlog::info("No devices were found, retrying...");
-
                     std::this_thread::sleep_for(250ms);
                 }
 
