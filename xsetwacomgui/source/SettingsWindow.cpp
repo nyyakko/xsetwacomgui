@@ -76,7 +76,7 @@ static Result<void> render_display_tab(Context& context)
 
     if (context.hasChangedScale)
     {
-        scale = ImClamp(scale, 1.0f, 10.f);
+        scale = std::clamp(scale, 1.0f, 10.f);
         context.settings.application.scale = scale;
     }
 
