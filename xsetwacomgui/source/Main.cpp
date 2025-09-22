@@ -350,7 +350,7 @@ Result<void> safe_main(std::span<char const*> const& arguments)
     Context context {
         {},
         TRY(get_available_devices()),
-        MUST(get_available_displays())
+        TRY(get_available_displays())
     };
 
     if (auto posConfig = std::ranges::find(arguments, "config"sv); posConfig != arguments.end())
