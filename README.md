@@ -7,7 +7,7 @@ A graphical `xsetwacom` wrapper for ease of use.
 # Building
 
 > [!WARNING]
-> Unless you're willing to contribute, make sure to always clone from the `stable` branch!
+> Unless you're willing to contribute, make sure to always build from the `stable` branch!
 
 ## Dependencies
 
