@@ -469,88 +469,88 @@ Result<void> render_main_window(Context& context)
 
         switch (*action)
         {
-            case UDevDevice::Action::BIND: {
-                if (std::ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) >= 1) break;
+        case UDevDevice::Action::BIND: {
+            if (std::ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) >= 1) break;
 
-                context.devices = TRY(get_available_devices());
+            context.devices = TRY(get_available_devices());
 
-                auto result = load_tablet_settings();
+            auto result = load_tablet_settings();
 
-                if (!result.has_value())
+            if (!result.has_value())
+            {
+                TRY(apply_settings_from_driver_to_context(context));
+
+                switch (result.error().message())
                 {
-                    TRY(apply_settings_from_driver_to_context(context));
-
-                    switch (result.error().message())
-                    {
-                    case SettingsError::Type::WRITE_FAILURE: break;
-                    case SettingsError::Type::FILE_NOT_FOUND: {
-                        ImGui::PushToast(
-                            TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Warning)),
-                            TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Missing))
-                        );
-                        break;
-                    }
-                    case SettingsError::Type::READ_FAILURE: {
-                        ImGui::PushToast(
-                            TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Warning)),
-                            TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Load_Failed))
-                        );
-                        break;
-                    }
-                    case SettingsError::Type::OUTDATED_SCHEMA: {
-                        context.handleOutdatedDeviceSettings = true;
-                        break;
-                    }
-                    }
-                }
-                else
-                {
-                    context.settings.tablet = *result;
-
+                case SettingsError::Type::WRITE_FAILURE: break;
+                case SettingsError::Type::FILE_NOT_FOUND: {
                     ImGui::PushToast(
-                        TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),
-                        TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Load_Success))
+                        TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Warning)),
+                        TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Missing))
                     );
-
-                    auto stylus = std::ranges::find(context.devices, context.settings.tablet.stylus.name, &Device::name);
-                    assert(stylus != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
-                    context.tablet.stylus = *stylus;
-
-                    auto pad = std::ranges::find(context.devices, context.settings.tablet.pad.name, &Device::name);
-                    assert(pad != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
-                    context.tablet.pad = *pad;
-
-                    context.hasChangedDevice = true;
-                    context.hasChangedDeviceHandedness = true;
-
-                    context.display = *std::ranges::find(context.displays, context.settings.tablet.display.name, &Display::name);
-                    context.hasChangedDisplay = true;
-
-                    TRY(apply_settings_from_context_to_device(context));
+                    break;
                 }
-
-                break;
-            }
-            case UDevDevice::Action::UNBIND: {
-                if (std::ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) > 1) break;
-
-                context.devices = TRY(get_available_devices());
-
-                auto maybeDevice = std::ranges::find(context.devices, context.settings.tablet.stylus.name, &Device::name);
-
-                if (maybeDevice == context.devices.end())
-                {
-                    context.display = {};
-                    context.tablet.stylus = {};
-                    context.tablet.pad = {};
-                    context.settings.tablet = {};
+                case SettingsError::Type::READ_FAILURE: {
+                    ImGui::PushToast(
+                        TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Warning)),
+                        TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Load_Failed))
+                    );
+                    break;
                 }
-
-                break;
+                case SettingsError::Type::OUTDATED_SCHEMA: {
+                    context.handleOutdatedDeviceSettings = true;
+                    break;
+                }
+                }
             }
-            case UDevDevice::Action::REMOVE: break;
-            case UDevDevice::Action::ADD: break;
-            case UDevDevice::Action::NONE: break;
+            else
+            {
+                context.settings.tablet = *result;
+
+                ImGui::PushToast(
+                    TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),
+                    TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Load_Success))
+                );
+
+                auto stylus = std::ranges::find(context.devices, context.settings.tablet.stylus.name, &Device::name);
+                assert(stylus != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
+                context.tablet.stylus = *stylus;
+
+                auto pad = std::ranges::find(context.devices, context.settings.tablet.pad.name, &Device::name);
+                assert(pad != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
+                context.tablet.pad = *pad;
+
+                context.hasChangedDevice = true;
+                context.hasChangedDeviceHandedness = true;
+
+                context.display = *std::ranges::find(context.displays, context.settings.tablet.display.name, &Display::name);
+                context.hasChangedDisplay = true;
+
+                TRY(apply_settings_from_context_to_device(context));
+            }
+
+            break;
+        }
+        case UDevDevice::Action::UNBIND: {
+            if (std::ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) > 1) break;
+
+            context.devices = TRY(get_available_devices());
+
+            auto maybeDevice = std::ranges::find(context.devices, context.settings.tablet.stylus.name, &Device::name);
+
+            if (maybeDevice == context.devices.end())
+            {
+                context.display = {};
+                context.tablet.stylus = {};
+                context.tablet.pad = {};
+                context.settings.tablet = {};
+            }
+
+            break;
+        }
+        case UDevDevice::Action::REMOVE: break;
+        case UDevDevice::Action::ADD: break;
+        case UDevDevice::Action::NONE: break;
         }
     }
 

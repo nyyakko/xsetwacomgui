@@ -249,85 +249,85 @@ Result<void> run_no_gui(Context& context)
 
         switch (*action)
         {
-            case UDevDevice::Action::BIND: {
-                if (std::ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) >= 1) break;
+        case UDevDevice::Action::BIND: {
+            if (std::ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) >= 1) break;
 
-                while (context.devices = TRY(get_available_devices()), context.devices.empty())
-                {
-                    if (static auto retry = 0; retry++ == 3) break;
-                    spdlog::info("No devices were found, retrying...");
-                    std::this_thread::sleep_for(250ms);
-                }
+            while (context.devices = TRY(get_available_devices()), context.devices.empty())
+            {
+                if (static auto retry = 0; retry++ == 3) break;
+                spdlog::info("No devices were found, retrying...");
+                std::this_thread::sleep_for(250ms);
+            }
 
-                if (context.devices.empty())
+            if (context.devices.empty())
+            {
+                push_system_toast(TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Devices_Missing)));
+                break;
+            }
+
+            auto result = load_tablet_settings();
+
+            if (!result.has_value())
+            {
+                TRY(apply_settings_from_driver_to_context(context));
+
+                switch (result.error().message())
                 {
-                    push_system_toast(TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Devices_Missing)));
+                case SettingsError::Type::WRITE_FAILURE: break;
+                case SettingsError::Type::FILE_NOT_FOUND: {
+                    TRY(push_system_toast(TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Missing))));
                     break;
                 }
-
-                auto result = load_tablet_settings();
-
-                if (!result.has_value())
-                {
-                    TRY(apply_settings_from_driver_to_context(context));
-
-                    switch (result.error().message())
-                    {
-                    case SettingsError::Type::WRITE_FAILURE: break;
-                    case SettingsError::Type::FILE_NOT_FOUND: {
-                        TRY(push_system_toast(TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Missing))));
-                        break;
-                    }
-                    case SettingsError::Type::READ_FAILURE: {
-                        TRY(push_system_toast(TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Load_Failed))));
-                        break;
-                    }
-                    case SettingsError::Type::OUTDATED_SCHEMA: {
-                        TRY(push_system_toast(TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Outdated_Schema))));
-                        break;
-                    }
-                    }
+                case SettingsError::Type::READ_FAILURE: {
+                    TRY(push_system_toast(TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Load_Failed))));
+                    break;
                 }
-                else
-                {
-                    context.settings.tablet = *result;
-
-                    auto stylus = std::ranges::find(context.devices, context.settings.tablet.stylus.name, &Device::name);
-                    assert(stylus != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
-                    context.tablet.stylus = *stylus;
-
-                    auto pad = std::ranges::find(context.devices, context.settings.tablet.pad.name, &Device::name);
-                    assert(pad != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
-                    context.tablet.pad = *pad;
-
-                    context.display = *std::ranges::find(context.displays, context.settings.tablet.display.name, &Display::name);
-
-                    TRY(apply_settings_from_context_to_device(context));
-
-                    spdlog::info("Device settings loaded successfully");
+                case SettingsError::Type::OUTDATED_SCHEMA: {
+                    TRY(push_system_toast(TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Outdated_Schema))));
+                    break;
                 }
-
-                break;
+                }
             }
-            case UDevDevice::Action::UNBIND: {
-                if (std::ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) > 1) break;
+            else
+            {
+                context.settings.tablet = *result;
 
-                context.devices = TRY(get_available_devices());
+                auto stylus = std::ranges::find(context.devices, context.settings.tablet.stylus.name, &Device::name);
+                assert(stylus != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
+                context.tablet.stylus = *stylus;
 
-                auto maybeDevice = std::ranges::find(context.devices, context.settings.tablet.stylus.name, &Device::name);
+                auto pad = std::ranges::find(context.devices, context.settings.tablet.pad.name, &Device::name);
+                assert(pad != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
+                context.tablet.pad = *pad;
 
-                if (maybeDevice == context.devices.end())
-                {
-                    context.display = {};
-                    context.tablet = {};
-                    context.settings.tablet = {};
-                }
+                context.display = *std::ranges::find(context.displays, context.settings.tablet.display.name, &Display::name);
 
-                break;
+                TRY(apply_settings_from_context_to_device(context));
+
+                spdlog::info("Device settings loaded successfully");
             }
-            case UDevDevice::Action::REMOVE: break;
-            case UDevDevice::Action::ADD: break;
-            case UDevDevice::Action::NONE: break;
+
+            break;
+        }
+        case UDevDevice::Action::UNBIND: {
+            if (std::ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) > 1) break;
+
+            context.devices = TRY(get_available_devices());
+
+            auto maybeDevice = std::ranges::find(context.devices, context.settings.tablet.stylus.name, &Device::name);
+
+            if (maybeDevice == context.devices.end())
+            {
+                context.display = {};
+                context.tablet = {};
+                context.settings.tablet = {};
+            }
+
+            break;
+        }
+        case UDevDevice::Action::REMOVE: break;
+        case UDevDevice::Action::ADD: break;
+        case UDevDevice::Action::NONE: break;
         }
     }
 
