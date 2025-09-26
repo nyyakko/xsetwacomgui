@@ -4,10 +4,10 @@
 
 #include <array>
 
-std::map<std::string, std::vector<FontInfo>> get_available_fonts()
+std::map<std::string, std::vector<Font>> get_available_fonts()
 {
-    std::map<std::string, std::vector<FontInfo>> fonts {
-        { "Default", { FontInfo { .family = "Default", .style = "Regular", .path = "" } }}
+    std::map<std::string, std::vector<Font>> fonts {
+        { "Default", { Font { .family = "Default", .style = "Regular", .path = "" } }}
     };
 
     FT_Library library {};

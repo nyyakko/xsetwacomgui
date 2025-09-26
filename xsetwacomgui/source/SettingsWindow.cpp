@@ -30,10 +30,10 @@ static Result<void> render_appearance_tab(Context& context)
     static auto fonts = get_available_fonts();
     static auto fontsInfo = fplus::get_map_values(fonts);
 
-    static auto fontsFamily = fplus::transform([] (std::vector<FontInfo> const& fontInfo) { return fontInfo.front().family.data(); }, fontsInfo);
+    static auto fontsFamily = fplus::transform([] (std::vector<Font> const& fontInfo) { return fontInfo.front().family.data(); }, fontsInfo);
     static auto fontFamilyIndex = static_cast<int>(std::distance(fonts.begin(), fonts.find(context.settings.application.font.family)));
 
-    static auto fontStyles = fplus::transform([] (FontInfo const& fontInfo) { return fontInfo.style.data(); }, fontsInfo.at(static_cast<size_t>(fontFamilyIndex)));
+    static auto fontStyles = fplus::transform([] (Font const& fontInfo) { return fontInfo.style.data(); }, fontsInfo.at(static_cast<size_t>(fontFamilyIndex)));
     static auto fontStyleIndex = static_cast<int>(std::distance(fontStyles.begin(), std::ranges::find(fontStyles, context.settings.application.font.style)));
 
     ImGui::BeginGroup();
@@ -58,7 +58,7 @@ static Result<void> render_appearance_tab(Context& context)
     {
         if (context.hasChangedFont)
         {
-            fontStyles = fplus::transform([] (FontInfo const& fontInfo) { return fontInfo.style.data(); }, fontsInfo.at(static_cast<size_t>(fontFamilyIndex)));
+            fontStyles = fplus::transform([] (Font const& fontInfo) { return fontInfo.style.data(); }, fontsInfo.at(static_cast<size_t>(fontFamilyIndex)));
             fontStyleIndex = 0;
         }
 
