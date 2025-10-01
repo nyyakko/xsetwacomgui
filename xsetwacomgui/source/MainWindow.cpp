@@ -1,12 +1,15 @@
+#include <spdlog/spdlog.h>
+
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "MainWindow.hpp"
 
 #include "core/ipc/Client.hpp"
 #include "MappingsWindow.hpp"
 #include "platform/udev/UDevDevice.hpp"
+#include "ProfileWindow.hpp"
+#include "ui/components/AreaMapper.hpp"
 #include "ui/Localisation.hpp"
 #include "ui/Scaling.hpp"
-#include "ui/widgets/AreaMapper.hpp"
 
 #include <fplus/fplus.hpp>
 #include <imgui/extensions/imgui_bezier.hpp>
@@ -684,7 +687,8 @@ Result<void> render_main_window(Context& context)
         ImGui::EndTabBar();
     }
 
-    auto previousCursorPosition = ImGui::GetCursorPos();
+    auto [previousX, previousY] = ImGui::GetCursorPos();
+
     ImGui::SetCursorPosY(ImGui::GetWindowHeight() - (35_scaled + ImGui::GetStyle().WindowPadding.x));
     if (ImGui::Button(TRY(Localisation::get(context.settings.application.language, Localisation::Save_Apply)), { 200_scaled, 35_scaled }))
     {
@@ -695,7 +699,86 @@ Result<void> render_main_window(Context& context)
         save_tablet_settings(context.settings.tablet);
         TRY(apply_settings_from_context_to_device(context));
     }
-    ImGui::SetCursorPos(previousCursorPosition);
+
+    auto previouslyPreviousY = previousY;
+    previousY = ImGui::GetCursorPosY();
+
+    ImGui::SameLine();
+    ImGui::SetCursorPosX(previousX + 200_scaled);
+
+    ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyle().Colors[ImGui::IsPopupOpen("ProfilesPopup", ImGuiPopupFlags_None) ? ImGuiCol_ButtonHovered : ImGuiCol_Button]);
+    if (ImGui::Button("##Profiles", { 35, 35_scaled }))
+    {
+        ImGui::OpenPopup("ProfilesPopup");
+    }
+
+    auto* drawList = ImGui::GetWindowDrawList();
+    auto center = ImGui::GetCursorPos();
+    center.x += previousX + 200_scaled + 35.f/2 - ImGui::GetStyle().WindowPadding.x;
+    center.y -= (35_scaled + ImGui::GetStyle().WindowPadding.y)/2;
+    static auto constexpr radius = 8.f;
+    center.y -= radius * 0.25f;
+    auto lhs = center + ImVec2(0, 1) * radius;
+    auto mid = center + ImVec2(-0.866f, -0.5f) * radius;
+    auto rhs = center + ImVec2(0.866f, -0.5f) * radius;
+    drawList->AddTriangleFilled(lhs, mid, rhs, ImGui::GetColorU32(ImGuiCol_Text));
+
+    ImGui::PopStyleColor();
+
+    static auto isProfileWindowOpen = false;
+
+    static std::vector<char const*> profiles {};
+    int profilesCount = static_cast<int>(profiles.size());
+
+    ImGui::SetNextWindowPos({
+        previousX,
+        previousY - 35_scaled - (2 * ImGui::GetStyle().WindowPadding.y + 25_scaled + float(profilesCount)*(ImGui::GetStyle().ItemSpacing.y + 25_scaled)) - ImGui::GetStyle().ItemSpacing.y
+    });
+
+    ImGui::SetNextWindowSize({ 200_scaled + 35, 0 });
+    ImGui::SetNextWindowSizeConstraints({}, { 200_scaled + 35, 41 + 5 * 29 });
+    if (ImGui::BeginPopup("ProfilesPopup"))
+    {
+        static auto profileIndex = 0;
+
+        for (auto i = 0; i < profilesCount + 1; i += 1)
+        {
+            ImGui::PushID(i);
+
+            if (i == 0)
+            {
+                isProfileWindowOpen |= ImGui::Selectable("New Profile", false, 0, { 0, 25_scaled });
+            }
+            else if (context.hasChangedProfile = ImGui::Selectable(profiles.at(size_t(i)-1), i-1 == profileIndex, 0, { 0, 25_scaled }); context.hasChangedProfile)
+            {
+                profileIndex = i-1;
+            }
+
+            ImGui::PopID();
+        }
+
+        ImGui::EndPopup();
+    }
+
+    if (isProfileWindowOpen)
+    {
+        auto [windowWidth, windowHeight] = ImGui::GetWindowSize();
+
+        float profileWindowWidth = static_cast<float>(windowWidth)/1.5f, profileWindowHeight = static_cast<float>(windowHeight)/1.5f;
+        ImGui::SetNextWindowSize({ profileWindowWidth, profileWindowHeight });
+        ImGui::SetNextWindowPos({ (static_cast<float>(windowWidth) - profileWindowWidth)/2, (static_cast<float>(windowHeight) - profileWindowHeight)/2 });
+        ImGui::Begin(
+            "Profile",
+            &isProfileWindowOpen,
+            ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
+        );
+        {
+            TRY(render_profile_window(context));
+        }
+        ImGui::End();
+    }
+
+    ImGui::SetCursorPos({ previousX, previouslyPreviousY });
     ImGui::EndDisabled();
 
     if (message.has_value())
