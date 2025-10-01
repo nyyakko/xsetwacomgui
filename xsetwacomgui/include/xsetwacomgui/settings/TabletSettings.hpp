@@ -35,7 +35,6 @@ struct DisplaySettings
     bool forceFullArea = false;
     bool forceAspectRatio = false;
 };
-
 struct TabletSettings
 {
 private:

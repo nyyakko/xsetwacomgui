@@ -39,6 +39,7 @@ struct Context
     bool hasChangedFont = false;
     bool hasChangedFontStyle = false;
     bool hasChangedTheme = false;
+    bool hasChangedProfile = false;
 };
 
 liberror::Result<void> apply_settings_from_driver_to_context(Context& context);

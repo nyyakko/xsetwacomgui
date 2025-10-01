@@ -11,6 +11,7 @@ set(xsetwacomgui_SourceFiles ${xsetwacomgui_SourceFiles}
     "${DIR}/SettingsWindow.cpp"
     "${DIR}/MappingsWindow.cpp"
     "${DIR}/GoddessWindow.cpp"
+    "${DIR}/ProfileWindow.cpp"
 
     PARENT_SCOPE
 )
