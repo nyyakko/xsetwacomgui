@@ -1,6 +1,8 @@
 {
     "save": "Сохранить",
     "saveApply": "Сохранить и применить",
+    "create": "Create (FIXME)",
+    "newProfile": "New Profile (FIXME)",
 
     "toast": {
         "success": "Успех",
@@ -13,7 +15,9 @@
         "deviceSettingsLoadSuccess": "Настройки устройства загружены",
         "deviceSettingsMissing": "Не найдены настройки устройства, будут загружены данные из xsetwacom",
         "deviceSettingsOutdatedSchema": "Формат настроек планшета устарел",
-        "devicesMissing": "Устройства не обнаружены"
+        "devicesMissing": "Устройства не обнаружены",
+        "profileNameEmpty": "Profile name cannot be empty (FIXME)",
+        "profileCreated": "Profile created successfully (FIXME)"
     },
 
     "menubar": {
@@ -99,6 +103,12 @@
         },
         "goddess": {
             "title": "Богиня"
+        },
+        "profile": {
+            "title": "Profile (FIXME)",
+            "tab": {
+                "name": "Name (FIXME)"
+            }
         }
     }
 }

@@ -1,6 +1,8 @@
 {
     "save": "Salvar",
     "saveApply": "Salvar e Aplicar",
+    "create": "Criar",
+    "newProfile": "Novo Perfil",
 
     "toast": {
         "success": "Successo",
@@ -13,7 +15,9 @@
         "deviceSettingsLoadSuccess": "As configurações do tablet foram carregadas com sucesso",
         "deviceSettingsMissing": "Não foi possível encontrar configurações salvas para o tablet, carregando diretamente do xsetwacom",
         "deviceSettingsOutdatedSchema": "O schema do arquivo de configuração do tablet presente está desatualizado",
-        "devicesMissing": "Nenhum tablet foi encontrado"
+        "devicesMissing": "Nenhum tablet foi encontrado",
+        "profileNameEmpty": "O nome do perfil não pode estar vazio",
+        "profileCreated": "Perfil criado com sucesso"
     },
 
     "menubar": {
@@ -99,6 +103,12 @@
         },
         "goddess": {
             "title": "Deusa"
+        },
+        "profile": {
+            "title": "Perfil",
+            "tab": {
+                "name": "Nome"
+            }
         }
     }
 }
