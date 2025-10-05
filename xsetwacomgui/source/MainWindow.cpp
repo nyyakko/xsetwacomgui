@@ -756,13 +756,11 @@ Result<void> render_main_window(Context& context)
     auto profiles = context.settings.tablet.profiles;
     auto profileNames = fplus::keep_if([] (auto const& profile) { return profile != "INVALID"; }, fplus::get_map_keys(profiles));
 
-    ImGui::SetNextWindowPos({
-        previousX,
-        previousY - 35_scaled - (2 * ImGui::GetStyle().WindowPadding.y + 25_scaled + float(profileNames.size())*(ImGui::GetStyle().ItemSpacing.y + 25_scaled)) - 4 * ImGui::GetStyle().ItemSpacing.y
-    });
+    auto const popupOffsetY = 2 * ImGui::GetStyle().WindowPadding.y + 25_scaled + float(profileNames.size())*(ImGui::GetStyle().ItemSpacing.y + 25_scaled);
+    ImGui::SetNextWindowPos({ previousX, previousY - 35_scaled - popupOffsetY - 4 * ImGui::GetStyle().ItemSpacing.y });
     ImGui::SetNextWindowSize({ 200_scaled + 35, 0 });
-    static auto const maxProfilesPopupHeight = (2 * ImGui::GetStyle().WindowPadding.y + 25_scaled + 5*(ImGui::GetStyle().ItemSpacing.y + 25_scaled)) - 4 * ImGui::GetStyle().ItemSpacing.y;
-    ImGui::SetNextWindowSizeConstraints({}, { 200_scaled + 35, maxProfilesPopupHeight });
+    static auto const popupMaxHeight = 2 * ImGui::GetStyle().WindowPadding.y + 25_scaled + 5*(ImGui::GetStyle().ItemSpacing.y + 25_scaled);
+    ImGui::SetNextWindowSizeConstraints({}, { 200_scaled + 35, popupMaxHeight - 4 * ImGui::GetStyle().ItemSpacing.y });
     if (ImGui::BeginPopup("ProfilesPopup"))
     {
         static auto profileIndex = context.settings.tablet.profile == "INVALID" ? 0 : static_cast<int>(
