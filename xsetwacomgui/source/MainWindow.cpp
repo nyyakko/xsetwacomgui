@@ -545,7 +545,7 @@ Result<void> render_main_window(Context& context)
             case SettingsError::Type::PROFILE_NOT_FOUND: {
                 ImGui::PushToast(
                     TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Error)),
-                    "Could not find previously selected profile"
+                    TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Profile_Missing))
                 );
                 break;
             }
@@ -623,7 +623,7 @@ Result<void> render_main_window(Context& context)
                 case SettingsError::Type::PROFILE_NOT_FOUND: {
                     ImGui::PushToast(
                         TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Error)),
-                        "Could not find previously selected profile"
+                        TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Profile_Missing))
                     );
                     break;
                 }
@@ -782,7 +782,7 @@ Result<void> render_main_window(Context& context)
 
             if (i == 0)
             {
-                isProfileWindowOpen |= ImGui::Selectable("New Profile", false, 0, { 0, 25_scaled });
+                isProfileWindowOpen |= ImGui::Selectable(TRY(Localisation::get(context.settings.application.language, Localisation::New_Profile)), false, 0, { 0, 25_scaled });
             }
             else
             {
@@ -809,7 +809,7 @@ Result<void> render_main_window(Context& context)
         ImGui::SetNextWindowSize({ profileWindowWidth, profileWindowHeight });
         ImGui::SetNextWindowPos({ (static_cast<float>(windowWidth) - profileWindowWidth)/2, (static_cast<float>(windowHeight) - profileWindowHeight)/2 });
         ImGui::Begin(
-            "Profile",
+            TRY(Localisation::get(context.settings.application.language, Localisation::Window_Profile_Title)),
             &isProfileWindowOpen,
             ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
         );

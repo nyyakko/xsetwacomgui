@@ -20,10 +20,15 @@ public:
         Toast_Device_Settings_Load_Success,
         Toast_Device_Settings_Outdated_Schema,
         Toast_Device_Settings_Missing,
+        Toast_Device_Settings_Profile_Missing,
         Toast_Devices_Missing,
+        Toast_Profile_Name_Empty,
+        Toast_Profile_Created,
 
         Save,
         Save_Apply,
+        Create,
+        New_Profile,
 
         MenuBar_Settings,
         MenuBar_Settings_Application,
@@ -68,6 +73,9 @@ public:
         Window_Mappings_Tabs_Stylus_Button,
         Window_Mappings_Tabs_Pad_Title,
         Window_Mappings_Tabs_Pad_Button,
+
+        Window_Profile_Title,
+        Window_Profile_Tab_Name,
 
         Popup_Outdated_Device_Settings_Title,
         Popup_Outdated_Device_Settings_Text,
