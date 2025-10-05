@@ -17,7 +17,7 @@
 
 using namespace liberror;
 
-std::filesystem::path get_random_jahy()
+static std::filesystem::path get_random_jahy()
 {
     auto count = 0;
 

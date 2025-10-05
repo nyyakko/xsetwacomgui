@@ -42,11 +42,11 @@ Result<char const*> Localisation::get(std::string_view language, Message id)
                 { Localisation::Toast_Device_Settings_Missing, json["toast"]["deviceSettingsMissing"].get<std::string>() },
                 { Localisation::Toast_Device_Settings_Outdated_Schema, json["toast"]["deviceSettingsOutdatedSchema"].get<std::string>() },
 
-                { Localisation::MenuBar_Settings_Title, json["menubar"]["settings"]["title"].get<std::string>() },
-                { Localisation::MenuBar_Settings_Entry_Application, json["window"]["settings"]["title"].get<std::string>() },
+                { Localisation::MenuBar_Settings, json["menubar"]["settings"]["title"].get<std::string>() },
+                { Localisation::MenuBar_Settings_Application, json["window"]["settings"]["title"].get<std::string>() },
 
-                { Localisation::MenuBar_Other_Title, json["menubar"]["other"]["title"].get<std::string>() },
-                { Localisation::MenuBar_Other_Entry_Goddess, json["window"]["goddess"]["title"].get<std::string>() },
+                { Localisation::MenuBar_Other, json["menubar"]["other"]["title"].get<std::string>() },
+                { Localisation::MenuBar_Other_Goddess, json["window"]["goddess"]["title"].get<std::string>() },
 
                 { Localisation::Popup_Outdated_Device_Settings_Title, json["popup"]["outdatedDeviceSettings"]["title"].get<std::string>() },
                 { Localisation::Popup_Outdated_Device_Settings_Text, json["popup"]["outdatedDeviceSettings"]["text"].get<std::string>() },

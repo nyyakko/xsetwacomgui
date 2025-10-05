@@ -4,16 +4,26 @@
 #include "settings/TabletSettings.hpp"
 #include "platform/hid/X11/Display.hpp"
 
+struct Settings
+{
+    ApplicationSettings application;
+    TabletSettings tablet;
+};
+
+struct Tablet
+{
+    Device stylus;
+    Device pad;
+};
+
 struct Context
 {
-    ApplicationSettings& applicationSettings;
-    TabletSettings& tabletSettings;
+    Settings settings;
 
-    std::vector<Device>& devices;
-    std::vector<Display>& displays;
+    std::vector<Device> devices;
+    std::vector<Display> displays;
 
-    Device stylus {};
-    Device pad {};
+    Tablet tablet {};
     Display display {};
 
     bool handleOutdatedDeviceSettings = false;

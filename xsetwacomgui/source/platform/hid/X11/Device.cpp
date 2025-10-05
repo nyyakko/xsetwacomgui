@@ -140,8 +140,8 @@ Result<void> set_stylus_area(Device stylus, Device::Area area)
         stylus.id,
         std::round(area.offsetX),
         std::round(area.offsetY),
-        std::round(area.width),
-        std::round(area.height)
+        std::round(area.width + area.offsetX),
+        std::round(area.height + area.offsetY)
     );
     TRY(execute(command));
     return {};

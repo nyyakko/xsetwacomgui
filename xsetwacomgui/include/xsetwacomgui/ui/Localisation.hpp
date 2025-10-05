@@ -25,10 +25,10 @@ public:
         Save,
         Save_Apply,
 
-        MenuBar_Settings_Title,
-        MenuBar_Settings_Entry_Application,
-        MenuBar_Other_Title,
-        MenuBar_Other_Entry_Goddess,
+        MenuBar_Settings,
+        MenuBar_Settings_Application,
+        MenuBar_Other,
+        MenuBar_Other_Goddess,
 
         Window_Main_Tabs_Tablet_Title,
         Window_Main_Tabs_Tablet_Device,

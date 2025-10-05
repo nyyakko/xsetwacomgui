@@ -23,7 +23,7 @@ public:
     float scale = 1.0;
     Theme theme = Theme::DARK;
     std::string language = "en_us";
-    FontInfo font = { "Default", "Regular", "" };
+    Font font = { "Default", "Regular", "" };
 };
 
 liberror::Result<ApplicationSettings, SettingsError> load_application_settings();

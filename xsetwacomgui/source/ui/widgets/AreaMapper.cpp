@@ -9,7 +9,7 @@ static auto constexpr MAPPER_GRAB_RADIUS = 6;
 #define MAPPER_GRAB_COLOR               ImColor(ImGui::GetStyle().Colors[ImGuiCol_SliderGrab])
 #define MAPPER_GRAB_ACTIVE_COLOR        ImColor(ImGui::GetStyle().Colors[ImGuiCol_SliderGrabActive])
 
-static bool area_mapper_render_grabbers(ImDrawList* const drawList, ImRect frame, ImVec2 size, ImVec2 anchors[4], char const* label, bool fullArea = false, bool = false)
+static bool area_mapper_grabbers(ImDrawList* const drawList, ImRect frame, ImVec2 size, ImVec2 anchors[4], char const* label, bool fullArea = false, bool = false)
 {
     // FIXME: implement force proportion logic
     bool changed = false;
@@ -107,7 +107,7 @@ bool area_mapper(char const* label, ImVec2 anchors[4], ImVec2 size, ImRect* outP
             drawList->AddLine({ frame.Min.x, frame.Min.y + static_cast<float>(i) }, { frame.Max.x, frame.Min.y + static_cast<float>(i) }, MAPPER_GRID_COLOR);
         }
 
-        changed = area_mapper_render_grabbers(drawList, frame, size, anchors, label, forceFullArea, forceAspectRatio);
+        changed = area_mapper_grabbers(drawList, frame, size, anchors, label, forceFullArea, forceAspectRatio);
     }
 
     ImGui::EndGroup();
