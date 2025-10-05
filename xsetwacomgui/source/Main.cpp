@@ -237,7 +237,7 @@ Result<void> run_no_gui(Context& context)
 
         TRY(TabletSettings::Profile::load_to_tablet(context.settings.tablet.get_current_profile(), context.tablet, context.display));
 
-        fmt::println("Device settings loaded successfully");
+        spdlog::info("Device settings (profile: {}) loaded successfully", context.settings.tablet.profile);
     }
 
     while (true)
@@ -315,7 +315,7 @@ Result<void> run_no_gui(Context& context)
 
                 TRY(TabletSettings::Profile::load_to_tablet(context.settings.tablet.get_current_profile(), context.tablet, context.display));
 
-                spdlog::info("Device settings loaded successfully");
+                spdlog::info("Device settings (profile: {}) loaded successfully", context.settings.tablet.profile);
             }
 
             break;
