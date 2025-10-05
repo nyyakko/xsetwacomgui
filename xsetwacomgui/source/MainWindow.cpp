@@ -758,10 +758,10 @@ Result<void> render_main_window(Context& context)
 
     ImGui::SetNextWindowPos({
         previousX,
-        previousY - 35_scaled - (2 * ImGui::GetStyle().WindowPadding.y + 25_scaled + float(profileNames.size())*(ImGui::GetStyle().ItemSpacing.y + 25_scaled)) - ImGui::GetStyle().ItemSpacing.y
+        previousY - 35_scaled - (2 * ImGui::GetStyle().WindowPadding.y + 25_scaled + float(profileNames.size())*(ImGui::GetStyle().ItemSpacing.y + 25_scaled)) - 4 * ImGui::GetStyle().ItemSpacing.y
     });
     ImGui::SetNextWindowSize({ 200_scaled + 35, 0 });
-    static auto const maxProfilesPopupHeight = (2 * ImGui::GetStyle().WindowPadding.y + 25_scaled + 5*(ImGui::GetStyle().ItemSpacing.y + 25_scaled)) - ImGui::GetStyle().ItemSpacing.y;
+    static auto const maxProfilesPopupHeight = (2 * ImGui::GetStyle().WindowPadding.y + 25_scaled + 5*(ImGui::GetStyle().ItemSpacing.y + 25_scaled)) - 4 * ImGui::GetStyle().ItemSpacing.y;
     ImGui::SetNextWindowSizeConstraints({}, { 200_scaled + 35, maxProfilesPopupHeight });
     if (ImGui::BeginPopup("ProfilesPopup"))
     {
@@ -783,6 +783,13 @@ Result<void> render_main_window(Context& context)
             if (i == 0)
             {
                 isProfileWindowOpen |= ImGui::Selectable(TRY(Localisation::get(context.settings.application.language, Localisation::New_Profile)), false, 0, { 0, 25_scaled });
+
+                if (!profileNames.empty())
+                {
+                    ImGui::Spacing();
+                    ImGui::Separator();
+                    ImGui::Spacing();
+                }
             }
             else
             {
