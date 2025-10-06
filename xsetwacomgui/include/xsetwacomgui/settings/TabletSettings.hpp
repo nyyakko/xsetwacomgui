@@ -41,7 +41,6 @@ struct TabletProfile
     StylusSettings stylus {};
     PadSettings pad {};
     DisplaySettings display {};
-
 };
 
 liberror::Result<TabletProfile> make_default_profile(Tablet const& tablet, Display const& display);
