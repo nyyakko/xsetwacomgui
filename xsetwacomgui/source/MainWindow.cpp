@@ -753,8 +753,7 @@ Result<void> render_main_window(Context& context)
 
     static auto isProfileWindowOpen = false;
 
-    auto profiles = context.settings.tablet.profiles;
-    auto profileNames = fplus::keep_if([] (auto const& profile) { return profile != "INVALID"; }, fplus::get_map_keys(profiles));
+    auto profileNames = fplus::keep_if([] (auto const& profile) { return profile != "INVALID"; }, fplus::get_map_keys(context.settings.tablet.profiles));
 
     auto const popupOffsetY = 2 * ImGui::GetStyle().WindowPadding.y + 25_scaled + float(profileNames.size())*(ImGui::GetStyle().ItemSpacing.y + 25_scaled);
     ImGui::SetNextWindowPos({ previousX, previousY - 35_scaled - popupOffsetY - 4 * ImGui::GetStyle().ItemSpacing.y });
