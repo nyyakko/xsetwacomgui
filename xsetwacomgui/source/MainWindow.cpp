@@ -738,7 +738,7 @@ Result<void> render_main_window(Context& context)
     ImGui::SameLine();
 
     ImGui::SetCursorPosX(previousX + 200_scaled);
-    ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyle().Colors[ImGui::IsPopupOpen("ProfilesPopup", ImGuiPopupFlags_None) ? ImGuiCol_ButtonHovered : ImGuiCol_Button]);
+    ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyle().Colors[ImGui::IsPopupOpen("ProfilesPopup", ImGuiPopupFlags_None) ? ImGuiCol_ButtonHovered : ImGuiCol_FrameBg]);
     if (ImGui::Button("##Profiles", { 35, 35_scaled }))
     {
         ImGui::OpenPopup("ProfilesPopup");
