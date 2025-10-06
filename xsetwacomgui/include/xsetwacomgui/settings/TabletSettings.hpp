@@ -36,7 +36,18 @@ struct DisplaySettings
     bool forceAspectRatio = false;
 };
 
-struct TabletSettings
+struct TabletProfile
+{
+    StylusSettings stylus {};
+    PadSettings pad {};
+    DisplaySettings display {};
+
+};
+
+liberror::Result<TabletProfile> make_default_profile(Tablet const& tablet, Display const& display);
+liberror::Result<void> load_profile_to_tablet(TabletProfile const& profile, Tablet const& tablet, Display const& display);
+
+class TabletSettings
 {
 private:
     // Should be updated every time a change is made
@@ -46,24 +57,13 @@ private:
     friend void save_tablet_settings(TabletSettings const& settings);
 
 public:
-    struct Profile
-    {
-        StylusSettings stylus {};
-        PadSettings pad {};
-        DisplaySettings display {};
-
-        static liberror::Result<Profile> make_default(Tablet const& tablet, Display const& display);
-        static liberror::Result<void> load_to_tablet(Profile const& profile, Tablet const& tablet, Display const& display);
-    };
-
-public:
     inline constexpr auto& get_current_profile(this auto& self) { return self.profiles.at(self.profile); }
 
     inline constexpr auto* operator->() { return &profiles.at(profile); }
 
 public:
     std::string profile = "INVALID";
-    std::map<std::string, Profile> profiles { { "INVALID", {} } };
+    std::map<std::string, TabletProfile> profiles { { "INVALID", {} } };
 };
 
 liberror::Result<TabletSettings, SettingsError> load_tablet_settings();

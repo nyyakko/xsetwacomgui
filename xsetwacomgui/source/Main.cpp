@@ -235,7 +235,7 @@ Result<void> run_no_gui(Context& context)
 
         context.display = *std::ranges::find(context.displays, context.settings.tablet->display.name, &Display::name);
 
-        TRY(TabletSettings::Profile::load_to_tablet(context.settings.tablet.get_current_profile(), context.tablet, context.display));
+        TRY(load_profile_to_tablet(context.settings.tablet.get_current_profile(), context.tablet, context.display));
 
         spdlog::info("Device settings (profile: {}) loaded successfully", context.settings.tablet.profile);
     }
@@ -273,10 +273,10 @@ Result<void> run_no_gui(Context& context)
                 context.tablet.pad = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::PAD; }, context.devices).back();
                 context.display = TRY(get_primary_display());
 
-                context.settings.tablet.profiles.emplace("Default", TRY(TabletSettings::Profile::make_default(context.tablet, context.display)));
+                context.settings.tablet.profiles.emplace("Default", TRY(make_default_profile(context.tablet, context.display)));
                 context.settings.tablet.profile = "Default";
 
-                TRY(TabletSettings::Profile::load_to_tablet(context.settings.tablet.get_current_profile(), context.tablet, context.display));
+                TRY(load_profile_to_tablet(context.settings.tablet.get_current_profile(), context.tablet, context.display));
 
                 switch (result.error().message())
                 {
@@ -313,7 +313,7 @@ Result<void> run_no_gui(Context& context)
 
                 context.display = *std::ranges::find(context.displays, context.settings.tablet->display.name, &Display::name);
 
-                TRY(TabletSettings::Profile::load_to_tablet(context.settings.tablet.get_current_profile(), context.tablet, context.display));
+                TRY(load_profile_to_tablet(context.settings.tablet.get_current_profile(), context.tablet, context.display));
 
                 spdlog::info("Device settings (profile: {}) loaded successfully", context.settings.tablet.profile);
             }
@@ -387,7 +387,7 @@ Result<void> safe_main(std::span<char const*> const& arguments)
 
             context.display = *std::ranges::find(context.displays, context.settings.tablet->display.name, &Display::name);
 
-            TRY(TabletSettings::Profile::load_to_tablet(context.settings.tablet.get_current_profile(), context.tablet, context.display));
+            TRY(load_profile_to_tablet(context.settings.tablet.get_current_profile(), context.tablet, context.display));
 
             fmt::println("Device settings loaded successfully");
 

@@ -42,7 +42,7 @@ Result<TabletSettings, SettingsError> load_tablet_settings()
 
         for (auto const& profileJson : json["profiles"])
         {
-            TabletSettings::Profile profile {};
+            TabletProfile profile {};
 
             profile.display.name             = profileJson.begin().value()["display"]["name"].get<std::string>();
             profile.display.forceFullArea    = profileJson.begin().value()["display"]["forceFullArea"].get<bool>();
@@ -207,9 +207,9 @@ Result<void> migrate_tablet_settings(TabletSettings const& settings)
     return {};
 }
 
-Result<TabletSettings::Profile> TabletSettings::Profile::make_default(Tablet const& tablet, Display const& display)
+Result<TabletProfile> make_default_profile(Tablet const& tablet, Display const& display)
 {
-    TabletSettings::Profile profile;
+    TabletProfile profile;
 
     profile.stylus.name = tablet.stylus.name;
     profile.stylus.handedness = Device::Handedness::RIGHT;
@@ -232,7 +232,7 @@ Result<TabletSettings::Profile> TabletSettings::Profile::make_default(Tablet con
     return profile;
 }
 
-Result<void> TabletSettings::Profile::load_to_tablet(TabletSettings::Profile const& profile, Tablet const& tablet, Display const& display)
+Result<void> load_profile_to_tablet(TabletProfile const& profile, Tablet const& tablet, Display const& display)
 {
     TRY(set_stylus_area(tablet.stylus, profile.stylus.area));
     TRY(set_stylus_handedness(tablet.stylus, profile.stylus.handedness));
