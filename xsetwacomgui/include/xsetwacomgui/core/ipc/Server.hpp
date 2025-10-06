@@ -46,8 +46,6 @@ private:
     libcoro::Task<void> message_receiver();
     libcoro::Task<void> message_sender();
 
-    void give_up_and_die();
-
 private:
     mqd_t server_;
     MutexProtected<std::unordered_map<std::string, mqd_t>> clients_;

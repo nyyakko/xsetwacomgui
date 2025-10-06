@@ -97,12 +97,6 @@ void IPCServer::stop()
     mq_unlink(SERVER_NAME);
 }
 
-void IPCServer::give_up_and_die()
-{
-    stop();
-    std::exit(EXIT_FAILURE);
-}
-
 Task<void> IPCServer::message_receiver()
 {
     while (true)
@@ -180,7 +174,7 @@ Task<void> IPCServer::message_sender()
             if (mq_send(clientFd, action.data(), action.size(), 0) < 0)
             {
                 spdlog::error("IPCServer::{}: mq_send failed: {}", __FUNCTION__, strerror(errno));
-                give_up_and_die();
+                std::exit(EXIT_FAILURE);
             }
         }
     }
