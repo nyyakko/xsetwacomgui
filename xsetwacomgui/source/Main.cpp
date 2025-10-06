@@ -286,7 +286,7 @@ Result<void> run_no_gui(Context& context)
                     break;
                 }
                 case SettingsError::Type::PROFILE_NOT_FOUND: {
-                    TRY(push_system_toast("Could not find previously selected profile"));
+                    TRY(push_system_toast(TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Profile_Missing))));
                     break;
                 }
                 case SettingsError::Type::READ_FAILURE: {
