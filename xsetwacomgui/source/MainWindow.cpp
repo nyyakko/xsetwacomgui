@@ -8,6 +8,7 @@
 #include "platform/udev/UDevDevice.hpp"
 #include "ProfileWindow.hpp"
 #include "ui/components/AreaMapper.hpp"
+#include "ui/components/DropupButton.hpp"
 #include "ui/Localisation.hpp"
 #include "ui/Scaling.hpp"
 
@@ -77,7 +78,7 @@ static Result<void> render_region_mappers(Context& context)
     static const ImVec2 displayMapperSize { 20 * 16_scaled, 20 * 9_scaled };
     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - displayMapperSize.x)/2);
     static ImRect displayMapperPosition {};
-    context.hasChangedDisplayArea = AreaMapper(TRY(Localisation::get(context.settings.application.language, Localisation::Window_Main_Tabs_Display_Display)), displayAreaAnchors, displayMapperSize, &displayMapperPosition, context.settings.tablet.display.forceFullArea, context.settings.tablet.display.forceAspectRatio);
+    context.hasChangedDisplayArea = AreaMapper(TRY(Localisation::get(context.settings.application.language, Localisation::Window_Main_Tabs_Display_Display)), displayAreaAnchors, displayMapperSize, &displayMapperPosition, context.settings.tablet->display.forceFullArea, context.settings.tablet->display.forceAspectRatio);
     ImGui::SetCursorPosX(cursorX);
 
     if (context.hasChangedDisplayArea && context.settings.tablet->display.name != "INVALID")
@@ -133,7 +134,7 @@ static Result<void> render_region_mappers(Context& context)
     static const ImVec2 deviceMapperSize { 15 * 16_scaled, 15 * 9_scaled };
     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - deviceMapperSize.x)/2);
     static ImRect deviceMapperPosition {};
-    context.hasChangedDeviceArea = AreaMapper(TRY(Localisation::get(context.settings.application.language, Localisation::Window_Main_Tabs_Tablet_Device)), deviceAreaAnchors, deviceMapperSize, &deviceMapperPosition, context.settings.tablet.stylus.forceFullArea, context.settings.tablet.stylus.forceAspectRatio);
+    context.hasChangedDeviceArea = AreaMapper(TRY(Localisation::get(context.settings.application.language, Localisation::Window_Main_Tabs_Tablet_Device)), deviceAreaAnchors, deviceMapperSize, &deviceMapperPosition, context.settings.tablet->stylus.forceFullArea, context.settings.tablet->stylus.forceAspectRatio);
     ImGui::SetCursorPosX(cursorX);
 
     if (context.hasChangedDeviceArea && context.settings.tablet->stylus.name != "INVALID")
@@ -717,10 +718,23 @@ Result<void> render_main_window(Context& context)
         ImGui::EndTabBar();
     }
 
-    auto [previousX, previousY] = ImGui::GetCursorPos();
+    auto profiles = fplus::keep_if([] (auto const& profile) { return profile != "INVALID"; }, fplus::get_map_keys(context.settings.tablet.profiles));
+    auto profileNames = fplus::transform([] (auto const& profile) { return profile.c_str(); }, profiles);
+    std::vector<std::vector<char const*>> items { { TRY(Localisation::get(context.settings.application.language, Localisation::New_Profile)) }, profileNames };
+    static std::pair<int, int> itemIndex { 1, context.settings.tablet.profile == "INVALID" ? 0 : std::distance(profileNames.begin(), std::ranges::find(profileNames, context.settings.tablet.profile)) };
 
+    if (context.hasChangedProfile)
+    {
+        itemIndex = { 1, std::distance(profileNames.begin(), std::ranges::find(profileNames, context.settings.tablet.profile)) };
+    }
+
+    static auto isProfileWindowOpen = false;
+
+    auto previousPosition = ImGui::GetCursorPos();
     ImGui::SetCursorPosY(ImGui::GetWindowHeight() - (35_scaled + ImGui::GetStyle().WindowPadding.x));
-    if (ImGui::Button(TRY(Localisation::get(context.settings.application.language, Localisation::Save_Apply)), { 200_scaled, 35_scaled }))
+    auto [pressedPrimary, pressedSecondary] = DropupButton(TRY(Localisation::get(context.settings.application.language, Localisation::Save_Apply)), &itemIndex, items, { 200_scaled, 35_scaled });
+    ImGui::SetCursorPos(previousPosition);
+    if (pressedPrimary)
     {
         ImGui::PushToast(
             TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),
@@ -729,80 +743,18 @@ Result<void> render_main_window(Context& context)
         save_tablet_settings(context.settings.tablet);
         TRY(TabletSettings::Profile::load_to_tablet(context.settings.tablet.get_current_profile(), context.tablet, context.display));
     }
-
-    auto* drawList = ImGui::GetWindowDrawList();
-
-    auto previouslyPreviousY = previousY;
-    previousY = ImGui::GetCursorPosY();
-
-    ImGui::SameLine();
-
-    ImGui::SetCursorPosX(previousX + 200_scaled);
-    ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyle().Colors[ImGui::IsPopupOpen("ProfilesPopup", ImGuiPopupFlags_None) ? ImGuiCol_ButtonHovered : ImGuiCol_FrameBg]);
-    if (ImGui::Button("##Profiles", { 35, 35_scaled }))
+    else if (pressedSecondary)
     {
-        ImGui::OpenPopup("ProfilesPopup");
-    }
-    auto center = ImGui::GetCursorPos();
-    center.x += previousX + 200_scaled + 35.f/2 - ImGui::GetStyle().WindowPadding.x;
-    center.y -= (35_scaled + ImGui::GetStyle().WindowPadding.y)/2;
-    static auto constexpr radius = 8.f;
-    center.y -= radius * 0.25f;
-    drawList->AddTriangleFilled(center + ImVec2(0, 1) * radius, center + ImVec2(-0.866f, -0.5f) * radius, center + ImVec2(0.866f, -0.5f) * radius, ImGui::GetColorU32(ImGuiCol_Text));
-    ImGui::PopStyleColor();
-
-    static auto isProfileWindowOpen = false;
-
-    auto profileNames = fplus::keep_if([] (auto const& profile) { return profile != "INVALID"; }, fplus::get_map_keys(context.settings.tablet.profiles));
-
-    auto const popupOffsetY = 2 * ImGui::GetStyle().WindowPadding.y + 25_scaled + float(profileNames.size())*(ImGui::GetStyle().ItemSpacing.y + 25_scaled);
-    ImGui::SetNextWindowPos({ previousX, previousY - 35_scaled - popupOffsetY - 4 * ImGui::GetStyle().ItemSpacing.y });
-    ImGui::SetNextWindowSize({ 200_scaled + 35, 0 });
-    static auto const popupMaxHeight = 2 * ImGui::GetStyle().WindowPadding.y + 25_scaled + 5*(ImGui::GetStyle().ItemSpacing.y + 25_scaled);
-    ImGui::SetNextWindowSizeConstraints({}, { 200_scaled + 35, popupMaxHeight - 4 * ImGui::GetStyle().ItemSpacing.y });
-    if (ImGui::BeginPopup("ProfilesPopup"))
-    {
-        static auto profileIndex = context.settings.tablet.profile == "INVALID" ? 0 : static_cast<int>(
-            std::distance(profileNames.begin(), std::ranges::find(profileNames, context.settings.tablet.profile))
-        );
-
-        if (context.hasChangedProfile)
+        if (itemIndex.first == 0 && itemIndex.second == 0)
         {
-            profileIndex = static_cast<int>(
-                std::distance(profileNames.begin(), std::ranges::find(profileNames, context.settings.tablet.profile))
-            );
+            isProfileWindowOpen = true;
+            itemIndex = { 1, std::distance(profileNames.begin(), std::ranges::find(profileNames, context.settings.tablet.profile)) };
         }
-
-        for (auto i = 0; i < int(profileNames.size()) + 1; i += 1)
+        else
         {
-            ImGui::PushID(i);
-
-            if (i == 0)
-            {
-                isProfileWindowOpen |= ImGui::Selectable(TRY(Localisation::get(context.settings.application.language, Localisation::New_Profile)), false, 0, { 0, 25_scaled });
-
-                if (!profileNames.empty())
-                {
-                    ImGui::Spacing();
-                    ImGui::Separator();
-                    ImGui::Spacing();
-                }
-            }
-            else
-            {
-                auto const profileName = profileNames.at(size_t(i-1));
-
-                if (context.hasChangedProfile = ImGui::Selectable(profileName.c_str(), i-1 == profileIndex, 0, { 0, 25_scaled }); context.hasChangedProfile)
-                {
-                    context.settings.tablet.profile = profileName;
-                    profileIndex = i-1;
-                }
-            }
-
-            ImGui::PopID();
+            context.settings.tablet.profile = profileNames.at(size_t(itemIndex.second));
+            context.hasChangedProfile = true;
         }
-
-        ImGui::EndPopup();
     }
 
     if (isProfileWindowOpen)
@@ -823,7 +775,6 @@ Result<void> render_main_window(Context& context)
         ImGui::End();
     }
 
-    ImGui::SetCursorPos({ previousX, previouslyPreviousY });
     ImGui::EndDisabled();
 
     if (message.has_value())
