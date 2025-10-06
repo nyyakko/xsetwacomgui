@@ -106,7 +106,7 @@ static Result<void> render_languages_tab(Context& context)
 
 Result<void> render_settings_window(Context& context)
 {
-    if (ImGui::BeginTabBar("##Tabs_2"))
+    if (ImGui::BeginTabBar("##Tabs"))
     {
         if (ImGui::BeginTabItem(TRY(Localisation::get(context.settings.application.language, Localisation::Window_Settings_Tabs_Appearance_Title))))
         {

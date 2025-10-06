@@ -69,7 +69,7 @@ static Result<void> render_pad_tab(Context& context)
 
 Result<void> render_mappings_window(Context& context)
 {
-    if (ImGui::BeginTabBar("##Tabs_2"))
+    if (ImGui::BeginTabBar("##Tabs"))
     {
         if (ImGui::BeginTabItem(TRY(Localisation::get(context.settings.application.language, Localisation::Window_Mappings_Tabs_Stylus_Title))))
         {

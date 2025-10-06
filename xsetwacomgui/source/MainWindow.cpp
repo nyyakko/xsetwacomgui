@@ -701,7 +701,7 @@ Result<void> render_main_window(Context& context)
     }
     ImGui::EndGroup();
 
-    if (ImGui::BeginTabBar("##Tabs_1"))
+    if (ImGui::BeginTabBar("##Tabs"))
     {
         if (ImGui::BeginTabItem(TRY(Localisation::get(context.settings.application.language, Localisation::Window_Main_Tabs_Tablet_Title))))
         {
