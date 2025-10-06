@@ -14,8 +14,7 @@ using namespace liberror;
 
 static std::vector<char const*>& the_action_names()
 {
-    static auto actions = magic_enum::enum_names<X11Action>();
-    static auto actionNames = [] {
+    static auto actionNames = [actions = magic_enum::enum_names<X11Action>()] {
         std::vector<char const*> result {};
         std::transform(actions.begin(), actions.end(), std::back_inserter(result), [] (auto& action) {
             return action.data();
