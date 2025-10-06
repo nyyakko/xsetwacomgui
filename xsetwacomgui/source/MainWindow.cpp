@@ -74,7 +74,7 @@ static Result<void> render_region_mappers(Context& context)
     static const ImVec2 displayMapperSize { 20 * 16_scaled, 20 * 9_scaled };
     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - displayMapperSize.x)/2);
     static ImRect displayMapperPosition {};
-    context.hasChangedDisplayArea = area_mapper(TRY(Localisation::get(context.settings.application.language, Localisation::Window_Main_Tabs_Display_Display)), displayAreaAnchors, displayMapperSize, &displayMapperPosition, context.settings.tablet.display.forceFullArea, context.settings.tablet.display.forceAspectRatio);
+    context.hasChangedDisplayArea = AreaMapper(TRY(Localisation::get(context.settings.application.language, Localisation::Window_Main_Tabs_Display_Display)), displayAreaAnchors, displayMapperSize, &displayMapperPosition, context.settings.tablet.display.forceFullArea, context.settings.tablet.display.forceAspectRatio);
     ImGui::SetCursorPosX(cursorX);
 
     if (context.hasChangedDisplayArea && context.settings.tablet.display.name != "INVALID")
@@ -130,7 +130,7 @@ static Result<void> render_region_mappers(Context& context)
     static const ImVec2 deviceMapperSize { 15 * 16_scaled, 15 * 9_scaled };
     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - deviceMapperSize.x)/2);
     static ImRect deviceMapperPosition {};
-    context.hasChangedDeviceArea = area_mapper(TRY(Localisation::get(context.settings.application.language, Localisation::Window_Main_Tabs_Tablet_Device)), deviceAreaAnchors, deviceMapperSize, &deviceMapperPosition, context.settings.tablet.stylus.forceFullArea, context.settings.tablet.stylus.forceAspectRatio);
+    context.hasChangedDeviceArea = AreaMapper(TRY(Localisation::get(context.settings.application.language, Localisation::Window_Main_Tabs_Tablet_Device)), deviceAreaAnchors, deviceMapperSize, &deviceMapperPosition, context.settings.tablet.stylus.forceFullArea, context.settings.tablet.stylus.forceAspectRatio);
     ImGui::SetCursorPosX(cursorX);
 
     if (context.hasChangedDeviceArea && context.settings.tablet.stylus.name != "INVALID")
