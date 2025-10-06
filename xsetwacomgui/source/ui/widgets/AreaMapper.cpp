@@ -65,7 +65,7 @@ static bool area_mapper_grabbers(ImDrawList* const drawList, ImRect frame, ImVec
     return changed;
 }
 
-bool area_mapper(char const* label, ImVec2 anchors[4], ImVec2 size, ImRect* outPosition, bool forceFullArea, bool forceAspectRatio)
+bool AreaMapper(char const* label, ImVec2 anchors[4], ImVec2 size, ImRect* outPosition, bool forceFullArea, bool forceAspectRatio)
 {
     auto window = ImGui::GetCurrentWindow();
 
