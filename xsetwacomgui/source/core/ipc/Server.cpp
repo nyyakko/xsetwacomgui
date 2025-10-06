@@ -50,6 +50,9 @@ Result<IPCServer> IPCServer::create()
     {
         if (errno == EEXIST)
         {
+#if DEBUG
+            spdlog::info("IPCServer::{}: server already running", __FUNCTION__);
+#endif
             std::exit(EXIT_FAILURE);
         }
 
@@ -106,7 +109,7 @@ Task<void> IPCServer::message_receiver()
         if (!result.has_value())
         {
             spdlog::error("{}", result.error().message());
-            give_up_and_die();
+            std::exit(EXIT_FAILURE);
         }
 
         std::string_view buffer(*result);
@@ -119,7 +122,7 @@ Task<void> IPCServer::message_receiver()
             if (clientFd < 0)
             {
                 spdlog::error("IPCServer::{}: mq_open failed: {}", __FUNCTION__, strerror(errno));
-                give_up_and_die();
+                std::exit(EXIT_FAILURE);
             }
 
             clients_.with([=] (auto& clients) {
@@ -169,13 +172,17 @@ Task<void> IPCServer::message_sender()
 
         auto action = magic_enum::enum_name<UDevDevice::Action>(device.get_action());
 
-        for (auto [_, clientFd] : clients_.with([] (auto const& clients) { return clients; }))
+        for (auto [clientName, clientFd] : clients_.with([] (auto const& clients) { return clients; }))
         {
             if (mq_send(clientFd, action.data(), action.size(), 0) < 0)
             {
                 spdlog::error("IPCServer::{}: mq_send failed: {}", __FUNCTION__, strerror(errno));
                 std::exit(EXIT_FAILURE);
             }
+
+#if DEBUG
+            spdlog::info("IPCServer::{}: sent message to client {}", __FUNCTION__, clientName);
+#endif
         }
     }
 
