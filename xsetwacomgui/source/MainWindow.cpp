@@ -583,8 +583,7 @@ Result<void> render_main_window(Context& context)
         hasTriedToInitializeDeviceSettings = true;
     }
 
-    static auto messageReceiver = IPCClient::the().receive_message_async();
-    auto message = messageReceiver.next();
+    auto message = TRY(IPCClient::the().receive_message_async());
 
     if (message.has_value())
     {

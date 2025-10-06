@@ -118,29 +118,23 @@ Result<void> IPCClient::disconnect()
     return {};
 }
 
-Generator<std::optional<std::array<char, 32>>> IPCClient::receive_message_async()
+Result<std::optional<std::array<char, 32>>> IPCClient::receive_message_async()
 {
-    while (true)
+    std::array<char, 32> buffer {};
+
+    auto bytesRead = mq_receive(this->client_, buffer.data(), buffer.size(), nullptr);
+
+    if (bytesRead >= 0 || errno == EAGAIN)
     {
-        std::array<char, 32> buffer {};
-
-        auto bytesRead = mq_receive(this->client_, buffer.data(), buffer.size(), nullptr);
-
-        if (bytesRead >= 0 || errno == EAGAIN)
-        {
-            if (bytesRead < 0 && errno == EAGAIN)
-                co_yield std::nullopt;
-            else
-                co_yield buffer;
-        }
+        if (bytesRead < 0 && errno == EAGAIN)
+            return std::nullopt;
         else
-        {
-            spdlog::error("IPCClient::{}: mq_receive failed: {}", __FUNCTION__, strerror(errno));
-            std::exit(EXIT_FAILURE);
-        }
+            return buffer;
     }
-
-    co_return;
+    else
+    {
+        return make_error("IPCClient::{}: mq_receive failed: {}", __FUNCTION__, strerror(errno));
+    }
 }
 
 Result<std::array<char, 32>> IPCClient::receive_message()
@@ -149,8 +143,7 @@ Result<std::array<char, 32>> IPCClient::receive_message()
 
     if (mq_receive(this->client_, buffer.data(), buffer.size(), nullptr) < 0)
     {
-        spdlog::error("IPCClient::{}: mq_receive failed: {}", __FUNCTION__, strerror(errno));
-        std::exit(EXIT_FAILURE);
+        return make_error("IPCClient::{}: mq_receive failed: {}", __FUNCTION__, strerror(errno));
     }
 
     return buffer;

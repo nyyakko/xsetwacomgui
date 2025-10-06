@@ -1,6 +1,5 @@
 #pragma once
 
-#include <libcoro/Generator.hpp>
 #include <liberror/Result.hpp>
 #include <liberror/Try.hpp>
 #include <libcoro/Task.hpp>
@@ -46,7 +45,7 @@ public:
     liberror::Result<void> connect();
     liberror::Result<void> disconnect();
 
-    libcoro::Generator<std::optional<std::array<char, 32>>> receive_message_async();
+    liberror::Result<std::optional<std::array<char, 32>>> receive_message_async();
     liberror::Result<std::array<char, 32>> receive_message();
 
 private:
