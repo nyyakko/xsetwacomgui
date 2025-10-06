@@ -40,43 +40,58 @@ Result<TabletSettings, SettingsError> load_tablet_settings()
             return make_error<SettingsError>(SettingsError::Type::OUTDATED_SCHEMA);
         }
 
-        settings.display.name             = json["display"]["name"].get<std::string>();
-        settings.display.forceFullArea    = json["display"]["forceFullArea"].get<bool>();
-        settings.display.forceAspectRatio = json["display"]["forceAspectRatio"].get<bool>();
-        settings.display.area.offsetX     = json["display"]["area"]["offsetX"].get<float>();
-        settings.display.area.offsetY     = json["display"]["area"]["offsetY"].get<float>();
-        settings.display.area.width       = json["display"]["area"]["width"].get<float>();
-        settings.display.area.height      = json["display"]["area"]["height"].get<float>();
-        settings.stylus.name              = json["tablet"]["stylus"]["name"].get<std::string>();
-        settings.stylus.handedness        = *magic_enum::enum_cast<Device::Handedness>(json["tablet"]["stylus"]["handedness"].get<std::string>());
-        settings.stylus.forceFullArea     = json["tablet"]["stylus"]["forceFullArea"].get<bool>();
-        settings.stylus.forceAspectRatio  = json["tablet"]["stylus"]["forceAspectRatio"].get<bool>();
-        settings.stylus.area.offsetX      = json["tablet"]["stylus"]["area"]["offsetX"].get<float>();
-        settings.stylus.area.offsetY      = json["tablet"]["stylus"]["area"]["offsetY"].get<float>();
-        settings.stylus.area.width        = json["tablet"]["stylus"]["area"]["width"].get<float>();
-        settings.stylus.area.height       = json["tablet"]["stylus"]["area"]["height"].get<float>();
-        settings.stylus.pressure.minX     = json["tablet"]["stylus"]["pressure"]["minX"].get<float>();
-        settings.stylus.pressure.minY     = json["tablet"]["stylus"]["pressure"]["minY"].get<float>();
-        settings.stylus.pressure.maxX     = json["tablet"]["stylus"]["pressure"]["maxX"].get<float>();
-        settings.stylus.pressure.maxY     = json["tablet"]["stylus"]["pressure"]["maxY"].get<float>();
-
-        for (auto const& entry : json["tablet"]["stylus"]["mappings"])
+        for (auto const& profileJson : json["profiles"])
         {
-            settings.stylus.mappings.insert({
-                std::atoi(entry.items().begin().key().data()),
-                *magic_enum::enum_cast<X11Action>(entry.items().begin().value().get<std::string>())
-            });
+            TabletSettings::Profile profile {};
+
+            profile.display.name             = profileJson.begin().value()["display"]["name"].get<std::string>();
+            profile.display.forceFullArea    = profileJson.begin().value()["display"]["forceFullArea"].get<bool>();
+            profile.display.forceAspectRatio = profileJson.begin().value()["display"]["forceAspectRatio"].get<bool>();
+            profile.display.area.offsetX     = profileJson.begin().value()["display"]["area"]["offsetX"].get<float>();
+            profile.display.area.offsetY     = profileJson.begin().value()["display"]["area"]["offsetY"].get<float>();
+            profile.display.area.width       = profileJson.begin().value()["display"]["area"]["width"].get<float>();
+            profile.display.area.height      = profileJson.begin().value()["display"]["area"]["height"].get<float>();
+
+            profile.stylus.name              = profileJson.begin().value()["tablet"]["stylus"]["name"].get<std::string>();
+            profile.stylus.handedness        = *magic_enum::enum_cast<Device::Handedness>(profileJson.begin().value()["tablet"]["stylus"]["handedness"].get<std::string>());
+            profile.stylus.forceFullArea     = profileJson.begin().value()["tablet"]["stylus"]["forceFullArea"].get<bool>();
+            profile.stylus.forceAspectRatio  = profileJson.begin().value()["tablet"]["stylus"]["forceAspectRatio"].get<bool>();
+            profile.stylus.area.offsetX      = profileJson.begin().value()["tablet"]["stylus"]["area"]["offsetX"].get<float>();
+            profile.stylus.area.offsetY      = profileJson.begin().value()["tablet"]["stylus"]["area"]["offsetY"].get<float>();
+            profile.stylus.area.width        = profileJson.begin().value()["tablet"]["stylus"]["area"]["width"].get<float>();
+            profile.stylus.area.height       = profileJson.begin().value()["tablet"]["stylus"]["area"]["height"].get<float>();
+            profile.stylus.pressure.minX     = profileJson.begin().value()["tablet"]["stylus"]["pressure"]["minX"].get<float>();
+            profile.stylus.pressure.minY     = profileJson.begin().value()["tablet"]["stylus"]["pressure"]["minY"].get<float>();
+            profile.stylus.pressure.maxX     = profileJson.begin().value()["tablet"]["stylus"]["pressure"]["maxX"].get<float>();
+            profile.stylus.pressure.maxY     = profileJson.begin().value()["tablet"]["stylus"]["pressure"]["maxY"].get<float>();
+
+            for (auto const& entry : profileJson.begin().value()["tablet"]["stylus"]["mappings"])
+            {
+                profile.stylus.mappings.insert({
+                    std::atoi(entry.items().begin().key().data()),
+                    *magic_enum::enum_cast<X11Action>(entry.items().begin().value().get<std::string>())
+                });
+            }
+
+            profile.pad.name = profileJson.begin().value()["tablet"]["pad"]["name"].get<std::string>();
+
+            for (auto const& entry : profileJson.begin().value()["tablet"]["pad"]["mappings"])
+            {
+                profile.pad.mappings.insert({
+                    std::atoi(entry.items().begin().key().data()),
+                    *magic_enum::enum_cast<X11Action>(entry.items().begin().value().get<std::string>())
+                });
+            }
+
+            settings.profiles.emplace(profileJson.begin().key(), profile);
         }
 
-        settings.pad.name = json["tablet"]["pad"]["name"].get<std::string>();
-
-        for (auto const& entry : json["tablet"]["pad"]["mappings"])
+        if (!settings.profiles.contains(json["profile"].get<std::string>()))
         {
-            settings.pad.mappings.insert({
-                std::atoi(entry.items().begin().key().data()),
-                *magic_enum::enum_cast<X11Action>(entry.items().begin().value().get<std::string>())
-            });
+            return make_error<SettingsError>(SettingsError::Type::PROFILE_NOT_FOUND);
         }
+
+        settings.profile = json["profile"].get<std::string>();
     }
     catch (std::exception const& error)
     {
@@ -90,70 +105,82 @@ void save_tablet_settings(TabletSettings const& settings)
 {
     nlohmann::ordered_json json {
         { "version", TabletSettings::SCHEMA_VERSION },
-        {
-            "tablet", {
-                {
-                    "stylus", {
-                        { "name", settings.stylus.name },
-                        { "handedness", magic_enum::enum_name<Device::Handedness>(settings.stylus.handedness) },
-                        {
-                            "area", {
-                                { "offsetX", settings.stylus.area.offsetX },
-                                { "offsetY", settings.stylus.area.offsetY },
-                                { "width", settings.stylus.area.width },
-                                { "height", settings.stylus.area.height }
-                            }
-                        },
-                        {
-                            "pressure", {
-                                { "minX", settings.stylus.pressure.minX },
-                                { "minY", settings.stylus.pressure.minY },
-                                { "maxX", settings.stylus.pressure.maxX },
-                                { "maxY", settings.stylus.pressure.maxY },
-                            }
-                        },
-                        { "forceFullArea", settings.stylus.forceFullArea },
-                        { "forceAspectRatio", settings.stylus.forceAspectRatio },
-                        { "mappings", nlohmann::json::array() }
-                    }
-                },
-                {
-                    "pad", {
-                        { "name", settings.pad.name },
-                        { "mappings", nlohmann::json::array() }
-                    }
-                },
-            }
-        },
-        {
-            "display", {
-                { "name", settings.display.name },
-                {
-                    "area", {
-                        { "offsetX", settings.display.area.offsetX },
-                        { "offsetY", settings.display.area.offsetY },
-                        { "width", settings.display.area.width },
-                        { "height", settings.display.area.height }
-                    }
-                },
-                { "forceFullArea", settings.display.forceFullArea },
-                { "forceAspectRatio", settings.display.forceAspectRatio },
-            }
-        }
+        { "profile", settings.profile },
+        { "profiles", nlohmann::json::array() }
     };
 
-    for (auto const& mapping : settings.stylus.mappings)
+    for (auto const& [name, profile] : settings.profiles | std::views::filter([] (auto const& profile) { return profile.first != "INVALID"; }))
     {
-        nlohmann::ordered_json mappingJson {};
-        mappingJson[std::to_string(mapping.first)] = magic_enum::enum_name<X11Action>(mapping.second);
-        json["tablet"]["stylus"]["mappings"].push_back(mappingJson);
-    }
+        nlohmann::ordered_json profileJson {};
 
-    for (auto const& mapping : settings.pad.mappings)
-    {
-        nlohmann::ordered_json mappingJson {};
-        mappingJson[std::to_string(mapping.first)] = magic_enum::enum_name<X11Action>(mapping.second);
-        json["tablet"]["pad"]["mappings"].push_back(mappingJson);
+        profileJson[name] = {
+            {
+                "tablet", {
+                    {
+                        "stylus", {
+                            { "name", profile.stylus.name },
+                            { "handedness", magic_enum::enum_name<Device::Handedness>(profile.stylus.handedness) },
+                            {
+                                "area", {
+                                    { "offsetX", profile.stylus.area.offsetX },
+                                    { "offsetY", profile.stylus.area.offsetY },
+                                    { "width", profile.stylus.area.width },
+                                    { "height", profile.stylus.area.height }
+                                }
+                            },
+                            {
+                                "pressure", {
+                                    { "minX", profile.stylus.pressure.minX },
+                                    { "minY", profile.stylus.pressure.minY },
+                                    { "maxX", profile.stylus.pressure.maxX },
+                                    { "maxY", profile.stylus.pressure.maxY },
+                                }
+                            },
+                            { "forceFullArea", profile.stylus.forceFullArea },
+                            { "forceAspectRatio", profile.stylus.forceAspectRatio },
+                            { "mappings", nlohmann::json::array() }
+                        }
+                    },
+                    {
+                        "pad", {
+                            { "name", profile.pad.name },
+                            { "mappings", nlohmann::json::array() }
+                        }
+                    },
+                }
+            },
+            {
+                "display", {
+                    { "name", profile.display.name },
+                    {
+                        "area", {
+                            { "offsetX", profile.display.area.offsetX },
+                            { "offsetY", profile.display.area.offsetY },
+                            { "width", profile.display.area.width },
+                            { "height", profile.display.area.height }
+                        }
+                    },
+                    { "forceFullArea", profile.display.forceFullArea },
+                    { "forceAspectRatio", profile.display.forceAspectRatio },
+                }
+            }
+        };
+
+        for (auto const& mapping : profile.stylus.mappings)
+        {
+            nlohmann::ordered_json mappingJson {};
+            mappingJson[std::to_string(mapping.first)] = magic_enum::enum_name<X11Action>(mapping.second);
+            profileJson[name]["tablet"]["stylus"]["mappings"].push_back(mappingJson);
+        }
+
+        for (auto const& mapping : profile.pad.mappings)
+        {
+            nlohmann::ordered_json mappingJson {};
+            mappingJson[std::to_string(mapping.first)] = magic_enum::enum_name<X11Action>(mapping.second);
+            profileJson[name]["tablet"]["pad"]["mappings"].push_back(mappingJson);
+        }
+
+        json["profiles"].push_back(profileJson);
     }
 
     std::ofstream stream(TABLET_SETTINGS_FILE);
@@ -176,6 +203,47 @@ Result<void> migrate_tablet_settings(TabletSettings const& settings)
     if (!execResult.second.empty()) return make_error(execResult.second);
     std::ofstream stream(get_application_config_path() / "conflict.diff");
     stream << execResult.first;
+
+    return {};
+}
+
+Result<TabletSettings::Profile> TabletSettings::Profile::make_default(Tablet const& tablet, Display const& display)
+{
+    TabletSettings::Profile profile;
+
+    profile.stylus.name = tablet.stylus.name;
+    profile.stylus.handedness = Device::Handedness::RIGHT;
+    profile.stylus.area = TRY(get_stylus_default_area(tablet.stylus));
+    profile.stylus.pressure = { 0, 0, 1, 1 };
+    profile.stylus.forceFullArea = false;
+    profile.stylus.forceAspectRatio = false;
+    // FIXME: find a way to get the default mappings
+    profile.stylus.mappings = TRY(get_device_button_mappings(tablet.stylus));
+
+    profile.pad.name = tablet.pad.name;
+    // FIXME: find a way to get the default mappings
+    profile.pad.mappings = TRY(get_device_button_mappings(tablet.pad));
+
+    profile.display.name = display.name;
+    profile.display.area = { 0, 0, display.area.width, display.area.height };
+    profile.display.forceFullArea = false;
+    profile.display.forceAspectRatio = false;
+
+    return profile;
+}
+
+Result<void> TabletSettings::Profile::load_to_tablet(TabletSettings::Profile const& profile, Tablet const& tablet, Display const& display)
+{
+    TRY(set_stylus_area(tablet.stylus, profile.stylus.area));
+    TRY(set_stylus_handedness(tablet.stylus, profile.stylus.handedness));
+    TRY(set_stylus_pressure_curve(tablet.stylus, profile.stylus.pressure));
+    TRY(set_device_button_mappings(tablet.stylus, profile.stylus.mappings));
+    auto displayArea = profile.display.area;
+    displayArea.offsetX += display.area.offsetX;
+    displayArea.offsetY += display.area.offsetY;
+    TRY(set_stylus_output_from_display_area(tablet.stylus, displayArea));
+
+    TRY(set_device_button_mappings(tablet.pad, profile.pad.mappings));
 
     return {};
 }

@@ -40,15 +40,30 @@ struct TabletSettings
 {
 private:
     // Should be updated every time a change is made
-    static constexpr auto SCHEMA_VERSION = "1.3";
+    static constexpr auto SCHEMA_VERSION = "1.4";
 
     friend liberror::Result<TabletSettings, SettingsError> load_tablet_settings();
     friend void save_tablet_settings(TabletSettings const& settings);
 
 public:
-    StylusSettings stylus {};
-    PadSettings pad {};
-    DisplaySettings display {};
+    struct Profile
+    {
+        StylusSettings stylus {};
+        PadSettings pad {};
+        DisplaySettings display {};
+
+        static liberror::Result<Profile> make_default(Tablet const& tablet, Display const& display);
+        static liberror::Result<void> load_to_tablet(Profile const& profile, Tablet const& tablet, Display const& display);
+    };
+
+public:
+    inline constexpr auto& get_current_profile(this auto& self) { return self.profiles.at(self.profile); }
+
+    inline constexpr auto* operator->() { return &profiles.at(profile); }
+
+public:
+    std::string profile = "INVALID";
+    std::map<std::string, Profile> profiles { { "INVALID", {} } };
 };
 
 liberror::Result<TabletSettings, SettingsError> load_tablet_settings();

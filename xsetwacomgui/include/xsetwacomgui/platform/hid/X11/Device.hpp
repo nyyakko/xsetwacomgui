@@ -29,6 +29,12 @@ struct Device
     Kind kind;
 };
 
+struct Tablet
+{
+    Device stylus;
+    Device pad;
+};
+
 liberror::Result<std::vector<Device>> get_available_devices();
 
 liberror::Result<Device::Pressure> get_stylus_pressure_curve(Device stylus);

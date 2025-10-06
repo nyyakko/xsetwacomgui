@@ -29,6 +29,8 @@ Result<char const*> Localisation::get(std::string_view language, Message id)
             the()[language.data()] = {
                 { Localisation::Save, json["save"].get<std::string>() },
                 { Localisation::Save_Apply, json["saveApply"].get<std::string>() },
+                { Localisation::Create, json["create"].get<std::string>() },
+                { Localisation::New_Profile, json["newProfile"].get<std::string>() },
 
                 { Localisation::Toast_Success, json["toast"]["success"].get<std::string>() },
                 { Localisation::Toast_Warning, json["toast"]["warning"].get<std::string>() },
@@ -41,6 +43,8 @@ Result<char const*> Localisation::get(std::string_view language, Message id)
                 { Localisation::Toast_Device_Settings_Load_Success, json["toast"]["deviceSettingsLoadSuccess"].get<std::string>() },
                 { Localisation::Toast_Device_Settings_Missing, json["toast"]["deviceSettingsMissing"].get<std::string>() },
                 { Localisation::Toast_Device_Settings_Outdated_Schema, json["toast"]["deviceSettingsOutdatedSchema"].get<std::string>() },
+                { Localisation::Toast_Profile_Name_Empty, json["toast"]["profileNameEmpty"].get<std::string>() },
+                { Localisation::Toast_Profile_Created, json["toast"]["profileCreated"].get<std::string>() },
 
                 { Localisation::MenuBar_Settings, json["menubar"]["settings"]["title"].get<std::string>() },
                 { Localisation::MenuBar_Settings_Application, json["window"]["settings"]["title"].get<std::string>() },
@@ -91,6 +95,9 @@ Result<char const*> Localisation::get(std::string_view language, Message id)
                 { Localisation::Window_Mappings_Tabs_Stylus_Button, json["window"]["mappings"]["tabs"]["stylus"]["button"].get<std::string>() },
                 { Localisation::Window_Mappings_Tabs_Pad_Title, json["window"]["mappings"]["tabs"]["pad"]["title"].get<std::string>() },
                 { Localisation::Window_Mappings_Tabs_Pad_Button, json["window"]["mappings"]["tabs"]["pad"]["button"].get<std::string>() },
+
+                { Localisation::Window_Profile_Title, json["window"]["profile"]["title"].get<std::string>() },
+                { Localisation::Window_Profile_Tab_Name, json["window"]["profile"]["tab"]["name"].get<std::string>() },
             };
         }
         catch (std::exception const& error)
