@@ -1,20 +1,6 @@
 #pragma once
 
-#include "settings/ApplicationSettings.hpp"
-#include "settings/TabletSettings.hpp"
-#include "platform/hid/X11/Display.hpp"
-
-struct Settings
-{
-    ApplicationSettings application;
-    TabletSettings tablet;
-};
-
-struct Tablet
-{
-    Device stylus;
-    Device pad;
-};
+#include "settings/Settings.hpp"
 
 struct Context
 {
@@ -39,7 +25,5 @@ struct Context
     bool hasChangedFont = false;
     bool hasChangedFontStyle = false;
     bool hasChangedTheme = false;
+    bool hasChangedProfile = false;
 };
-
-liberror::Result<void> apply_settings_from_driver_to_context(Context& context);
-liberror::Result<void> apply_settings_from_context_to_device(Context const& context);

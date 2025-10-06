@@ -1,6 +1,8 @@
 {
     "save": "Save",
     "saveApply": "Save & Apply",
+    "create": "Create",
+    "newProfile": "New Profile",
 
     "toast": {
         "success": "Success",
@@ -13,7 +15,9 @@
         "deviceSettingsLoadSuccess": "Device settings loaded successfully",
         "deviceSettingsMissing": "No saved device settings could be found, reading directly from xsetwacom instead",
         "deviceSettingsOutdatedSchema": "The schema of the present tablet configuration file is outdated",
-        "devicesMissing": "No devices were found"
+        "devicesMissing": "No devices were found",
+        "profileNameEmpty": "Profile name cannot be empty",
+        "profileCreated": "Profile created successfully"
     },
 
     "menubar": {
@@ -99,6 +103,12 @@
         },
         "goddess": {
             "title": "Goddess"
+        },
+        "profile": {
+            "title": "Profile",
+            "tab": {
+                "name": "Name"
+            }
         }
     }
 }

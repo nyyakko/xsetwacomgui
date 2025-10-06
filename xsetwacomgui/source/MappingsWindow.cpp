@@ -27,7 +27,7 @@ static std::vector<char const*>& the_action_names()
 
 static Result<void> render_stylus_tab(Context& context)
 {
-    for (auto const& mapping : context.settings.tablet.stylus.mappings)
+    for (auto const& mapping : context.settings.tablet->stylus.mappings)
     {
         ImGui::Text("%s %d", TRY(Localisation::get(context.settings.application.language, Localisation::Window_Mappings_Tabs_Stylus_Button)), mapping.first);
         ImGui::SameLine();
@@ -39,7 +39,7 @@ static Result<void> render_stylus_tab(Context& context)
         ImGui::SetNextItemWidth(180_scaled);
         if (ImGui::Combo(fmt::format("##Actions##Stylus##{}", mapping.first).data(), &actionIndexes[size_t(mapping.first)], the_action_names().data(), int(the_action_names().size())))
         {
-            context.settings.tablet.stylus.mappings.at(mapping.first) = *magic_enum::enum_cast<X11Action>(actionIndexes[size_t(mapping.first)]+1);
+            context.settings.tablet->stylus.mappings.at(mapping.first) = *magic_enum::enum_cast<X11Action>(actionIndexes[size_t(mapping.first)]+1);
         }
     }
 
@@ -48,7 +48,7 @@ static Result<void> render_stylus_tab(Context& context)
 
 static Result<void> render_pad_tab(Context& context)
 {
-    for (auto const& mapping : context.settings.tablet.pad.mappings)
+    for (auto const& mapping : context.settings.tablet->pad.mappings)
     {
         ImGui::Text("%s %d", TRY(Localisation::get(context.settings.application.language, Localisation::Window_Mappings_Tabs_Pad_Button)), mapping.first);
         ImGui::SameLine();
@@ -60,7 +60,7 @@ static Result<void> render_pad_tab(Context& context)
         ImGui::SetNextItemWidth(180_scaled);
         if (ImGui::Combo(fmt::format("##Actions##Pad##{}", mapping.first).data(), &actionIndexes[size_t(mapping.first)], the_action_names().data(), int(the_action_names().size())))
         {
-            context.settings.tablet.pad.mappings.at(mapping.first) = *magic_enum::enum_cast<X11Action>(actionIndexes[size_t(mapping.first)]+1);
+            context.settings.tablet->pad.mappings.at(mapping.first) = *magic_enum::enum_cast<X11Action>(actionIndexes[size_t(mapping.first)]+1);
         }
     }
 
@@ -69,7 +69,7 @@ static Result<void> render_pad_tab(Context& context)
 
 Result<void> render_mappings_window(Context& context)
 {
-    if (ImGui::BeginTabBar("##Tabs_3"))
+    if (ImGui::BeginTabBar("##Tabs_2"))
     {
         if (ImGui::BeginTabItem(TRY(Localisation::get(context.settings.application.language, Localisation::Window_Mappings_Tabs_Stylus_Title))))
         {
@@ -95,7 +95,7 @@ Result<void> render_mappings_window(Context& context)
             TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Saved))
         );
         save_tablet_settings(context.settings.tablet);
-        TRY(apply_settings_from_context_to_device(context));
+        TRY(TabletSettings::Profile::load_to_tablet(context.settings.tablet.get_current_profile(), context.tablet, context.display));
     }
     ImGui::SetCursorPos(previousCursorPosition);
 

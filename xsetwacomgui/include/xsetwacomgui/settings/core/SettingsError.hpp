@@ -11,7 +11,8 @@ public:
         FILE_NOT_FOUND,
         READ_FAILURE,
         WRITE_FAILURE,
-        OUTDATED_SCHEMA
+        OUTDATED_SCHEMA,
+        PROFILE_NOT_FOUND
     };
 
 public:

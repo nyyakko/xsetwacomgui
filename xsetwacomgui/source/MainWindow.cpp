@@ -1,12 +1,16 @@
+#include <spdlog/spdlog.h>
+
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "MainWindow.hpp"
 
 #include "core/ipc/Client.hpp"
 #include "MappingsWindow.hpp"
 #include "platform/udev/UDevDevice.hpp"
+#include "ProfileWindow.hpp"
+#include "ui/components/AreaMapper.hpp"
+#include "ui/components/DropupButton.hpp"
 #include "ui/Localisation.hpp"
 #include "ui/Scaling.hpp"
-#include "ui/widgets/AreaMapper.hpp"
 
 #include <fplus/fplus.hpp>
 #include <imgui/extensions/imgui_bezier.hpp>
@@ -34,33 +38,33 @@ static Result<void> render_region_mappers(Context& context)
     static ImVec2 displayAreaAnchors[4] { { -1, -1 }, { -1, -1 }, { -1, -1 }, { -1, -1 } };
     static auto displayDefaultArea = context.displays.empty() ? Display::Area {} : Display::Area { 0, 0, context.display.area.width, context.display.area.height };
 
-    if (context.hasChangedDisplayArea && context.settings.tablet.display.forceFullArea && context.settings.tablet.display.name != "INVALID")
+    if (context.hasChangedDisplayArea && context.settings.tablet->display.forceFullArea && context.settings.tablet->display.name != "INVALID")
     {
-        context.settings.tablet.display.area = displayDefaultArea;
+        context.settings.tablet->display.area = displayDefaultArea;
     }
 
-    if (context.hasChangedDisplay && context.settings.tablet.display.name != "INVALID")
+    if (context.hasChangedDisplay && context.settings.tablet->display.name != "INVALID")
     {
         displayDefaultArea = Display::Area { 0, 0, context.display.area.width, context.display.area.height };
     }
 
-    if (!(context.displays.empty() || context.settings.tablet.display.name == "INVALID"))
+    if (!(context.displays.empty() || context.settings.tablet->display.name == "INVALID"))
     {
         displayAreaAnchors[0] = {
-            context.settings.tablet.display.area.offsetX / displayDefaultArea.width,
-            context.settings.tablet.display.area.offsetY / displayDefaultArea.height
+            context.settings.tablet->display.area.offsetX / displayDefaultArea.width,
+            context.settings.tablet->display.area.offsetY / displayDefaultArea.height
         };
         displayAreaAnchors[1] = {
-            context.settings.tablet.display.area.offsetX / displayDefaultArea.width,
-            (context.settings.tablet.display.area.height + context.settings.tablet.display.area.offsetY) / displayDefaultArea.height
+            context.settings.tablet->display.area.offsetX / displayDefaultArea.width,
+            (context.settings.tablet->display.area.height + context.settings.tablet->display.area.offsetY) / displayDefaultArea.height
         };
         displayAreaAnchors[2] = {
-            (context.settings.tablet.display.area.width + context.settings.tablet.display.area.offsetX) / displayDefaultArea.width,
-            context.settings.tablet.display.area.offsetY / displayDefaultArea.height
+            (context.settings.tablet->display.area.width + context.settings.tablet->display.area.offsetX) / displayDefaultArea.width,
+            context.settings.tablet->display.area.offsetY / displayDefaultArea.height
         };
         displayAreaAnchors[3] = {
-            (context.settings.tablet.display.area.width + context.settings.tablet.display.area.offsetX) / displayDefaultArea.width,
-            (context.settings.tablet.display.area.height + context.settings.tablet.display.area.offsetY) / displayDefaultArea.height
+            (context.settings.tablet->display.area.width + context.settings.tablet->display.area.offsetX) / displayDefaultArea.width,
+            (context.settings.tablet->display.area.height + context.settings.tablet->display.area.offsetY) / displayDefaultArea.height
         };
     }
     else
@@ -74,12 +78,12 @@ static Result<void> render_region_mappers(Context& context)
     static const ImVec2 displayMapperSize { 20 * 16_scaled, 20 * 9_scaled };
     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - displayMapperSize.x)/2);
     static ImRect displayMapperPosition {};
-    context.hasChangedDisplayArea = area_mapper(TRY(Localisation::get(context.settings.application.language, Localisation::Window_Main_Tabs_Display_Display)), displayAreaAnchors, displayMapperSize, &displayMapperPosition, context.settings.tablet.display.forceFullArea, context.settings.tablet.display.forceAspectRatio);
+    context.hasChangedDisplayArea = AreaMapper(TRY(Localisation::get(context.settings.application.language, Localisation::Window_Main_Tabs_Display_Display)), displayAreaAnchors, displayMapperSize, &displayMapperPosition, context.settings.tablet->display.forceFullArea, context.settings.tablet->display.forceAspectRatio);
     ImGui::SetCursorPosX(cursorX);
 
-    if (context.hasChangedDisplayArea && context.settings.tablet.display.name != "INVALID")
+    if (context.hasChangedDisplayArea && context.settings.tablet->display.name != "INVALID")
     {
-        context.settings.tablet.display.area = {
+        context.settings.tablet->display.area = {
             .offsetX = displayAreaAnchors[0].x * displayDefaultArea.width,
             .offsetY = displayAreaAnchors[0].y * displayDefaultArea.height,
             .width   = (displayAreaAnchors[2].x - displayAreaAnchors[0].x) * displayDefaultArea.width,
@@ -90,33 +94,33 @@ static Result<void> render_region_mappers(Context& context)
     static ImVec2 deviceAreaAnchors[4] { { -1, -1 }, { -1, -1 }, { -1, -1 }, { -1, -1 } };
     static auto deviceDefaultArea = context.devices.empty() ? Device::Area {} : TRY(get_stylus_default_area(context.tablet.stylus));
 
-    if (context.hasChangedDeviceArea && context.settings.tablet.stylus.forceFullArea && context.settings.tablet.stylus.name != "INVALID")
+    if (context.hasChangedDeviceArea && context.settings.tablet->stylus.forceFullArea && context.settings.tablet->stylus.name != "INVALID")
     {
-        context.settings.tablet.stylus.area = deviceDefaultArea;
+        context.settings.tablet->stylus.area = deviceDefaultArea;
     }
 
-    if (context.hasChangedDevice && context.settings.tablet.stylus.name != "INVALID")
+    if (context.hasChangedDevice && context.settings.tablet->stylus.name != "INVALID")
     {
         deviceDefaultArea = TRY(get_stylus_default_area(context.tablet.stylus));
     }
 
-    if (!(context.devices.empty() || context.settings.tablet.stylus.name == "INVALID"))
+    if (!(context.devices.empty() || context.settings.tablet->stylus.name == "INVALID"))
     {
         deviceAreaAnchors[0] = {
-            context.settings.tablet.stylus.area.offsetX / deviceDefaultArea.width,
-            context.settings.tablet.stylus.area.offsetY / deviceDefaultArea.height
+            context.settings.tablet->stylus.area.offsetX / deviceDefaultArea.width,
+            context.settings.tablet->stylus.area.offsetY / deviceDefaultArea.height
         };
         deviceAreaAnchors[1] = {
-            context.settings.tablet.stylus.area.offsetX / deviceDefaultArea.width,
-            (context.settings.tablet.stylus.area.height + context.settings.tablet.stylus.area.offsetY) / deviceDefaultArea.height
+            context.settings.tablet->stylus.area.offsetX / deviceDefaultArea.width,
+            (context.settings.tablet->stylus.area.height + context.settings.tablet->stylus.area.offsetY) / deviceDefaultArea.height
         };
         deviceAreaAnchors[2] = {
-            (context.settings.tablet.stylus.area.width + context.settings.tablet.stylus.area.offsetX) / deviceDefaultArea.width,
-            context.settings.tablet.stylus.area.offsetY / deviceDefaultArea.height
+            (context.settings.tablet->stylus.area.width + context.settings.tablet->stylus.area.offsetX) / deviceDefaultArea.width,
+            context.settings.tablet->stylus.area.offsetY / deviceDefaultArea.height
         };
         deviceAreaAnchors[3] = {
-            (context.settings.tablet.stylus.area.width + context.settings.tablet.stylus.area.offsetX) / deviceDefaultArea.width,
-            (context.settings.tablet.stylus.area.height + context.settings.tablet.stylus.area.offsetY) / deviceDefaultArea.height
+            (context.settings.tablet->stylus.area.width + context.settings.tablet->stylus.area.offsetX) / deviceDefaultArea.width,
+            (context.settings.tablet->stylus.area.height + context.settings.tablet->stylus.area.offsetY) / deviceDefaultArea.height
         };
     }
     else
@@ -130,12 +134,12 @@ static Result<void> render_region_mappers(Context& context)
     static const ImVec2 deviceMapperSize { 15 * 16_scaled, 15 * 9_scaled };
     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - deviceMapperSize.x)/2);
     static ImRect deviceMapperPosition {};
-    context.hasChangedDeviceArea = area_mapper(TRY(Localisation::get(context.settings.application.language, Localisation::Window_Main_Tabs_Tablet_Device)), deviceAreaAnchors, deviceMapperSize, &deviceMapperPosition, context.settings.tablet.stylus.forceFullArea, context.settings.tablet.stylus.forceAspectRatio);
+    context.hasChangedDeviceArea = AreaMapper(TRY(Localisation::get(context.settings.application.language, Localisation::Window_Main_Tabs_Tablet_Device)), deviceAreaAnchors, deviceMapperSize, &deviceMapperPosition, context.settings.tablet->stylus.forceFullArea, context.settings.tablet->stylus.forceAspectRatio);
     ImGui::SetCursorPosX(cursorX);
 
-    if (context.hasChangedDeviceArea && context.settings.tablet.stylus.name != "INVALID")
+    if (context.hasChangedDeviceArea && context.settings.tablet->stylus.name != "INVALID")
     {
-        context.settings.tablet.stylus.area = {
+        context.settings.tablet->stylus.area = {
             .offsetX = deviceAreaAnchors[0].x * deviceDefaultArea.width,
             .offsetY = deviceAreaAnchors[0].y * deviceDefaultArea.height,
             .width   = (deviceAreaAnchors[2].x - deviceAreaAnchors[0].x) * deviceDefaultArea.width,
@@ -159,7 +163,7 @@ static Result<void> render_tablet_tab(Context& context)
 
     static auto deviceDefaultArea = context.devices.empty() ? Device::Area {} : TRY(get_stylus_default_area(context.tablet.stylus));
 
-    if (context.hasChangedDevice && context.settings.tablet.stylus.name != "INVALID")
+    if (context.hasChangedDevice && context.settings.tablet->stylus.name != "INVALID")
     {
         deviceDefaultArea = TRY(get_stylus_default_area(context.tablet.stylus));
     }
@@ -168,14 +172,14 @@ static Result<void> render_tablet_tab(Context& context)
     {
         auto devices = fplus::keep_if([] (auto const& device) { return device.kind == Device::Kind::STYLUS; }, context.devices);
         auto deviceNames = fplus::transform([] (auto const& device) { return device.name.data(); }, devices);
-        static auto deviceIndex = context.settings.tablet.stylus.name == "INVALID" ? 0 : static_cast<int>(
-            std::distance(devices.begin(), std::ranges::find(devices, context.settings.tablet.stylus.name, &Device::name))
+        static auto deviceIndex = context.settings.tablet->stylus.name == "INVALID" ? 0 : static_cast<int>(
+            std::distance(devices.begin(), std::ranges::find(devices, context.settings.tablet->stylus.name, &Device::name))
         );
 
         if (context.hasChangedDevice)
         {
-            deviceIndex = context.settings.tablet.stylus.name == "INVALID" ? 0 : static_cast<int>(
-                std::distance(devices.begin(), std::ranges::find(devices, context.settings.tablet.stylus.name, &Device::name))
+            deviceIndex = context.settings.tablet->stylus.name == "INVALID" ? 0 : static_cast<int>(
+                std::distance(devices.begin(), std::ranges::find(devices, context.settings.tablet->stylus.name, &Device::name))
             );
         }
 
@@ -187,22 +191,22 @@ static Result<void> render_tablet_tab(Context& context)
         if (context.hasChangedDevice)
         {
             context.tablet.stylus = context.devices.at(static_cast<size_t>(deviceIndex));
-            context.settings.tablet.stylus.name = context.tablet.stylus.name;
-            context.settings.tablet.stylus.area = TRY(get_stylus_default_area(context.tablet.stylus));
-            context.settings.tablet.stylus.pressure = { 0, 0, 1, 1 };
-            context.settings.tablet.stylus.forceFullArea = false;
-            context.settings.tablet.stylus.forceAspectRatio = false;
-            context.settings.tablet.stylus.handedness = Device::Handedness::RIGHT;
+            context.settings.tablet->stylus.name = context.tablet.stylus.name;
+            context.settings.tablet->stylus.area = TRY(get_stylus_default_area(context.tablet.stylus));
+            context.settings.tablet->stylus.pressure = { 0, 0, 1, 1 };
+            context.settings.tablet->stylus.forceFullArea = false;
+            context.settings.tablet->stylus.forceAspectRatio = false;
+            context.settings.tablet->stylus.handedness = Device::Handedness::RIGHT;
         }
 
-        ImGui::BeginDisabled(context.settings.tablet.stylus.forceFullArea);
+        ImGui::BeginDisabled(context.settings.tablet->stylus.forceFullArea);
         {
             ImGui::BeginGroup();
             {
                 ImGui::AlignTextToFramePadding();
                 ImGui::Text("%s", TRY(Localisation::get(context.settings.application.language, Localisation::Window_Main_Tabs_Tablet_Width)));
                 ImGui::SetNextItemWidth(150_scaled);
-                context.hasChangedDeviceArea |= ImGui::InputFloat("##TabletWidth", &context.settings.tablet.stylus.area.width, 0.f, 0.f, "%.0f");
+                context.hasChangedDeviceArea |= ImGui::InputFloat("##TabletWidth", &context.settings.tablet->stylus.area.width, 0.f, 0.f, "%.0f");
             }
             ImGui::EndGroup();
             ImGui::SameLine();
@@ -211,7 +215,7 @@ static Result<void> render_tablet_tab(Context& context)
                 ImGui::AlignTextToFramePadding();
                 ImGui::Text("%s", TRY(Localisation::get(context.settings.application.language, Localisation::Window_Main_Tabs_Tablet_Height)));
                 ImGui::SetNextItemWidth(150_scaled);
-                context.hasChangedDeviceArea |= ImGui::InputFloat("##TabletHeight", &context.settings.tablet.stylus.area.height, 0.f, 0.f, "%.0f");
+                context.hasChangedDeviceArea |= ImGui::InputFloat("##TabletHeight", &context.settings.tablet->stylus.area.height, 0.f, 0.f, "%.0f");
             }
             ImGui::EndGroup();
         }
@@ -221,7 +225,7 @@ static Result<void> render_tablet_tab(Context& context)
                 ImGui::AlignTextToFramePadding();
                 ImGui::Text("%s", TRY(Localisation::get(context.settings.application.language, Localisation::Window_Main_Tabs_Tablet_OffsetX)));
                 ImGui::SetNextItemWidth(150_scaled);
-                context.hasChangedDeviceArea |= ImGui::InputFloat("##TabletOffsetX", &context.settings.tablet.stylus.area.offsetX, 0.f, 0.f, "%.0f");
+                context.hasChangedDeviceArea |= ImGui::InputFloat("##TabletOffsetX", &context.settings.tablet->stylus.area.offsetX, 0.f, 0.f, "%.0f");
             }
             ImGui::EndGroup();
             ImGui::SameLine();
@@ -230,7 +234,7 @@ static Result<void> render_tablet_tab(Context& context)
                 ImGui::AlignTextToFramePadding();
                 ImGui::Text("%s", TRY(Localisation::get(context.settings.application.language, Localisation::Window_Main_Tabs_Tablet_OffsetY)));
                 ImGui::SetNextItemWidth(150_scaled);
-                context.hasChangedDeviceArea |= ImGui::InputFloat("##TabletOffsetY", &context.settings.tablet.stylus.area.offsetY, 0.f, 0.f, "%.0f");
+                context.hasChangedDeviceArea |= ImGui::InputFloat("##TabletOffsetY", &context.settings.tablet->stylus.area.offsetY, 0.f, 0.f, "%.0f");
             }
             ImGui::EndGroup();
         }
@@ -245,18 +249,18 @@ static Result<void> render_tablet_tab(Context& context)
                 TRY(Localisation::get(context.settings.application.language, Localisation::Window_Main_Tabs_Tablet_Orientation_Right)),
             };
             ImGui::SetNextItemWidth(150_scaled);
-            static auto orientationIndex = static_cast<int>(context.settings.tablet.stylus.handedness);
+            static auto orientationIndex = static_cast<int>(context.settings.tablet->stylus.handedness);
 
             if (context.hasChangedDeviceHandedness)
             {
-                orientationIndex = static_cast<int>(context.settings.tablet.stylus.handedness);
+                orientationIndex = static_cast<int>(context.settings.tablet->stylus.handedness);
             }
 
             context.hasChangedDeviceHandedness |= ImGui::Combo("##Orientations", &orientationIndex, orientations, std::size(orientations));
 
             if (context.hasChangedDeviceHandedness)
             {
-                context.settings.tablet.stylus.handedness = Device::Handedness(orientationIndex);
+                context.settings.tablet->stylus.handedness = Device::Handedness(orientationIndex);
             }
 
             ImGui::SameLine();
@@ -285,9 +289,9 @@ static Result<void> render_tablet_tab(Context& context)
 
         ImGui::BeginGroup();
         {
-            context.hasChangedDeviceArea |= ImGui::Checkbox(TRY(Localisation::get(context.settings.application.language, Localisation::Window_Main_Tabs_Tablet_FullArea)), &context.settings.tablet.stylus.forceFullArea);
+            context.hasChangedDeviceArea |= ImGui::Checkbox(TRY(Localisation::get(context.settings.application.language, Localisation::Window_Main_Tabs_Tablet_FullArea)), &context.settings.tablet->stylus.forceFullArea);
             ImGui::BeginDisabled();
-            ImGui::Checkbox(TRY(Localisation::get(context.settings.application.language, Localisation::Window_Main_Tabs_Tablet_ForceProportions)), &context.settings.tablet.stylus.forceAspectRatio);
+            ImGui::Checkbox(TRY(Localisation::get(context.settings.application.language, Localisation::Window_Main_Tabs_Tablet_ForceProportions)), &context.settings.tablet->stylus.forceAspectRatio);
             ImGui::EndDisabled();
         }
         ImGui::EndGroup();
@@ -298,12 +302,12 @@ static Result<void> render_tablet_tab(Context& context)
     {
         static float pressureAnchors[4] = {};
 
-        if (!context.devices.empty() && context.settings.tablet.stylus.name != "INVALID")
+        if (!context.devices.empty() && context.settings.tablet->stylus.name != "INVALID")
         {
-            pressureAnchors[0] = context.settings.tablet.stylus.pressure.minX;
-            pressureAnchors[1] = context.settings.tablet.stylus.pressure.minY;
-            pressureAnchors[2] = context.settings.tablet.stylus.pressure.maxX;
-            pressureAnchors[3] = context.settings.tablet.stylus.pressure.maxY;
+            pressureAnchors[0] = context.settings.tablet->stylus.pressure.minX;
+            pressureAnchors[1] = context.settings.tablet->stylus.pressure.minY;
+            pressureAnchors[2] = context.settings.tablet->stylus.pressure.maxX;
+            pressureAnchors[3] = context.settings.tablet->stylus.pressure.maxY;
         }
         else
         {
@@ -318,18 +322,18 @@ static Result<void> render_tablet_tab(Context& context)
 
         if (context.hasChangedDevicePressure)
         {
-            context.settings.tablet.stylus.pressure = { pressureAnchors[0], pressureAnchors[1], pressureAnchors[2], pressureAnchors[3] };
+            context.settings.tablet->stylus.pressure = { pressureAnchors[0], pressureAnchors[1], pressureAnchors[2], pressureAnchors[3] };
         }
     }
     ImGui::EndGroup();
 
-    if (context.hasChangedDeviceArea && context.settings.tablet.stylus.name != "INVALID")
+    if (context.hasChangedDeviceArea && context.settings.tablet->stylus.name != "INVALID")
     {
-        context.settings.tablet.stylus.area = {
-            .offsetX = std::clamp(context.settings.tablet.stylus.area.offsetX, 0.f, deviceDefaultArea.width),
-            .offsetY = std::clamp(context.settings.tablet.stylus.area.offsetY, 0.f, deviceDefaultArea.height),
-            .width   = std::clamp(context.settings.tablet.stylus.area.width, 0.f, deviceDefaultArea.width),
-            .height  = std::clamp(context.settings.tablet.stylus.area.height, 0.f, deviceDefaultArea.height)
+        context.settings.tablet->stylus.area = {
+            .offsetX = std::clamp(context.settings.tablet->stylus.area.offsetX, 0.f, deviceDefaultArea.width),
+            .offsetY = std::clamp(context.settings.tablet->stylus.area.offsetY, 0.f, deviceDefaultArea.height),
+            .width   = std::clamp(context.settings.tablet->stylus.area.width, 0.f, deviceDefaultArea.width),
+            .height  = std::clamp(context.settings.tablet->stylus.area.height, 0.f, deviceDefaultArea.height)
         };
     }
 
@@ -342,7 +346,7 @@ static Result<void> render_display_tab(Context& context)
 
     static auto displayDefaultArea = context.displays.empty() ? Display::Area {} : Display::Area { 0, 0, context.display.area.width, context.display.area.height };
 
-    if (context.hasChangedDisplay && context.settings.tablet.display.name != "INVALID")
+    if (context.hasChangedDisplay && context.settings.tablet->display.name != "INVALID")
     {
         displayDefaultArea = Display::Area { 0, 0, context.display.area.width, context.display.area.height };
     }
@@ -350,14 +354,14 @@ static Result<void> render_display_tab(Context& context)
     ImGui::BeginGroup();
     {
         auto displaysNames = fplus::transform([] (auto const& display) { return display.name.data(); }, context.displays);
-        static auto displayIndex = context.settings.tablet.display.name == "INVALID" ? 0 : static_cast<int>(
-            std::distance(context.displays.begin(), std::ranges::find(context.displays, context.settings.tablet.display.name, &Display::name))
+        static auto displayIndex = context.settings.tablet->display.name == "INVALID" ? 0 : static_cast<int>(
+            std::distance(context.displays.begin(), std::ranges::find(context.displays, context.settings.tablet->display.name, &Display::name))
         );
 
         if (context.hasChangedDisplay)
         {
-            displayIndex = context.settings.tablet.display.name == "INVALID" ? 0 : static_cast<int>(
-                std::distance(context.displays.begin(), std::ranges::find(context.displays, context.settings.tablet.display.name, &Display::name))
+            displayIndex = context.settings.tablet->display.name == "INVALID" ? 0 : static_cast<int>(
+                std::distance(context.displays.begin(), std::ranges::find(context.displays, context.settings.tablet->display.name, &Display::name))
             );
         }
 
@@ -369,20 +373,20 @@ static Result<void> render_display_tab(Context& context)
         if (context.hasChangedDisplay)
         {
             context.display = context.displays.at(static_cast<size_t>(displayIndex));
-            context.settings.tablet.display.name = context.display.name;
-            context.settings.tablet.display.area = Display::Area { 0, 0, context.display.area.width, context.display.area.height };
-            context.settings.tablet.display.forceFullArea = false;
-            context.settings.tablet.display.forceAspectRatio = false;
+            context.settings.tablet->display.name = context.display.name;
+            context.settings.tablet->display.area = Display::Area { 0, 0, context.display.area.width, context.display.area.height };
+            context.settings.tablet->display.forceFullArea = false;
+            context.settings.tablet->display.forceAspectRatio = false;
         }
 
-        ImGui::BeginDisabled(context.settings.tablet.display.forceFullArea);
+        ImGui::BeginDisabled(context.settings.tablet->display.forceFullArea);
         {
             ImGui::BeginGroup();
             {
                 ImGui::AlignTextToFramePadding();
                 ImGui::Text("%s", TRY(Localisation::get(context.settings.application.language, Localisation::Window_Main_Tabs_Display_Width)));
                 ImGui::SetNextItemWidth(150_scaled);
-                context.hasChangedDisplayArea |= ImGui::InputFloat("##DisplayWidth", &context.settings.tablet.display.area.width, 0.f, 0.f, "%.0f");
+                context.hasChangedDisplayArea |= ImGui::InputFloat("##DisplayWidth", &context.settings.tablet->display.area.width, 0.f, 0.f, "%.0f");
             }
             ImGui::EndGroup();
             ImGui::SameLine();
@@ -391,7 +395,7 @@ static Result<void> render_display_tab(Context& context)
                 ImGui::AlignTextToFramePadding();
                 ImGui::Text("%s", TRY(Localisation::get(context.settings.application.language, Localisation::Window_Main_Tabs_Display_Height)));
                 ImGui::SetNextItemWidth(150_scaled);
-                context.hasChangedDisplayArea |= ImGui::InputFloat("##DisplayHeight", &context.settings.tablet.display.area.height, 0.f, 0.f, "%.0f");
+                context.hasChangedDisplayArea |= ImGui::InputFloat("##DisplayHeight", &context.settings.tablet->display.area.height, 0.f, 0.f, "%.0f");
             }
             ImGui::EndGroup();
         }
@@ -401,7 +405,7 @@ static Result<void> render_display_tab(Context& context)
                 ImGui::AlignTextToFramePadding();
                 ImGui::Text("%s", TRY(Localisation::get(context.settings.application.language, Localisation::Window_Main_Tabs_Display_OffsetX)));
                 ImGui::SetNextItemWidth(150_scaled);
-                context.hasChangedDisplayArea |= ImGui::InputFloat("##DisplayOffsetX", &context.settings.tablet.display.area.offsetX, 0.f, 0.f, "%.0f");
+                context.hasChangedDisplayArea |= ImGui::InputFloat("##DisplayOffsetX", &context.settings.tablet->display.area.offsetX, 0.f, 0.f, "%.0f");
             }
             ImGui::EndGroup();
             ImGui::SameLine();
@@ -410,7 +414,7 @@ static Result<void> render_display_tab(Context& context)
                 ImGui::AlignTextToFramePadding();
                 ImGui::Text("%s", TRY(Localisation::get(context.settings.application.language, Localisation::Window_Main_Tabs_Display_OffsetY)));
                 ImGui::SetNextItemWidth(150_scaled);
-                context.hasChangedDisplayArea |= ImGui::InputFloat("##DisplayOffsetY", &context.settings.tablet.display.area.offsetY, 0.f, 0.f, "%.0f");
+                context.hasChangedDisplayArea |= ImGui::InputFloat("##DisplayOffsetY", &context.settings.tablet->display.area.offsetY, 0.f, 0.f, "%.0f");
             }
             ImGui::EndGroup();
         }
@@ -418,22 +422,22 @@ static Result<void> render_display_tab(Context& context)
 
         ImGui::BeginGroup();
         {
-            context.hasChangedDisplayArea |= ImGui::Checkbox(TRY(Localisation::get(context.settings.application.language, Localisation::Window_Main_Tabs_Display_FullArea)), &context.settings.tablet.display.forceFullArea);
+            context.hasChangedDisplayArea |= ImGui::Checkbox(TRY(Localisation::get(context.settings.application.language, Localisation::Window_Main_Tabs_Display_FullArea)), &context.settings.tablet->display.forceFullArea);
             ImGui::BeginDisabled();
-            ImGui::Checkbox(TRY(Localisation::get(context.settings.application.language, Localisation::Window_Main_Tabs_Display_ForceProportions)), &context.settings.tablet.display.forceAspectRatio);
+            ImGui::Checkbox(TRY(Localisation::get(context.settings.application.language, Localisation::Window_Main_Tabs_Display_ForceProportions)), &context.settings.tablet->display.forceAspectRatio);
             ImGui::EndDisabled();
         }
         ImGui::EndGroup();
     }
     ImGui::EndGroup();
 
-    if (context.hasChangedDisplayArea && context.settings.tablet.display.name != "INVALID")
+    if (context.hasChangedDisplayArea && context.settings.tablet->display.name != "INVALID")
     {
-        context.settings.tablet.display.area = {
-            .offsetX = std::clamp(context.settings.tablet.display.area.offsetX, 0.f, displayDefaultArea.width),
-            .offsetY = std::clamp(context.settings.tablet.display.area.offsetY, 0.f, displayDefaultArea.height),
-            .width   = std::clamp(context.settings.tablet.display.area.width, 0.f, displayDefaultArea.width),
-            .height  = std::clamp(context.settings.tablet.display.area.height, 0.f, displayDefaultArea.height)
+        context.settings.tablet->display.area = {
+            .offsetX = std::clamp(context.settings.tablet->display.area.offsetX, 0.f, displayDefaultArea.width),
+            .offsetY = std::clamp(context.settings.tablet->display.area.offsetY, 0.f, displayDefaultArea.height),
+            .width   = std::clamp(context.settings.tablet->display.area.width, 0.f, displayDefaultArea.width),
+            .height  = std::clamp(context.settings.tablet->display.area.height, 0.f, displayDefaultArea.height)
         };
     }
 
@@ -453,101 +457,6 @@ Result<void> render_main_window(Context& context)
 #endif
 
     static auto hasTriedToInitializeDeviceSettings = false;
-
-    static auto messageReceiver = IPCClient::the().receive_message_async();
-    auto message = messageReceiver.next();
-
-    if (message.has_value())
-    {
-        auto action = magic_enum::enum_cast<UDevDevice::Action>(message->data());
-        assert(action && "INVALID ACTION");
-
-        switch (*action)
-        {
-        case UDevDevice::Action::BIND: {
-            if (std::ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) >= 1) break;
-
-            context.devices = TRY(get_available_devices());
-
-            auto result = load_tablet_settings();
-
-            if (!result.has_value())
-            {
-                TRY(apply_settings_from_driver_to_context(context));
-
-                switch (result.error().message())
-                {
-                case SettingsError::Type::WRITE_FAILURE: break;
-                case SettingsError::Type::FILE_NOT_FOUND: {
-                    ImGui::PushToast(
-                        TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Warning)),
-                        TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Missing))
-                    );
-                    break;
-                }
-                case SettingsError::Type::READ_FAILURE: {
-                    ImGui::PushToast(
-                        TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Warning)),
-                        TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Load_Failed))
-                    );
-                    break;
-                }
-                case SettingsError::Type::OUTDATED_SCHEMA: {
-                    context.handleOutdatedDeviceSettings = true;
-                    break;
-                }
-                }
-            }
-            else
-            {
-                context.settings.tablet = *result;
-
-                ImGui::PushToast(
-                    TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),
-                    TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Load_Success))
-                );
-
-                auto stylus = std::ranges::find(context.devices, context.settings.tablet.stylus.name, &Device::name);
-                assert(stylus != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
-                context.tablet.stylus = *stylus;
-
-                auto pad = std::ranges::find(context.devices, context.settings.tablet.pad.name, &Device::name);
-                assert(pad != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
-                context.tablet.pad = *pad;
-
-                context.hasChangedDevice = true;
-                context.hasChangedDeviceHandedness = true;
-
-                context.display = *std::ranges::find(context.displays, context.settings.tablet.display.name, &Display::name);
-                context.hasChangedDisplay = true;
-
-                TRY(apply_settings_from_context_to_device(context));
-            }
-
-            break;
-        }
-        case UDevDevice::Action::UNBIND: {
-            if (std::ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) > 1) break;
-
-            context.devices = TRY(get_available_devices());
-
-            auto maybeDevice = std::ranges::find(context.devices, context.settings.tablet.stylus.name, &Device::name);
-
-            if (maybeDevice == context.devices.end())
-            {
-                context.display = {};
-                context.tablet.stylus = {};
-                context.tablet.pad = {};
-                context.settings.tablet = {};
-            }
-
-            break;
-        }
-        case UDevDevice::Action::REMOVE: break;
-        case UDevDevice::Action::ADD: break;
-        case UDevDevice::Action::NONE: break;
-        }
-    }
 
     if (context.handleOutdatedDeviceSettings)
     {
@@ -614,7 +523,14 @@ Result<void> render_main_window(Context& context)
 
         if (!result.has_value())
         {
-            TRY(apply_settings_from_driver_to_context(context));
+            context.tablet.stylus = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::STYLUS; }, context.devices).back();
+            context.tablet.pad = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::PAD; }, context.devices).back();
+            context.display = TRY(get_primary_display());
+
+            context.settings.tablet.profiles.emplace("Default", TRY(TabletSettings::Profile::make_default(context.tablet, context.display)));
+            context.settings.tablet.profile = "Default";
+
+            TRY(TabletSettings::Profile::load_to_tablet(context.settings.tablet.get_current_profile(), context.tablet, context.display));
 
             switch (result.error().message())
             {
@@ -625,6 +541,13 @@ Result<void> render_main_window(Context& context)
                     TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Missing))
                 );
                 save_tablet_settings(context.settings.tablet);
+                break;
+            }
+            case SettingsError::Type::PROFILE_NOT_FOUND: {
+                ImGui::PushToast(
+                    TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Error)),
+                    TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Profile_Missing))
+                );
                 break;
             }
             case SettingsError::Type::READ_FAILURE: {
@@ -644,20 +567,131 @@ Result<void> render_main_window(Context& context)
         {
             context.settings.tablet = *result;
 
-            auto stylus = std::ranges::find(context.devices, context.settings.tablet.stylus.name, &Device::name);
+            auto stylus = std::ranges::find(context.devices, context.settings.tablet->stylus.name, &Device::name);
             assert(stylus != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
             context.tablet.stylus = *stylus;
 
-            auto pad = std::ranges::find(context.devices, context.settings.tablet.pad.name, &Device::name);
+            auto pad = std::ranges::find(context.devices, context.settings.tablet->pad.name, &Device::name);
             assert(pad != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
             context.tablet.pad = *pad;
 
-            context.display = *std::ranges::find(context.displays, context.settings.tablet.display.name, &Display::name);
+            context.display = *std::ranges::find(context.displays, context.settings.tablet->display.name, &Display::name);
 
-            TRY(apply_settings_from_context_to_device(context));
+            TRY(TabletSettings::Profile::load_to_tablet(context.settings.tablet.get_current_profile(), context.tablet, context.display));
         }
 
         hasTriedToInitializeDeviceSettings = true;
+    }
+
+    static auto messageReceiver = IPCClient::the().receive_message_async();
+    auto message = messageReceiver.next();
+
+    if (message.has_value())
+    {
+        auto action = magic_enum::enum_cast<UDevDevice::Action>(message->data());
+        assert(action && "INVALID ACTION");
+
+        switch (*action)
+        {
+        case UDevDevice::Action::BIND: {
+            if (std::ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) >= 1) break;
+
+            context.devices = TRY(get_available_devices());
+
+            auto result = load_tablet_settings();
+
+            if (!result.has_value())
+            {
+                context.tablet.stylus = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::STYLUS; }, context.devices).back();
+                context.tablet.pad = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::PAD; }, context.devices).back();
+                context.display = TRY(get_primary_display());
+
+                context.settings.tablet.profiles.emplace("Default", TRY(TabletSettings::Profile::make_default(context.tablet, context.display)));
+                context.settings.tablet.profile = "Default";
+
+                TRY(TabletSettings::Profile::load_to_tablet(context.settings.tablet.get_current_profile(), context.tablet, context.display));
+
+                switch (result.error().message())
+                {
+                case SettingsError::Type::WRITE_FAILURE: break;
+                case SettingsError::Type::FILE_NOT_FOUND: {
+                    ImGui::PushToast(
+                        TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Warning)),
+                        TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Missing))
+                    );
+                    break;
+                }
+                case SettingsError::Type::PROFILE_NOT_FOUND: {
+                    ImGui::PushToast(
+                        TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Error)),
+                        TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Profile_Missing))
+                    );
+                    break;
+                }
+                case SettingsError::Type::READ_FAILURE: {
+                    ImGui::PushToast(
+                        TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Warning)),
+                        TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Load_Failed))
+                    );
+                    break;
+                }
+                case SettingsError::Type::OUTDATED_SCHEMA: {
+                    context.handleOutdatedDeviceSettings = true;
+                    break;
+                }
+                }
+            }
+            else
+            {
+                context.settings.tablet = *result;
+
+                ImGui::PushToast(
+                    TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),
+                    TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Load_Success))
+                );
+
+                auto stylus = std::ranges::find(context.devices, context.settings.tablet->stylus.name, &Device::name);
+                assert(stylus != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
+                context.tablet.stylus = *stylus;
+
+                auto pad = std::ranges::find(context.devices, context.settings.tablet->pad.name, &Device::name);
+                assert(pad != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
+                context.tablet.pad = *pad;
+
+                context.hasChangedDevice = true;
+                context.hasChangedDeviceHandedness = true;
+
+                context.display = *std::ranges::find(context.displays, context.settings.tablet->display.name, &Display::name);
+                context.hasChangedDisplay = true;
+
+                context.hasChangedProfile = true;
+
+                TRY(TabletSettings::Profile::load_to_tablet(context.settings.tablet.get_current_profile(), context.tablet, context.display));
+            }
+
+            break;
+        }
+        case UDevDevice::Action::UNBIND: {
+            if (std::ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) > 1) break;
+
+            context.devices = TRY(get_available_devices());
+
+            auto maybeDevice = std::ranges::find(context.devices, context.settings.tablet->stylus.name, &Device::name);
+
+            if (maybeDevice == context.devices.end())
+            {
+                context.display = {};
+                context.tablet.stylus = {};
+                context.tablet.pad = {};
+                context.settings.tablet = {};
+            }
+
+            break;
+        }
+        case UDevDevice::Action::REMOVE: break;
+        case UDevDevice::Action::ADD: break;
+        case UDevDevice::Action::NONE: break;
+        }
     }
 
     ImGui::BeginDisabled(context.handleOutdatedDeviceSettings);
@@ -684,18 +718,63 @@ Result<void> render_main_window(Context& context)
         ImGui::EndTabBar();
     }
 
-    auto previousCursorPosition = ImGui::GetCursorPos();
+    auto profiles = fplus::keep_if([] (auto const& profile) { return profile != "INVALID"; }, fplus::get_map_keys(context.settings.tablet.profiles));
+    auto profileNames = fplus::transform([] (auto const& profile) { return profile.c_str(); }, profiles);
+    std::vector<std::vector<char const*>> items { { TRY(Localisation::get(context.settings.application.language, Localisation::New_Profile)) }, profileNames };
+    static std::pair<int, int> itemIndex { 1, context.settings.tablet.profile == "INVALID" ? 0 : std::distance(profileNames.begin(), std::ranges::find(profileNames, context.settings.tablet.profile)) };
+
+    if (context.hasChangedProfile)
+    {
+        itemIndex = { 1, std::distance(profileNames.begin(), std::ranges::find(profileNames, context.settings.tablet.profile)) };
+    }
+
+    static auto isProfileWindowOpen = false;
+
+    auto previousPosition = ImGui::GetCursorPos();
     ImGui::SetCursorPosY(ImGui::GetWindowHeight() - (35_scaled + ImGui::GetStyle().WindowPadding.x));
-    if (ImGui::Button(TRY(Localisation::get(context.settings.application.language, Localisation::Save_Apply)), { 200_scaled, 35_scaled }))
+    auto [pressedPrimary, pressedSecondary] = DropupButton(TRY(Localisation::get(context.settings.application.language, Localisation::Save_Apply)), &itemIndex, items, { 200_scaled, 35_scaled });
+    ImGui::SetCursorPos(previousPosition);
+    if (pressedPrimary)
     {
         ImGui::PushToast(
             TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),
             TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Saved))
         );
         save_tablet_settings(context.settings.tablet);
-        TRY(apply_settings_from_context_to_device(context));
+        TRY(TabletSettings::Profile::load_to_tablet(context.settings.tablet.get_current_profile(), context.tablet, context.display));
     }
-    ImGui::SetCursorPos(previousCursorPosition);
+    else if (pressedSecondary)
+    {
+        if (itemIndex.first == 0 && itemIndex.second == 0)
+        {
+            isProfileWindowOpen = true;
+            itemIndex = { 1, std::distance(profileNames.begin(), std::ranges::find(profileNames, context.settings.tablet.profile)) };
+        }
+        else
+        {
+            context.settings.tablet.profile = profileNames.at(size_t(itemIndex.second));
+            context.hasChangedProfile = true;
+        }
+    }
+
+    if (isProfileWindowOpen)
+    {
+        auto [windowWidth, windowHeight] = ImGui::GetWindowSize();
+
+        float profileWindowWidth = 400_scaled, profileWindowHeight = 200_scaled;
+        ImGui::SetNextWindowSize({ profileWindowWidth, profileWindowHeight });
+        ImGui::SetNextWindowPos({ (static_cast<float>(windowWidth) - profileWindowWidth)/2, (static_cast<float>(windowHeight) - profileWindowHeight)/2 });
+        ImGui::Begin(
+            TRY(Localisation::get(context.settings.application.language, Localisation::Window_Profile_Title)),
+            &isProfileWindowOpen,
+            ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
+        );
+        {
+            TRY(render_profile_window(context));
+        }
+        ImGui::End();
+    }
+
     ImGui::EndDisabled();
 
     if (message.has_value())
