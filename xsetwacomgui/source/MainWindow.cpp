@@ -275,10 +275,10 @@ static Result<void> render_tablet_tab(Context& context)
                 ImGui::SetNextWindowSize({ mappingsSettingsWidth, applicationSettingsHeight });
                 ImGui::SetNextWindowPos({ (static_cast<float>(windowWidth) - mappingsSettingsWidth)/2, (static_cast<float>(windowHeight) - applicationSettingsHeight)/2 });
                 ImGui::Begin(
-                        TRY(Localisation::get(context.settings.application.language, Localisation::Window_Mappings_Title)),
-                        &isMappingsSettingsOpen,
-                        ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
-                        );
+                    TRY(Localisation::get(context.settings.application.language, Localisation::Window_Mappings_Title)),
+                    &isMappingsSettingsOpen,
+                    ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
+                );
                 {
                     TRY(render_mappings_window(context));
                 }
