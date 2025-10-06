@@ -125,20 +125,13 @@ Task<void> IPCServer::message_receiver()
                 std::exit(EXIT_FAILURE);
             }
 
-            clients_.with([=] (auto& clients) {
-                clients.insert({ clientName, clientFd });
-            });
-
+            clients_.with([=] (auto& clients) { clients.insert({ clientName, clientFd }); });
             spdlog::info("Client {} connected", clientName);
         }
         else if (buffer.starts_with("QUIT"))
         {
             auto clientName = std::next(buffer.data(), 5);
-
-            clients_.with([&] (auto& clients) {
-                clients.erase(clientName);
-            });
-
+            clients_.with([&] (auto& clients) { clients.erase(clientName); });
             spdlog::info("Client {} disconnected", clientName);
         }
     }
@@ -164,7 +157,15 @@ Task<void> IPCServer::message_sender()
 
     while (true)
     {
-        if (co_await poll(fds) <= 0) continue;
+        auto result = co_await poll(fds);
+
+        if (result == 0) continue;
+
+        if (result < 0)
+        {
+            spdlog::error("IPCServer::{}: poll failed: {}", __FUNCTION__, strerror(errno));
+            std::exit(EXIT_FAILURE);
+        }
 
         UDevDevice device(udev_monitor_receive_device(monitor.get()));
 
