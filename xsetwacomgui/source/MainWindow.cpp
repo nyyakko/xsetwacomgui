@@ -271,9 +271,9 @@ static Result<void> render_tablet_tab(Context& context)
             {
                 auto [windowWidth, windowHeight] = ImGui::GetWindowSize();
 
-                float mappingsSettingsWidth = static_cast<float>(windowWidth)/1.5f, applicationSettingsHeight = static_cast<float>(windowHeight)/1.5f;
-                ImGui::SetNextWindowSize({ mappingsSettingsWidth, applicationSettingsHeight });
-                ImGui::SetNextWindowPos({ (static_cast<float>(windowWidth) - mappingsSettingsWidth)/2, (static_cast<float>(windowHeight) - applicationSettingsHeight)/2 });
+                float mappingsWindowWidth = static_cast<float>(windowWidth)/1.5f, mappingsWindowHeight = static_cast<float>(windowHeight)/1.5f;
+                ImGui::SetNextWindowSize({ mappingsWindowWidth, mappingsWindowHeight });
+                ImGui::SetNextWindowPos({ (static_cast<float>(windowWidth) - mappingsWindowWidth)/2, (static_cast<float>(windowHeight) - mappingsWindowHeight)/2 });
                 ImGui::Begin(
                     TRY(Localisation::get(context.settings.application.language, Localisation::Window_Mappings_Title)),
                     &isMappingsSettingsOpen,
@@ -462,9 +462,9 @@ Result<void> render_main_window(Context& context)
     {
         auto [windowWidth, windowHeight] = ImGui::GetWindowSize();
 
-        float deviceSettingsMigrationWidth = 400_scaled, deviceSettingsMigrationHeight = 150_scaled;
-        ImGui::SetNextWindowSize({ deviceSettingsMigrationWidth, deviceSettingsMigrationHeight });
-        ImGui::SetNextWindowPos({ (static_cast<float>(windowWidth) - deviceSettingsMigrationWidth)/2, (static_cast<float>(windowHeight) - deviceSettingsMigrationHeight)/2 });
+        float migrationPopupWidth = 400_scaled, migrationPopupHeight = 150_scaled;
+        ImGui::SetNextWindowSize({ migrationPopupWidth, migrationPopupHeight });
+        ImGui::SetNextWindowPos({ (static_cast<float>(windowWidth) - migrationPopupWidth)/2, (static_cast<float>(windowHeight) - migrationPopupHeight)/2 });
         ImGui::Begin(
             TRY(Localisation::get(context.settings.application.language, Localisation::Popup_Outdated_Device_Settings_Title)),
             nullptr,
