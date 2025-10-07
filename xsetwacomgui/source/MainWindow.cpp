@@ -32,6 +32,8 @@ using namespace libcoro;
 
 static Result<void> render_region_mappers(Context& context)
 {
+    ImGui::BeginGroup();
+
     auto [cursorX, cursorY] = ImGui::GetCursorPos();
     ImDrawList* drawList = ImGui::GetWindowDrawList();
 
@@ -153,6 +155,8 @@ static Result<void> render_region_mappers(Context& context)
         auto p2 = deviceAnchor * (deviceMapperPosition.Max - deviceMapperPosition.Min) + deviceMapperPosition.Min;
         drawList->AddLine(p1, p2, ImColor(255, 0, 0, 127), 2.f);
     }
+
+    ImGui::EndGroup();
 
     return {};
 }
@@ -694,11 +698,8 @@ Result<void> render_main_window(Context& context)
     }
 
     ImGui::BeginDisabled(context.handleOutdatedDeviceSettings);
-    ImGui::BeginGroup();
-    {
-        render_region_mappers(context);
-    }
-    ImGui::EndGroup();
+
+    render_region_mappers(context);
 
     if (ImGui::BeginTabBar("##Tabs"))
     {
