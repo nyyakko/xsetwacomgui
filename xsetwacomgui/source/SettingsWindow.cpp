@@ -18,7 +18,7 @@ static Result<void> render_appearance_tab(Context& context)
         TRY(Localisation::get(context.settings.application.language, Localisation::Window_Settings_Tabs_Appearance_Theme_Dark)),
         TRY(Localisation::get(context.settings.application.language, Localisation::Window_Settings_Tabs_Appearance_Theme_Light))
     };
-    static int themeIndex = static_cast<int>(context.settings.application.theme);
+    static auto themeIndex = static_cast<int>(context.settings.application.theme);
     ImGui::SetNextItemWidth(300_scaled + ImGui::GetStyle().WindowPadding.x);
     context.hasChangedTheme = ImGui::Combo("##Theme", &themeIndex, themes, std::size(themes));
 
@@ -71,7 +71,7 @@ static Result<void> render_appearance_tab(Context& context)
 static Result<void> render_display_tab(Context& context)
 {
     ImGui::Text("%s", TRY(Localisation::get(context.settings.application.language, Localisation::Window_Settings_Tabs_Display_Scale)));
-    static float scale = context.settings.application.scale;
+    static auto scale = context.settings.application.scale;
     context.hasChangedScale = ImGui::InputFloat("##UiScale", &scale, 0.1f);
 
     if (context.hasChangedScale)

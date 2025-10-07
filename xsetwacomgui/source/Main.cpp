@@ -123,8 +123,8 @@ Result<void> run_gui(Context& context)
             ImGui::Begin(NAME, nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar);
             ImGui::RenderToasts();
             {
-                static bool isSettingsWindowOpen = false;
-                static bool isGoddessWindowOpen = false;
+                static auto isSettingsWindowOpen = false;
+                static auto isGoddessWindowOpen = false;
 
                 if (ImGui::BeginMenuBar())
                 {

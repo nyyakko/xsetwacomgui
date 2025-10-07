@@ -17,7 +17,6 @@
 #include <imgui/extensions/imgui_text.hpp>
 #include <imgui/extensions/imgui_toast.hpp>
 #include <imgui/imgui.hpp>
-#include <libcoro/Generator.hpp>
 #include <liberror/Try.hpp>
 
 #include <sys/poll.h>
@@ -28,14 +27,12 @@
 #include <span>
 
 using namespace liberror;
-using namespace libcoro;
 
 static Result<void> render_region_mappers(Context& context)
 {
     ImGui::BeginGroup();
 
-    auto [cursorX, cursorY] = ImGui::GetCursorPos();
-    ImDrawList* drawList = ImGui::GetWindowDrawList();
+    auto previousCursorPosition = ImGui::GetCursorPos();
 
     static ImVec2 displayAreaAnchors[4] { { -1, -1 }, { -1, -1 }, { -1, -1 }, { -1, -1 } };
     static auto displayDefaultArea = context.displays.empty() ? Display::Area {} : Display::Area { 0, 0, context.display.area.width, context.display.area.height };
@@ -81,7 +78,7 @@ static Result<void> render_region_mappers(Context& context)
     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - displayMapperSize.x)/2);
     static ImRect displayMapperPosition {};
     context.hasChangedDisplayArea = AreaMapper(TRY(Localisation::get(context.settings.application.language, Localisation::Window_Main_Tabs_Display_Display)), displayAreaAnchors, displayMapperSize, &displayMapperPosition, context.settings.tablet->display.forceFullArea, context.settings.tablet->display.forceAspectRatio);
-    ImGui::SetCursorPosX(cursorX);
+    ImGui::SetCursorPosX(previousCursorPosition.x);
 
     if (context.hasChangedDisplayArea && context.settings.tablet->display.name != "INVALID")
     {
@@ -137,7 +134,7 @@ static Result<void> render_region_mappers(Context& context)
     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - deviceMapperSize.x)/2);
     static ImRect deviceMapperPosition {};
     context.hasChangedDeviceArea = AreaMapper(TRY(Localisation::get(context.settings.application.language, Localisation::Window_Main_Tabs_Tablet_Device)), deviceAreaAnchors, deviceMapperSize, &deviceMapperPosition, context.settings.tablet->stylus.forceFullArea, context.settings.tablet->stylus.forceAspectRatio);
-    ImGui::SetCursorPosX(cursorX);
+    ImGui::SetCursorPosX(previousCursorPosition.x);
 
     if (context.hasChangedDeviceArea && context.settings.tablet->stylus.name != "INVALID")
     {
@@ -148,6 +145,8 @@ static Result<void> render_region_mappers(Context& context)
             .height  = (deviceAreaAnchors[3].y - deviceAreaAnchors[2].y) * deviceDefaultArea.height
         };
     }
+
+    auto* drawList = ImGui::GetWindowDrawList();
 
     for (auto [displayAnchor, deviceAnchor] : fplus::zip(std::span<ImVec2>(displayAreaAnchors, 4), std::span<ImVec2>(deviceAreaAnchors, 4)))
     {
@@ -451,7 +450,7 @@ static Result<void> render_display_tab(Context& context)
 Result<void> render_main_window(Context& context)
 {
 #ifdef DEBUG
-    static bool shouldWarnAboutDebugBuild = true;
+    static auto shouldWarnAboutDebugBuild = true;
 
     if (shouldWarnAboutDebugBuild)
     {
@@ -588,7 +587,6 @@ Result<void> render_main_window(Context& context)
     }
 
     auto message = TRY(IPCClient::the().receive_message_async());
-
     if (message.has_value())
     {
         auto action = magic_enum::enum_cast<UDevDevice::Action>(message->data());
@@ -730,10 +728,10 @@ Result<void> render_main_window(Context& context)
 
     static auto isProfileWindowOpen = false;
 
-    auto previousPosition = ImGui::GetCursorPos();
+    auto previousCursorPosition = ImGui::GetCursorPos();
     ImGui::SetCursorPosY(ImGui::GetWindowHeight() - (35_scaled + ImGui::GetStyle().WindowPadding.x));
     auto [pressedPrimary, pressedSecondary] = DropupButton(TRY(Localisation::get(context.settings.application.language, Localisation::Save_Apply)), &itemIndex, items, { 200_scaled, 35_scaled });
-    ImGui::SetCursorPos(previousPosition);
+    ImGui::SetCursorPos(previousCursorPosition);
     if (pressedPrimary)
     {
         ImGui::PushToast(

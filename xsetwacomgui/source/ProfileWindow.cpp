@@ -9,7 +9,6 @@
 #include <imgui/extensions/imgui_toast.hpp>
 
 using namespace liberror;
-
 using namespace std::literals;
 
 Result<void> render_profile_window(Context& context)
