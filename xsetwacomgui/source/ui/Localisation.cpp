@@ -15,9 +15,14 @@ Result<char const*> Localisation::get(std::string_view language, Message id)
 {
     if (!the().contains(language.data()))
     {
-        std::ifstream stream(
-            get_application_languages_path() / fmt::format("{}.json", std::string_view(language.data()) | ranges::views::transform(tolower) | ranges::to<std::string>)
-        );
+        auto translationFilePath = get_application_languages_path() / fmt::format("{}.json", std::string_view(language.data()) | ranges::views::transform(tolower) | ranges::to<std::string>);
+
+        if (!std::filesystem::exists(translationFilePath))
+        {
+            return make_error("Could not file translation file for language: {}", language);
+        }
+
+        std::ifstream stream(translationFilePath);
         std::stringstream content;
         content << stream.rdbuf();
 
