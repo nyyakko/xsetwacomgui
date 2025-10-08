@@ -67,3 +67,4 @@ enum class X11Action
 liberror::Result<std::map<int, X11Action>> get_device_button_mappings(Device device);
 liberror::Result<void> set_device_button_mappings(Device device, std::map<int, X11Action> const&);
 liberror::Result<void> reset_device_button_mappings(Device device);
+liberror::Result<std::map<int, X11Action>> get_device_default_button_mappings(Device device);

@@ -240,3 +240,13 @@ Result<void> reset_device_button_mappings(Device device)
 
     return {};
 }
+
+Result<std::map<int, X11Action>> get_device_default_button_mappings(Device device)
+{
+    auto previousMappings = TRY(get_device_button_mappings(device));
+    TRY(reset_device_button_mappings(device));
+    auto defaultMappings = TRY(get_device_button_mappings(device));
+    TRY(set_device_button_mappings(device, previousMappings));
+
+    return defaultMappings;
+}
