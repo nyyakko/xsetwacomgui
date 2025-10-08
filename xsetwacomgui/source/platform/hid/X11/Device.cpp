@@ -230,3 +230,13 @@ Result<void> set_device_button_mappings(Device device, std::map<int, X11Action> 
 
     return {};
 }
+
+Result<void> reset_device_button_mappings(Device device)
+{
+    for (auto button : std::views::iota(1zu, 25zu))
+    {
+        execute(fmt::format("--set {} Button {}", device.id, button));
+    }
+
+    return {};
+}
