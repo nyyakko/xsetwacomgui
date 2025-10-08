@@ -58,7 +58,7 @@ Result<void> render_goddess_window()
         return make_error("Failed to load {}", imagePath.string());
     }
 
-    static ImVec2 frameDimensions { static_cast<float>(width) * 70/100, static_cast<float>(height) * 70/100 };
+    static ImVec2 frameDimensions { float(width) * 70/100, float(height) * 70/100 };
     ImGui::SetCursorPos({ (ImGui::GetWindowWidth() - frameDimensions.x) / 2, (ImGui::GetWindowHeight() - frameDimensions.y) / 2 });
     ImGui::Image(imageTexture, frameDimensions);
 

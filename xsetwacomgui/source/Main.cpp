@@ -56,9 +56,9 @@ Result<void> run_gui(Context& context)
     set_scale(context.settings.application.scale);
 
 #ifdef DEBUG
-    auto window = glfwCreateWindow(static_cast<int>(800_scaled), static_cast<int>(815_scaled), NAME " - DEBUG BUILD", nullptr, nullptr);
+    auto window = glfwCreateWindow(int(800_scaled), int(815_scaled), NAME " - DEBUG BUILD", nullptr, nullptr);
 #else
-    auto window = glfwCreateWindow(static_cast<int>(800_scaled), static_cast<int>(815_scaled), NAME, nullptr, nullptr);
+    auto window = glfwCreateWindow(int(800_scaled), int(815_scaled), NAME, nullptr, nullptr);
 #endif
 
     glfwMakeContextCurrent(window);
@@ -118,7 +118,7 @@ Result<void> run_gui(Context& context)
             int windowWidth, windowHeight;
             glfwGetWindowSize(window, &windowWidth, &windowHeight);
             ImGui::SetNextWindowPos({});
-            ImGui::SetNextWindowSize({ static_cast<float>(windowWidth), static_cast<float>(windowHeight) });
+            ImGui::SetNextWindowSize({ float(windowWidth), float(windowHeight) });
             ImGui::Begin(NAME, nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar);
             ImGui::RenderToasts();
             {
@@ -152,9 +152,9 @@ Result<void> run_gui(Context& context)
 
                 if (isSettingsWindowOpen)
                 {
-                    float applicationSettingsWidth = static_cast<float>(windowWidth)/1.5f, applicationSettingsHeight = static_cast<float>(windowHeight)/1.5f;
+                    float applicationSettingsWidth = float(windowWidth)/1.5f, applicationSettingsHeight = float(windowHeight)/1.5f;
                     ImGui::SetNextWindowSize({ applicationSettingsWidth, applicationSettingsHeight });
-                    ImGui::SetNextWindowPos({ (static_cast<float>(windowWidth) - applicationSettingsWidth)/2, (static_cast<float>(windowHeight) - applicationSettingsHeight)/2 });
+                    ImGui::SetNextWindowPos({ (float(windowWidth) - applicationSettingsWidth)/2, (float(windowHeight) - applicationSettingsHeight)/2 });
                     ImGui::Begin(
                         TRY(Localisation::get(context.settings.application.language, Localisation::MenuBar_Settings_Application)),
                         &isSettingsWindowOpen,
@@ -168,9 +168,9 @@ Result<void> run_gui(Context& context)
 
                 if (isGoddessWindowOpen)
                 {
-                    float goddessWidth = static_cast<float>(windowWidth)/1.5f, goddessHeight = static_cast<float>(windowHeight)/1.5f;
+                    float goddessWidth = float(windowWidth)/1.5f, goddessHeight = float(windowHeight)/1.5f;
                     ImGui::SetNextWindowSize({ goddessWidth, goddessHeight });
-                    ImGui::SetNextWindowPos({ (static_cast<float>(windowWidth) - goddessWidth)/2, (static_cast<float>(windowHeight) - goddessHeight)/2 });
+                    ImGui::SetNextWindowPos({ (float(windowWidth) - goddessWidth)/2, (float(windowHeight) - goddessHeight)/2 });
                     ImGui::Begin(
                         TRY(Localisation::get(context.settings.application.language, Localisation::MenuBar_Other_Goddess)),
                         &isGoddessWindowOpen,

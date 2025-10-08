@@ -179,13 +179,13 @@ static Result<void> render_tablet_tab(Context& context)
                 | ranges::views::transform([] (auto const& device) { return device.name.data(); })
                 | ranges::to_vector;
 
-        static auto deviceIndex = context.settings.tablet->stylus.name == "INVALID" ? 0 : static_cast<int>(
+        static auto deviceIndex = context.settings.tablet->stylus.name == "INVALID" ? 0 : int(
             std::distance(deviceNames.begin(), std::ranges::find(deviceNames, context.settings.tablet->stylus.name))
         );
 
         if (context.hasChangedDevice)
         {
-            deviceIndex = context.settings.tablet->stylus.name == "INVALID" ? 0 : static_cast<int>(
+            deviceIndex = context.settings.tablet->stylus.name == "INVALID" ? 0 : int(
                 std::distance(deviceNames.begin(), std::ranges::find(deviceNames, context.settings.tablet->stylus.name))
             );
         }
@@ -193,11 +193,11 @@ static Result<void> render_tablet_tab(Context& context)
         ImGui::AlignTextToFramePadding();
         ImGui::Text("%s", TRY(Localisation::get(context.settings.application.language, Localisation::Window_Main_Tabs_Tablet_Device)));
         ImGui::SetNextItemWidth(300_scaled + ImGui::GetStyle().WindowPadding.x);
-        context.hasChangedDevice = ImGui::Combo("##Device", &deviceIndex, deviceNames.data(), static_cast<int>(deviceNames.size()));
+        context.hasChangedDevice = ImGui::Combo("##Device", &deviceIndex, deviceNames.data(), int(deviceNames.size()));
 
         if (context.hasChangedDevice)
         {
-            context.tablet.stylus = context.devices.at(static_cast<size_t>(deviceIndex));
+            context.tablet.stylus = context.devices.at(size_t(deviceIndex));
             context.settings.tablet->stylus.name = context.tablet.stylus.name;
             context.settings.tablet->stylus.area = TRY(get_stylus_default_area(context.tablet.stylus));
             context.settings.tablet->stylus.pressure = { 0, 0, 1, 1 };
@@ -256,11 +256,11 @@ static Result<void> render_tablet_tab(Context& context)
                 TRY(Localisation::get(context.settings.application.language, Localisation::Window_Main_Tabs_Tablet_Orientation_Right)),
             };
             ImGui::SetNextItemWidth(150_scaled);
-            static auto orientationIndex = static_cast<int>(context.settings.tablet->stylus.handedness);
+            static auto orientationIndex = int(context.settings.tablet->stylus.handedness);
 
             if (context.hasChangedDeviceHandedness)
             {
-                orientationIndex = static_cast<int>(context.settings.tablet->stylus.handedness);
+                orientationIndex = int(context.settings.tablet->stylus.handedness);
             }
 
             context.hasChangedDeviceHandedness |= ImGui::Combo("##Orientations", &orientationIndex, orientations, std::size(orientations));
@@ -278,9 +278,9 @@ static Result<void> render_tablet_tab(Context& context)
             {
                 auto [windowWidth, windowHeight] = ImGui::GetWindowSize();
 
-                float mappingsWindowWidth = static_cast<float>(windowWidth)/1.5f, mappingsWindowHeight = static_cast<float>(windowHeight)/1.5f;
+                float mappingsWindowWidth = float(windowWidth)/1.5f, mappingsWindowHeight = float(windowHeight)/1.5f;
                 ImGui::SetNextWindowSize({ mappingsWindowWidth, mappingsWindowHeight });
-                ImGui::SetNextWindowPos({ (static_cast<float>(windowWidth) - mappingsWindowWidth)/2, (static_cast<float>(windowHeight) - mappingsWindowHeight)/2 });
+                ImGui::SetNextWindowPos({ (float(windowWidth) - mappingsWindowWidth)/2, (float(windowHeight) - mappingsWindowHeight)/2 });
                 ImGui::Begin(
                     TRY(Localisation::get(context.settings.application.language, Localisation::Window_Mappings_Title)),
                     &isMappingsSettingsOpen,
@@ -362,13 +362,13 @@ static Result<void> render_display_tab(Context& context)
     {
         auto displayNames = context.displays | ranges::views::transform([] (auto const& display) { return display.name.data(); }) | ranges::to_vector;
 
-        static auto displayIndex = context.settings.tablet->display.name == "INVALID" ? 0 : static_cast<int>(
+        static auto displayIndex = context.settings.tablet->display.name == "INVALID" ? 0 : int(
             std::distance(context.displays.begin(), std::ranges::find(context.displays, context.settings.tablet->display.name, &Display::name))
         );
 
         if (context.hasChangedDisplay)
         {
-            displayIndex = context.settings.tablet->display.name == "INVALID" ? 0 : static_cast<int>(
+            displayIndex = context.settings.tablet->display.name == "INVALID" ? 0 : int(
                 std::distance(context.displays.begin(), std::ranges::find(context.displays, context.settings.tablet->display.name, &Display::name))
             );
         }
@@ -376,11 +376,11 @@ static Result<void> render_display_tab(Context& context)
         ImGui::AlignTextToFramePadding();
         ImGui::Text("%s", TRY(Localisation::get(context.settings.application.language, Localisation::Window_Main_Tabs_Display_Display)));
         ImGui::SetNextItemWidth(300_scaled + ImGui::GetStyle().WindowPadding.x);
-        context.hasChangedDisplay = ImGui::Combo("##Displays", &displayIndex, displayNames.data(), static_cast<int>(displayNames.size()));
+        context.hasChangedDisplay = ImGui::Combo("##Displays", &displayIndex, displayNames.data(), int(displayNames.size()));
 
         if (context.hasChangedDisplay)
         {
-            context.display = context.displays.at(static_cast<size_t>(displayIndex));
+            context.display = context.displays.at(size_t(displayIndex));
             context.settings.tablet->display.name = context.display.name;
             context.settings.tablet->display.area = Display::Area { 0, 0, context.display.area.width, context.display.area.height };
             context.settings.tablet->display.forceFullArea = false;
@@ -472,7 +472,7 @@ Result<void> render_main_window(Context& context)
 
         float migrationPopupWidth = 400_scaled, migrationPopupHeight = 150_scaled;
         ImGui::SetNextWindowSize({ migrationPopupWidth, migrationPopupHeight });
-        ImGui::SetNextWindowPos({ (static_cast<float>(windowWidth) - migrationPopupWidth)/2, (static_cast<float>(windowHeight) - migrationPopupHeight)/2 });
+        ImGui::SetNextWindowPos({ (float(windowWidth) - migrationPopupWidth)/2, (float(windowHeight) - migrationPopupHeight)/2 });
         ImGui::Begin(
             TRY(Localisation::get(context.settings.application.language, Localisation::Popup_Outdated_Device_Settings_Title)),
             nullptr,
@@ -486,7 +486,7 @@ Result<void> render_main_window(Context& context)
                 for (auto messageLine :
                     ImGui::SplitToWidth(
                         TRY(Localisation::get(context.settings.application.language, Localisation::Popup_Outdated_Device_Settings_Text)),
-                        static_cast<int>(popupWidth)
+                        int(popupWidth)
                     ))
                 {
                     ImGui::Text("%s", messageLine.data());
@@ -787,7 +787,7 @@ Result<void> render_main_window(Context& context)
 
         float profileWindowWidth = 400_scaled, profileWindowHeight = 200_scaled;
         ImGui::SetNextWindowSize({ profileWindowWidth, profileWindowHeight });
-        ImGui::SetNextWindowPos({ (static_cast<float>(windowWidth) - profileWindowWidth)/2, (static_cast<float>(windowHeight) - profileWindowHeight)/2 });
+        ImGui::SetNextWindowPos({ (float(windowWidth) - profileWindowWidth)/2, (float(windowHeight) - profileWindowHeight)/2 });
         ImGui::Begin(
             TRY(Localisation::get(context.settings.application.language, Localisation::Window_Profile_Title)),
             &isProfileWindowOpen,

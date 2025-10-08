@@ -32,10 +32,10 @@ Result<std::vector<Display>> get_available_displays()
             .id = std::atoi(iterator->str(1).data()),
             .primary = !iterator->str(2).empty(),
             .area = {
-                .offsetX = static_cast<float>(std::atof(iterator->str(6).data())),
-                .offsetY = static_cast<float>(std::atof(iterator->str(7).data())),
-                .width = static_cast<float>(std::atof(iterator->str(4).data())),
-                .height = static_cast<float>(std::atof(iterator->str(5).data())),
+                .offsetX = float(std::atof(iterator->str(6).data())),
+                .offsetY = float(std::atof(iterator->str(7).data())),
+                .width = float(std::atof(iterator->str(4).data())),
+                .height = float(std::atof(iterator->str(5).data())),
             },
         };
 

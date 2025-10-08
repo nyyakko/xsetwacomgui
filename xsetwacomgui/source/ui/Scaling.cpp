@@ -2,7 +2,7 @@
 
 float operator""_scaled(unsigned long long i)
 {
-    return static_cast<float>(i) * the_scale();
+    return float(i) * the_scale();
 }
 
 float& the_scale()

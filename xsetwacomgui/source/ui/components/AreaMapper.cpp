@@ -41,14 +41,14 @@ bool AreaMapper(char const* label, ImVec2 anchors[4], ImVec2 size, ImRect* outPo
         ImGui::RenderFrame(frame.Min, frame.Max, MAPPER_BACKGROUD_CONTRAST_COLOR);
         ImGui::RenderFrame(anchors[0] * (frame.Max - frame.Min) + frame.Min, anchors[3] * (frame.Max - frame.Min) + frame.Min, MAPPER_BACKGROUD_COLOR);
 
-        for (size_t i = 0; i <= static_cast<size_t>(size.x); i += static_cast<size_t>(size.x / 4))
+        for (size_t i = 0; i <= size_t(size.x); i += size_t(size.x / 4))
         {
-            drawList->AddLine({ frame.Min.x + static_cast<float>(i), frame.Min.y }, { frame.Min.x + static_cast<float>(i), frame.Max.y }, MAPPER_GRID_COLOR);
+            drawList->AddLine({ frame.Min.x + float(i), frame.Min.y }, { frame.Min.x + float(i), frame.Max.y }, MAPPER_GRID_COLOR);
         }
 
-        for (size_t i = 0; i <= static_cast<size_t>(size.y); i += static_cast<size_t>(size.y / 4))
+        for (size_t i = 0; i <= size_t(size.y); i += size_t(size.y / 4))
         {
-            drawList->AddLine({ frame.Min.x, frame.Min.y + static_cast<float>(i) }, { frame.Max.x, frame.Min.y + static_cast<float>(i) }, MAPPER_GRID_COLOR);
+            drawList->AddLine({ frame.Min.x, frame.Min.y + float(i) }, { frame.Max.x, frame.Min.y + float(i) }, MAPPER_GRID_COLOR);
         }
 
         for (size_t i = 0; i < 4; i += 1)
@@ -63,7 +63,7 @@ bool AreaMapper(char const* label, ImVec2 anchors[4], ImVec2 size, ImRect* outPo
 
             if (active)
             {
-                ImGui::SetTooltip("(%4.3f, %4.3f)", static_cast<double>(anchors[i].x), static_cast<double>(anchors[i].y));
+                ImGui::SetTooltip("(%4.3f, %4.3f)", double(anchors[i].x), double(anchors[i].y));
                 ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
             }
 

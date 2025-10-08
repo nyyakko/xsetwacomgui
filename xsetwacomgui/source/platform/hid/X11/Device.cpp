@@ -71,10 +71,10 @@ Result<void> set_stylus_pressure_curve(Device stylus, Device::Pressure pressure)
 {
     auto command = fmt::format("--set {} PressureCurve {} {} {} {}",
         stylus.id,
-        static_cast<int>(std::round(pressure.minX * 100.f)),
-        static_cast<int>(std::round(pressure.minY * 100.f)),
-        static_cast<int>(std::round(pressure.maxX * 100.f)),
-        static_cast<int>(std::round(pressure.maxY * 100.f))
+        int(std::round(pressure.minX * 100.f)),
+        int(std::round(pressure.minY * 100.f)),
+        int(std::round(pressure.maxX * 100.f)),
+        int(std::round(pressure.maxY * 100.f))
     );
     TRY(execute(command));
     return {};
@@ -165,10 +165,10 @@ Result<void> set_stylus_output_from_display_area(Device stylus, Display::Area ar
 {
     auto command = fmt::format("--set {} MapToOutput {}x{}+{}+{}",
         stylus.id,
-        static_cast<int>(std::round(area.width)),
-        static_cast<int>(std::round(area.height)),
-        static_cast<int>(std::round(area.offsetX)),
-        static_cast<int>(std::round(area.offsetY))
+        int(std::round(area.width)),
+        int(std::round(area.height)),
+        int(std::round(area.offsetX)),
+        int(std::round(area.offsetY))
     );
     TRY(execute(command));
     return {};

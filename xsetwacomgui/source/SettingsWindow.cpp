@@ -18,7 +18,7 @@ static Result<void> render_appearance_tab(Context& context)
         TRY(Localisation::get(context.settings.application.language, Localisation::Window_Settings_Tabs_Appearance_Theme_Dark)),
         TRY(Localisation::get(context.settings.application.language, Localisation::Window_Settings_Tabs_Appearance_Theme_Light))
     };
-    static auto themeIndex = static_cast<int>(context.settings.application.theme);
+    static auto themeIndex = int(context.settings.application.theme);
     ImGui::SetNextItemWidth(300_scaled + ImGui::GetStyle().WindowPadding.x);
     context.hasChangedTheme = ImGui::Combo("##Theme", &themeIndex, themes, std::size(themes));
 
@@ -31,17 +31,17 @@ static Result<void> render_appearance_tab(Context& context)
     static auto fontsInfo = ranges::views::values(fonts) | ranges::to_vector;
 
     static auto fontsFamily = fontsInfo | ranges::views::transform([] (auto const& fontInfo) { return fontInfo.front().family.data(); }) | ranges::to_vector;
-    static auto fontFamilyIndex = static_cast<int>(std::distance(fonts.begin(), fonts.find(context.settings.application.font.family)));
+    static auto fontFamilyIndex = int(std::distance(fonts.begin(), fonts.find(context.settings.application.font.family)));
 
-    static auto fontStyles = fontsInfo.at(static_cast<size_t>(fontFamilyIndex)) | ranges::views::transform([] (auto const& fontInfo) { return fontInfo.style.data(); }) | ranges::to_vector;
-    static auto fontStyleIndex = static_cast<int>(std::distance(fontStyles.begin(), std::ranges::find(fontStyles, context.settings.application.font.style)));
+    static auto fontStyles = fontsInfo.at(size_t(fontFamilyIndex)) | ranges::views::transform([] (auto const& fontInfo) { return fontInfo.style.data(); }) | ranges::to_vector;
+    static auto fontStyleIndex = int(std::distance(fontStyles.begin(), std::ranges::find(fontStyles, context.settings.application.font.style)));
 
     ImGui::BeginGroup();
     {
         ImGui::AlignTextToFramePadding();
         ImGui::Text("%s", TRY(Localisation::get(context.settings.application.language, Localisation::Window_Settings_Tabs_Appearance_Font)));
         ImGui::SetNextItemWidth(150_scaled);
-        context.hasChangedFont = ImGui::Combo("##FontFamily", &fontFamilyIndex, fontsFamily.data(), static_cast<int>(fontsFamily.size()));
+        context.hasChangedFont = ImGui::Combo("##FontFamily", &fontFamilyIndex, fontsFamily.data(), int(fontsFamily.size()));
     }
     ImGui::EndGroup();
     ImGui::SameLine();
@@ -50,7 +50,7 @@ static Result<void> render_appearance_tab(Context& context)
         ImGui::AlignTextToFramePadding();
         ImGui::Text("%s", TRY(Localisation::get(context.settings.application.language, Localisation::Window_Settings_Tabs_Appearance_FontStyle)));
         ImGui::SetNextItemWidth(150_scaled);
-        context.hasChangedFontStyle = ImGui::Combo("##FontStyle", &fontStyleIndex, fontStyles.data(), static_cast<int>(fontStyles.size()));
+        context.hasChangedFontStyle = ImGui::Combo("##FontStyle", &fontStyleIndex, fontStyles.data(), int(fontStyles.size()));
     }
     ImGui::EndGroup();
 
@@ -58,11 +58,11 @@ static Result<void> render_appearance_tab(Context& context)
     {
         if (context.hasChangedFont)
         {
-            fontStyles = fontsInfo.at(static_cast<size_t>(fontFamilyIndex)) | ranges::views::transform([] (auto const& fontInfo) { return fontInfo.style.data(); }) | ranges::to_vector;
+            fontStyles = fontsInfo.at(size_t(fontFamilyIndex)) | ranges::views::transform([] (auto const& fontInfo) { return fontInfo.style.data(); }) | ranges::to_vector;
             fontStyleIndex = 0;
         }
 
-        context.settings.application.font = fonts.at(fontsFamily.at(static_cast<size_t>(fontFamilyIndex))).at(static_cast<size_t>(fontStyleIndex));
+        context.settings.application.font = fonts.at(fontsFamily.at(size_t(fontFamilyIndex))).at(size_t(fontStyleIndex));
     }
 
     return {};
@@ -90,15 +90,15 @@ static Result<void> render_languages_tab(Context& context)
     static auto languages = get_available_languages();
     static auto languagesData = languages | ranges::views::transform([] (auto const& language) { return language.data(); }) | ranges::to_vector;
 
-    static int languageIndex = static_cast<int>(
+    static int languageIndex = int(
         std::distance(languages.begin(), std::ranges::find(languages, context.settings.application.language))
     );
 
-    context.hasChangedLanguage = ImGui::Combo("##Language", &languageIndex, languagesData.data(), static_cast<int>(languages.size()));
+    context.hasChangedLanguage = ImGui::Combo("##Language", &languageIndex, languagesData.data(), int(languages.size()));
 
     if (context.hasChangedLanguage)
     {
-        context.settings.application.language = languages.at(static_cast<size_t>(languageIndex));
+        context.settings.application.language = languages.at(size_t(languageIndex));
     }
 
     return {};
