@@ -28,7 +28,7 @@
 
 using namespace liberror;
 
-static Result<void> render_region_mappers(Context& context)
+static Result<void> render_area_mappers(Context& context)
 {
     ImGui::BeginGroup();
 
@@ -718,7 +718,7 @@ Result<void> render_main_window(Context& context)
 
     ImGui::BeginDisabled(context.handleOutdatedDeviceSettings);
 
-    render_region_mappers(context);
+    render_area_mappers(context);
 
     if (ImGui::BeginTabBar("##Tabs"))
     {
