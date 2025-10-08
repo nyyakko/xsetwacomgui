@@ -32,12 +32,12 @@ static Result<void> render_stylus_tab(Context& context)
 
         static std::array<int, 9> actionIndexes {};
 
-        actionIndexes[size_t(mapping.first)] = int(mapping.second)-1;
+        actionIndexes[size_t(mapping.first)-1] = int(mapping.second)-1;
 
         ImGui::SetNextItemWidth(180_scaled);
-        if (ImGui::Combo(fmt::format("##Actions##Stylus##{}", mapping.first).data(), &actionIndexes[size_t(mapping.first)], the_action_names().data(), int(the_action_names().size())))
+        if (ImGui::Combo(fmt::format("##Actions##Stylus##{}", mapping.first).data(), &actionIndexes[size_t(mapping.first)-1], the_action_names().data(), int(the_action_names().size())))
         {
-            context.settings.tablet->stylus.mappings.at(mapping.first) = *magic_enum::enum_cast<X11Action>(actionIndexes[size_t(mapping.first)]+1);
+            context.settings.tablet->stylus.mappings.at(mapping.first) = *magic_enum::enum_cast<X11Action>(actionIndexes[size_t(mapping.first)-1]+1);
         }
     }
 
