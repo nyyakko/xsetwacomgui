@@ -4,7 +4,6 @@
 #include "ui/Localisation.hpp"
 #include "ui/Scaling.hpp"
 
-#include <fplus/fplus.hpp>
 #include <imgui/extensions/imgui_toast.hpp>
 #include <imgui/imgui.hpp>
 #include <liberror/Try.hpp>

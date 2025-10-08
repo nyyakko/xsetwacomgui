@@ -3,9 +3,9 @@
 #include "ui/Localisation.hpp"
 #include "ui/Scaling.hpp"
 
-#include <fplus/fplus.hpp>
 #include <imgui/extensions/imgui_toast.hpp>
 #include <liberror/Try.hpp>
+#include <range/v3/view.hpp>
 
 #include <algorithm>
 
@@ -28,12 +28,12 @@ static Result<void> render_appearance_tab(Context& context)
     }
 
     static auto fonts = get_available_fonts();
-    static auto fontsInfo = fplus::get_map_values(fonts);
+    static auto fontsInfo = ranges::views::values(fonts) | ranges::to_vector;
 
-    static auto fontsFamily = fplus::transform([] (std::vector<Font> const& fontInfo) { return fontInfo.front().family.data(); }, fontsInfo);
+    static auto fontsFamily = fontsInfo | ranges::views::transform([] (auto const& fontInfo) { return fontInfo.front().family.data(); }) | ranges::to_vector;
     static auto fontFamilyIndex = static_cast<int>(std::distance(fonts.begin(), fonts.find(context.settings.application.font.family)));
 
-    static auto fontStyles = fplus::transform([] (Font const& fontInfo) { return fontInfo.style.data(); }, fontsInfo.at(static_cast<size_t>(fontFamilyIndex)));
+    static auto fontStyles = fontsInfo.at(static_cast<size_t>(fontFamilyIndex)) | ranges::views::transform([] (auto const& fontInfo) { return fontInfo.style.data(); }) | ranges::to_vector;
     static auto fontStyleIndex = static_cast<int>(std::distance(fontStyles.begin(), std::ranges::find(fontStyles, context.settings.application.font.style)));
 
     ImGui::BeginGroup();
@@ -58,7 +58,7 @@ static Result<void> render_appearance_tab(Context& context)
     {
         if (context.hasChangedFont)
         {
-            fontStyles = fplus::transform([] (Font const& fontInfo) { return fontInfo.style.data(); }, fontsInfo.at(static_cast<size_t>(fontFamilyIndex)));
+            fontStyles = fontsInfo.at(static_cast<size_t>(fontFamilyIndex)) | ranges::views::transform([] (auto const& fontInfo) { return fontInfo.style.data(); }) | ranges::to_vector;
             fontStyleIndex = 0;
         }
 
@@ -88,7 +88,7 @@ static Result<void> render_languages_tab(Context& context)
     ImGui::Text("%s", TRY(Localisation::get(context.settings.application.language, Localisation::Window_Settings_Tabs_Language_Language)));
 
     static auto languages = get_available_languages();
-    static auto languagesData = fplus::transform([] (std::string const& language) { return language.data(); }, languages);
+    static auto languagesData = languages | ranges::views::transform([] (auto const& language) { return language.data(); }) | ranges::to_vector;
 
     static int languageIndex = static_cast<int>(
         std::distance(languages.begin(), std::ranges::find(languages, context.settings.application.language))

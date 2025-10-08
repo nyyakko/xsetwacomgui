@@ -2,10 +2,10 @@
 
 #include <fmt/core.h>
 #include <fmt/format.h>
-#include <fplus/split.hpp>
 #include <liberror/Try.hpp>
 #include <libexec/Execute.hpp>
 #include <magic_enum/magic_enum.hpp>
+#include <range/v3/view.hpp>
 
 #include <sys/wait.h>
 #include <fcntl.h>
@@ -21,7 +21,7 @@ using namespace liberror;
 
 static Result<std::string> execute(std::string const& command)
 {
-    auto [out, err] = TRY(libexec::execute("xsetwacom", fplus::split(' ', false, command)));
+    auto [out, err] = TRY(libexec::execute("xsetwacom", command | ranges::views::split(' ') | ranges::to<std::vector<std::string>>));
     if (!err.empty()) return make_error(err);
     return out;
 }

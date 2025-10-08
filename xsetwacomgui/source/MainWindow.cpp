@@ -12,12 +12,12 @@
 #include "ui/Localisation.hpp"
 #include "ui/Scaling.hpp"
 
-#include <fplus/fplus.hpp>
 #include <imgui/extensions/imgui_bezier.hpp>
 #include <imgui/extensions/imgui_text.hpp>
 #include <imgui/extensions/imgui_toast.hpp>
 #include <imgui/imgui.hpp>
 #include <liberror/Try.hpp>
+#include <range/v3/view.hpp>
 
 #include <sys/poll.h>
 
@@ -148,7 +148,7 @@ static Result<void> render_region_mappers(Context& context)
 
     auto* drawList = ImGui::GetWindowDrawList();
 
-    for (auto [displayAnchor, deviceAnchor] : fplus::zip(std::span<ImVec2>(displayAreaAnchors, 4), std::span<ImVec2>(deviceAreaAnchors, 4)))
+    for (auto [displayAnchor, deviceAnchor] : ranges::views::zip(std::span<ImVec2>(displayAreaAnchors, 4), std::span<ImVec2>(deviceAreaAnchors, 4)))
     {
         auto p1 = displayAnchor * (displayMapperPosition.Max - displayMapperPosition.Min) + displayMapperPosition.Min;
         auto p2 = deviceAnchor * (deviceMapperPosition.Max - deviceMapperPosition.Min) + deviceMapperPosition.Min;
@@ -173,16 +173,20 @@ static Result<void> render_tablet_tab(Context& context)
 
     ImGui::BeginGroup();
     {
-        auto devices = fplus::keep_if([] (auto const& device) { return device.kind == Device::Kind::STYLUS; }, context.devices);
-        auto deviceNames = fplus::transform([] (auto const& device) { return device.name.data(); }, devices);
+        auto deviceNames =
+            context.devices
+                | ranges::views::filter([] (auto kind) { return kind == Device::Kind::STYLUS; }, &Device::kind)
+                | ranges::views::transform([] (auto const& device) { return device.name.data(); })
+                | ranges::to_vector;
+
         static auto deviceIndex = context.settings.tablet->stylus.name == "INVALID" ? 0 : static_cast<int>(
-            std::distance(devices.begin(), std::ranges::find(devices, context.settings.tablet->stylus.name, &Device::name))
+            std::distance(deviceNames.begin(), std::ranges::find(deviceNames, context.settings.tablet->stylus.name))
         );
 
         if (context.hasChangedDevice)
         {
             deviceIndex = context.settings.tablet->stylus.name == "INVALID" ? 0 : static_cast<int>(
-                std::distance(devices.begin(), std::ranges::find(devices, context.settings.tablet->stylus.name, &Device::name))
+                std::distance(deviceNames.begin(), std::ranges::find(deviceNames, context.settings.tablet->stylus.name))
             );
         }
 
@@ -356,7 +360,8 @@ static Result<void> render_display_tab(Context& context)
 
     ImGui::BeginGroup();
     {
-        auto displaysNames = fplus::transform([] (auto const& display) { return display.name.data(); }, context.displays);
+        auto displayNames = context.displays | ranges::views::transform([] (auto const& display) { return display.name.data(); }) | ranges::to_vector;
+
         static auto displayIndex = context.settings.tablet->display.name == "INVALID" ? 0 : static_cast<int>(
             std::distance(context.displays.begin(), std::ranges::find(context.displays, context.settings.tablet->display.name, &Display::name))
         );
@@ -371,7 +376,7 @@ static Result<void> render_display_tab(Context& context)
         ImGui::AlignTextToFramePadding();
         ImGui::Text("%s", TRY(Localisation::get(context.settings.application.language, Localisation::Window_Main_Tabs_Display_Display)));
         ImGui::SetNextItemWidth(300_scaled + ImGui::GetStyle().WindowPadding.x);
-        context.hasChangedDisplay = ImGui::Combo("##Displays", &displayIndex, displaysNames.data(), static_cast<int>(displaysNames.size()));
+        context.hasChangedDisplay = ImGui::Combo("##Displays", &displayIndex, displayNames.data(), static_cast<int>(displayNames.size()));
 
         if (context.hasChangedDisplay)
         {
@@ -526,8 +531,16 @@ Result<void> render_main_window(Context& context)
 
         if (!result.has_value())
         {
-            context.tablet.stylus = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::STYLUS; }, context.devices).back();
-            context.tablet.pad = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::PAD; }, context.devices).back();
+            context.tablet.stylus = (context.devices
+                | ranges::views::filter([] (auto kind) { return kind == Device::Kind::STYLUS; }, &Device::kind)
+                | ranges::to_vector
+            ).back();
+
+            context.tablet.pad = (context.devices
+                | ranges::views::filter([] (auto kind) { return kind == Device::Kind::PAD; }, &Device::kind)
+                | ranges::to_vector
+            ).back();
+
             context.display = TRY(get_primary_display());
 
             context.settings.tablet.profiles.emplace("Default", TRY(make_default_profile(context.tablet, context.display)));
@@ -603,8 +616,16 @@ Result<void> render_main_window(Context& context)
 
             if (!result.has_value())
             {
-                context.tablet.stylus = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::STYLUS; }, context.devices).back();
-                context.tablet.pad = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::PAD; }, context.devices).back();
+                context.tablet.stylus = (context.devices
+                    | ranges::views::filter([] (auto kind) { return kind == Device::Kind::STYLUS; }, &Device::kind)
+                    | ranges::to_vector
+                ).back();
+
+                context.tablet.pad = (context.devices
+                    | ranges::views::filter([] (auto kind) { return kind == Device::Kind::PAD; }, &Device::kind)
+                    | ranges::to_vector
+                ).back();
+
                 context.display = TRY(get_primary_display());
 
                 context.settings.tablet.profiles.emplace("Default", TRY(make_default_profile(context.tablet, context.display)));
@@ -716,8 +737,13 @@ Result<void> render_main_window(Context& context)
         ImGui::EndTabBar();
     }
 
-    auto profiles = fplus::keep_if([] (auto const& profile) { return profile != "INVALID"; }, fplus::get_map_keys(context.settings.tablet.profiles));
-    auto profileNames = fplus::transform([] (auto const& profile) { return profile.c_str(); }, profiles);
+    auto profileNames =
+        context.settings.tablet.profiles
+            | ranges::views::keys
+            | ranges::views::filter([] (auto const& profile) { return profile != "INVALID"; })
+            | ranges::views::transform([] (auto const& profile) { return profile.c_str(); })
+            | ranges::to_vector;
+
     std::vector<std::vector<char const*>> items { { TRY(Localisation::get(context.settings.application.language, Localisation::New_Profile)) }, profileNames };
     static std::pair<int, int> itemIndex { 1, context.settings.tablet.profile == "INVALID" ? 0 : std::distance(profileNames.begin(), std::ranges::find(profileNames, context.settings.tablet.profile)) };
 

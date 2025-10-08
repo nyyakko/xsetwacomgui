@@ -1,9 +1,9 @@
 #include "platform/hid/X11/Display.hpp"
 
 #include <fmt/format.h>
-#include <fplus/split.hpp>
 #include <liberror/Try.hpp>
 #include <libexec/Execute.hpp>
+#include <range/v3/view.hpp>
 
 #include <cstdlib>
 #include <regex>
@@ -13,7 +13,7 @@ using namespace liberror;
 
 static Result<std::string> execute(std::string const& command)
 {
-    auto [out, err] = TRY(libexec::execute("xrandr", fplus::split(' ', false, command)));
+    auto [out, err] = TRY(libexec::execute("xrandr", command | ranges::views::split(' ') | ranges::to<std::vector<std::string>>));
     if (!err.empty()) return make_error(err);
     return out;
 }

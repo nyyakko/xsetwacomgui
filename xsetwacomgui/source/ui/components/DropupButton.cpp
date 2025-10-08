@@ -4,7 +4,8 @@
 #include "ui/Scaling.hpp"
 
 #include <spdlog/spdlog.h>
-#include <fplus/container_common.hpp>
+
+#include <numeric>
 
 std::pair<bool, bool> DropupButton(char const* label, std::pair<int, int>* const itemIndex, std::vector<std::vector<char const*>> items, ImVec2 const& size)
 {

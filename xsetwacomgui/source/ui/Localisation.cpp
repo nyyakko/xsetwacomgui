@@ -3,12 +3,11 @@
 #include "platform/Environment.hpp"
 
 #include <fmt/format.h>
-#include <fplus/fplus.hpp>
 #include <nlohmann/json.hpp>
+#include <range/v3/view.hpp>
 
 #include <sstream>
 #include <fstream>
-#include <ranges>
 
 using namespace liberror;
 
@@ -16,9 +15,8 @@ Result<char const*> Localisation::get(std::string_view language, Message id)
 {
     if (!the().contains(language.data()))
     {
-        auto languageLowercase = std::string_view(language.data()) | std::views::transform(tolower);
         std::ifstream stream(
-            get_application_languages_path() / fmt::format("{}.json", std::string(languageLowercase.begin(), languageLowercase.end()))
+            get_application_languages_path() / fmt::format("{}.json", std::string_view(language.data()) | ranges::views::transform(tolower) | ranges::to<std::string>)
         );
         std::stringstream content;
         content << stream.rdbuf();

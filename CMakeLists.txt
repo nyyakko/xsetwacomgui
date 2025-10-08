@@ -11,7 +11,6 @@ find_package(OpenGL REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(Freetype REQUIRED)
 
-CPMAddPackage(URI "gh:Dobiasd/FunctionalPlus@0.2.24" EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:eliaskosunen/scnlib@4.0.1"     EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:fmtlib/fmt#10.2.1"             EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:gabime/spdlog@1.15.3"          EXCLUDE_FROM_ALL YES)
@@ -21,6 +20,7 @@ CPMAddPackage(URI "gh:nyyakko/imgui#master"          EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:nyyakko/LibCoro#master"        EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:nyyakko/LibError#master"       EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:nyyakko/LibExec#master"        EXCLUDE_FROM_ALL YES)
+CPMAddPackage(URI "gh:ericniebler/range-v3#master"   EXCLUDE_FROM_ALL YES)
 
 include(cmake/static_analyzers.cmake)
 include(GNUInstallDirs)
@@ -31,7 +31,6 @@ set(xsetwacomgui_LinkerOptions ${xsetwacomgui_LinkerOptions})
 set(xsetwacomgui_ExternalLibraries
     fmt::fmt
     freetype
-    FunctionalPlus::fplus
     glfw
     imgui::imgui
     LibCoro::LibCoro
@@ -40,6 +39,7 @@ set(xsetwacomgui_ExternalLibraries
     magic_enum::magic_enum
     nlohmann_json::nlohmann_json
     OpenGL::GL
+    range-v3::range-v3
     scn::scn
     spdlog::spdlog
     udev

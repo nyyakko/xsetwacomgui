@@ -15,8 +15,6 @@
 #include "ui/Localisation.hpp"
 #include "ui/Scaling.hpp"
 
-#include <fplus/container_common.hpp>
-#include <fplus/fplus.hpp>
 #include <GLFW/glfw3.h>
 #include <GL/gl.h>
 #include <imgui/extensions/imgui_toast.hpp>
@@ -27,6 +25,7 @@
 #include <libexec/Execute.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <scn/scan.h>
+#include <range/v3/view.hpp>
 
 #include <sys/poll.h>
 
@@ -269,8 +268,16 @@ Result<void> run_no_gui(Context& context)
 
             if (!result.has_value())
             {
-                context.tablet.stylus = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::STYLUS; }, context.devices).back();
-                context.tablet.pad = fplus::keep_if([] (auto&& device) { return device.kind == Device::Kind::PAD; }, context.devices).back();
+                context.tablet.stylus = (context.devices
+                    | ranges::views::filter([] (auto kind) { return kind == Device::Kind::STYLUS; }, &Device::kind)
+                    | ranges::to_vector
+                ).back();
+
+                context.tablet.pad = (context.devices
+                    | ranges::views::filter([] (auto kind) { return kind == Device::Kind::PAD; }, &Device::kind)
+                    | ranges::to_vector
+                ).back();
+
                 context.display = TRY(get_primary_display());
 
                 context.settings.tablet.profiles.emplace("Default", TRY(make_default_profile(context.tablet, context.display)));
