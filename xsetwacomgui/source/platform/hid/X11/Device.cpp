@@ -199,23 +199,11 @@ Result<std::map<int, X11Action>> get_device_button_mappings(Device device)
 {
     std::map<int, X11Action> mappings {};
 
-    std::regex pattern(R"(button [^]([^]+))");
-
     for (auto button : std::views::iota(1zu, 25zu))
     {
         auto output = execute(fmt::format("--get {} Button {}", device.id, button));
-        if (!output.has_value()) continue;
-
-        if (!output->starts_with("button"))
-        {
-            continue;
-        }
-
-        std::sregex_iterator iterator(output->begin(), output->end(), pattern);
-        for (; iterator != std::sregex_iterator{}; iterator = std::next(iterator))
-        {
-            mappings.insert({ button, X11Action(std::atoi(iterator->str(1).data())) });
-        }
+        if (!(output.has_value() && output->starts_with("button"))) continue;
+        mappings.insert({ button, X11Action(std::atoi(output->substr(output->find_first_of('+')+1).data())) });
     }
 
     return mappings;
