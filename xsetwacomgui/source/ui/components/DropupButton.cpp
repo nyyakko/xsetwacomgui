@@ -47,7 +47,7 @@ std::pair<bool, bool> DropupButton(char const* label, std::pair<int, int>* const
 
     ImGui::SetNextWindowPos({ previousX, previousY - size.y - popupOffsetY - 3 * ImGui::GetStyle().ItemSpacing.y });
     ImGui::SetNextWindowSize({ size.x + size.y, 0 });
-    static auto const popupMaxHeight = 2 * ImGui::GetStyle().WindowPadding.y + 6*(ImGui::GetStyle().ItemSpacing.y + 25_scaled);
+    static auto const popupMaxHeight = 2 * ImGui::GetStyle().WindowPadding.y + 6 * (ImGui::GetStyle().ItemSpacing.y + 25_scaled);
     ImGui::SetNextWindowSizeConstraints({}, { size.x + size.y, popupMaxHeight - 4 * ImGui::GetStyle().ItemSpacing.y });
     if (ImGui::BeginPopup("Popup"))
     {
