@@ -1,3 +1,5 @@
+#include <spdlog/spdlog.h>
+
 #include "MappingsWindow.hpp"
 
 #include "platform/hid/X11/Device.hpp"
@@ -8,18 +10,16 @@
 #include <imgui/imgui.hpp>
 #include <liberror/Try.hpp>
 #include <magic_enum/magic_enum.hpp>
+#include <range/v3/view.hpp>
 
 using namespace liberror;
 
 static std::vector<char const*>& the_action_names()
 {
-    static auto actionNames = [actions = magic_enum::enum_names<X11Action>()] {
-        std::vector<char const*> result {};
-        std::transform(actions.begin(), actions.end(), std::back_inserter(result), [] (auto& action) {
-            return action.data();
-        });
-        return result;
-    }();
+    static auto actionNames =
+        magic_enum::enum_names<X11Action>()
+            | ranges::views::transform([] (auto& action) { return action.data(); })
+            | ranges::to_vector;
     return actionNames;
 }
 
@@ -53,12 +53,12 @@ static Result<void> render_pad_tab(Context& context)
 
         static std::array<int, 9> actionIndexes {};
 
-        actionIndexes[size_t(mapping.first)] = int(mapping.second)-1;
+        actionIndexes[size_t(mapping.first)-1] = int(mapping.second)-1;
 
         ImGui::SetNextItemWidth(180_scaled);
-        if (ImGui::Combo(fmt::format("##Actions##Pad##{}", mapping.first).data(), &actionIndexes[size_t(mapping.first)], the_action_names().data(), int(the_action_names().size())))
+        if (ImGui::Combo(fmt::format("##Actions##Pad##{}", mapping.first).data(), &actionIndexes[size_t(mapping.first)-1], the_action_names().data(), int(the_action_names().size())))
         {
-            context.settings.tablet->pad.mappings.at(mapping.first) = *magic_enum::enum_cast<X11Action>(actionIndexes[size_t(mapping.first)]+1);
+            context.settings.tablet->pad.mappings.at(mapping.first) = *magic_enum::enum_cast<X11Action>(actionIndexes[size_t(mapping.first)-1]+1);
         }
     }
 
