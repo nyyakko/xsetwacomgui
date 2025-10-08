@@ -7,6 +7,9 @@
 
 #include <numeric>
 
+#define DROPUP_BUTTON_COLOR        ImGui::GetStyle().Colors[ImGuiCol_FrameBg]
+#define DROPUP_BUTTON_COLOR_ACTIVE ImGui::GetStyle().Colors[ImGuiCol_ButtonHovered]
+
 std::pair<bool, bool> DropupButton(char const* label, std::pair<int, int>* const itemIndex, std::vector<std::vector<char const*>> items, ImVec2 const& size)
 {
     std::pair<bool, bool> pressed { false, false };
@@ -25,7 +28,7 @@ std::pair<bool, bool> DropupButton(char const* label, std::pair<int, int>* const
     ImGui::SameLine();
 
     ImGui::SetCursorPosX(previousX + size.x);
-    ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyle().Colors[ImGui::IsPopupOpen("Popup", ImGuiPopupFlags_None) ? ImGuiCol_ButtonHovered : ImGuiCol_FrameBg]);
+    ImGui::PushStyleColor(ImGuiCol_Button, ImGui::IsPopupOpen("Popup", ImGuiPopupFlags_None) ? DROPUP_BUTTON_COLOR_ACTIVE : DROPUP_BUTTON_COLOR);
     if (ImGui::Button("##Popup", { size.y, size.y }))
     {
         ImGui::OpenPopup("Popup");
@@ -41,6 +44,7 @@ std::pair<bool, bool> DropupButton(char const* label, std::pair<int, int>* const
     auto const popupOffsetY = 2 * ImGui::GetStyle().WindowPadding.y + std::accumulate(items.begin(), items.end(), 0.f, [] (auto total, auto const& items) {
         return total + float(items.size())*(ImGui::GetStyle().ItemSpacing.y + 25_scaled);
     });
+
     ImGui::SetNextWindowPos({ previousX, previousY - size.y - popupOffsetY - 3 * ImGui::GetStyle().ItemSpacing.y });
     ImGui::SetNextWindowSize({ size.x + size.y, 0 });
     static auto const popupMaxHeight = 2 * ImGui::GetStyle().WindowPadding.y + 6*(ImGui::GetStyle().ItemSpacing.y + 25_scaled);
