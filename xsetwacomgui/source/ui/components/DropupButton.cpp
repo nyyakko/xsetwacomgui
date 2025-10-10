@@ -41,8 +41,8 @@ std::pair<bool, bool> DropupButton(char const* label, std::pair<int, int>* const
     center.y -= radius * 0.25f;
     drawList->AddTriangleFilled(center + ImVec2(0, 1) * radius, center + ImVec2(-0.866f, -0.5f) * radius, center + ImVec2(0.866f, -0.5f) * radius, ImGui::GetColorU32(ImGuiCol_Text));
 
-    auto const popupOffsetY = 2 * ImGui::GetStyle().WindowPadding.y + std::accumulate(items.begin(), items.end(), 0.f, [] (auto total, auto const& items) {
-        return total + float(items.size())*(ImGui::GetStyle().ItemSpacing.y + 25_scaled);
+    auto const popupOffsetY = 2 * ImGui::GetStyle().WindowPadding.y + std::accumulate(items.begin(), items.end(), 0.f, [] (auto total, auto const& current) {
+        return total + float(current.size())*(ImGui::GetStyle().ItemSpacing.y + 25_scaled);
     });
 
     ImGui::SetNextWindowPos({ previousX, previousY - size.y - popupOffsetY - 3 * ImGui::GetStyle().ItemSpacing.y });
