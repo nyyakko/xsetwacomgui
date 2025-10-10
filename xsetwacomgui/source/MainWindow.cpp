@@ -680,12 +680,11 @@ Result<void> render_main_window(Context& context)
                 assert(pad != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
                 context.tablet.pad = *pad;
 
-                context.hasChangedDevice = true;
-                context.hasChangedDeviceHandedness = true;
-
                 context.display = *std::ranges::find(context.displays, context.settings.tablet->display.name, &Display::name);
-                context.hasChangedDisplay = true;
 
+                context.hasChangedDeviceHandedness = true;
+                context.hasChangedDevice = true;
+                context.hasChangedDisplay = true;
                 context.hasChangedProfile = true;
 
                 TRY(load_profile_to_tablet(context.settings.tablet.get_current_profile(), context.tablet, context.display));
@@ -703,9 +702,8 @@ Result<void> render_main_window(Context& context)
             if (maybeDevice == context.devices.end())
             {
                 context.display = {};
-                context.tablet.stylus = {};
-                context.tablet.pad = {};
                 context.settings.tablet = {};
+                context.tablet = {};
             }
 
             break;
