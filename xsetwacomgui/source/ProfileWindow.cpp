@@ -35,7 +35,7 @@ Result<void> render_profile_window(Context& context)
                 TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),
                 TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Profile_Created))
             );
-            context.settings.tablet.profiles.emplace(profileName.data(), TRY(make_default_profile(context.tablet, context.display)));
+            context.settings.tablet.add_profile(TRY(make_profile(profileName.data(), context.tablet, context.display)));
             save_tablet_settings(context.settings.tablet);
         }
     }

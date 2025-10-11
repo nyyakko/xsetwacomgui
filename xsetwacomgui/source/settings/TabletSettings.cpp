@@ -44,6 +44,8 @@ Result<TabletSettings, SettingsError> load_tablet_settings()
         {
             TabletProfile profile {};
 
+            profile.name = profileJson.begin().key();
+
             profile.display.name             = profileJson.begin().value()["display"]["name"].get<std::string>();
             profile.display.forceFullArea    = profileJson.begin().value()["display"]["forceFullArea"].get<bool>();
             profile.display.forceAspectRatio = profileJson.begin().value()["display"]["forceAspectRatio"].get<bool>();
@@ -207,9 +209,11 @@ Result<void> migrate_tablet_settings(TabletSettings const& settings)
     return {};
 }
 
-Result<TabletProfile> make_default_profile(Tablet const& tablet, Display const& display)
+Result<TabletProfile> make_profile(std::string_view name, Tablet const& tablet, Display const& display)
 {
-    TabletProfile profile;
+    TabletProfile profile {};
+
+    profile.name = name;
 
     profile.stylus.name = tablet.stylus.name;
     profile.stylus.handedness = Device::Handedness::RIGHT;

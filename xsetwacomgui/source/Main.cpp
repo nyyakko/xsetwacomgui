@@ -224,19 +224,19 @@ Result<void> run_no_gui(Context& context)
 
         context.settings.tablet = *result;
 
-        auto stylus = std::ranges::find(context.devices, context.settings.tablet->stylus.name, &Device::name);
+        auto stylus = std::ranges::find(context.devices, context.settings.tablet.get_profile().stylus.name, &Device::name);
         assert(stylus != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
         context.tablet.stylus = *stylus;
 
-        auto pad = std::ranges::find(context.devices, context.settings.tablet->pad.name, &Device::name);
+        auto pad = std::ranges::find(context.devices, context.settings.tablet.get_profile().pad.name, &Device::name);
         assert(pad != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
         context.tablet.pad = *pad;
 
-        context.display = *std::ranges::find(context.displays, context.settings.tablet->display.name, &Display::name);
+        context.display = *std::ranges::find(context.displays, context.settings.tablet.get_profile().display.name, &Display::name);
 
-        TRY(load_profile_to_tablet(context.settings.tablet.get_current_profile(), context.tablet, context.display));
+        TRY(load_profile_to_tablet(context.settings.tablet.get_profile(), context.tablet, context.display));
 
-        spdlog::info("Device settings (profile: {}) loaded successfully", context.settings.tablet.profile);
+        spdlog::info("Device settings (profile: {}) loaded successfully", context.settings.tablet.get_profile().name);
     }
 
     while (true)
@@ -280,10 +280,10 @@ Result<void> run_no_gui(Context& context)
 
                 context.display = TRY(get_primary_display());
 
-                context.settings.tablet.profiles.emplace("Default", TRY(make_default_profile(context.tablet, context.display)));
-                context.settings.tablet.profile = "Default";
+                context.settings.tablet.add_profile(TRY(make_profile("Default", context.tablet, context.display)));
+                context.settings.tablet.set_profile("Default");
 
-                TRY(load_profile_to_tablet(context.settings.tablet.get_current_profile(), context.tablet, context.display));
+                TRY(load_profile_to_tablet(context.settings.tablet.get_profile(), context.tablet, context.display));
 
                 switch (result.error().message())
                 {
@@ -310,19 +310,19 @@ Result<void> run_no_gui(Context& context)
             {
                 context.settings.tablet = *result;
 
-                auto stylus = std::ranges::find(context.devices, context.settings.tablet->stylus.name, &Device::name);
+                auto stylus = std::ranges::find(context.devices, context.settings.tablet.get_profile().stylus.name, &Device::name);
                 assert(stylus != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
                 context.tablet.stylus = *stylus;
 
-                auto pad = std::ranges::find(context.devices, context.settings.tablet->pad.name, &Device::name);
+                auto pad = std::ranges::find(context.devices, context.settings.tablet.get_profile().pad.name, &Device::name);
                 assert(pad != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
                 context.tablet.pad = *pad;
 
-                context.display = *std::ranges::find(context.displays, context.settings.tablet->display.name, &Display::name);
+                context.display = *std::ranges::find(context.displays, context.settings.tablet.get_profile().display.name, &Display::name);
 
-                TRY(load_profile_to_tablet(context.settings.tablet.get_current_profile(), context.tablet, context.display));
+                TRY(load_profile_to_tablet(context.settings.tablet.get_profile(), context.tablet, context.display));
 
-                spdlog::info("Device settings (profile: {}) loaded successfully", context.settings.tablet.profile);
+                spdlog::info("Device settings (profile: {}) loaded successfully", context.settings.tablet.get_profile().name);
             }
 
             break;
@@ -332,7 +332,7 @@ Result<void> run_no_gui(Context& context)
 
             context.devices = TRY(get_available_devices());
 
-            auto maybeDevice = std::ranges::find(context.devices, context.settings.tablet->stylus.name, &Device::name);
+            auto maybeDevice = std::ranges::find(context.devices, context.settings.tablet.get_profile().stylus.name, &Device::name);
 
             if (maybeDevice == context.devices.end())
             {
@@ -384,17 +384,17 @@ Result<void> safe_main(std::span<char const*> const& arguments)
 
             context.settings.tablet = *result;
 
-            auto stylus = std::ranges::find(context.devices, context.settings.tablet->stylus.name, &Device::name);
+            auto stylus = std::ranges::find(context.devices, context.settings.tablet.get_profile().stylus.name, &Device::name);
             assert(stylus != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
             context.tablet.stylus = *stylus;
 
-            auto pad = std::ranges::find(context.devices, context.settings.tablet->pad.name, &Device::name);
+            auto pad = std::ranges::find(context.devices, context.settings.tablet.get_profile().pad.name, &Device::name);
             assert(pad != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
             context.tablet.pad = *pad;
 
-            context.display = *std::ranges::find(context.displays, context.settings.tablet->display.name, &Display::name);
+            context.display = *std::ranges::find(context.displays, context.settings.tablet.get_profile().display.name, &Display::name);
 
-            TRY(load_profile_to_tablet(context.settings.tablet.get_current_profile(), context.tablet, context.display));
+            TRY(load_profile_to_tablet(context.settings.tablet.get_profile(), context.tablet, context.display));
 
             fmt::println("Device settings loaded successfully");
 

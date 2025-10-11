@@ -38,12 +38,13 @@ struct DisplaySettings
 
 struct TabletProfile
 {
-    StylusSettings stylus {};
-    PadSettings pad {};
-    DisplaySettings display {};
+    std::string name = "INVALID";
+    StylusSettings stylus;
+    PadSettings pad;
+    DisplaySettings display;
 };
 
-liberror::Result<TabletProfile> make_default_profile(Tablet const& tablet, Display const& display);
+liberror::Result<TabletProfile> make_profile(std::string_view name, Tablet const& tablet, Display const& display);
 liberror::Result<void> load_profile_to_tablet(TabletProfile const& profile, Tablet const& tablet, Display const& display);
 
 class TabletSettings
@@ -56,11 +57,14 @@ private:
     friend void save_tablet_settings(TabletSettings const& settings);
 
 public:
-    inline constexpr auto& get_current_profile(this auto& self) { return self.profiles.at(self.profile); }
+    inline constexpr auto& get_profile(this auto& self) { return self.profiles.at(self.profile); }
+    inline constexpr void set_profile(this auto& self, std::string_view profile) { assert(self.profiles.contains(profile.data())); self.profile = profile; }
 
-    inline constexpr auto* operator->() { return &profiles.at(profile); }
+    inline constexpr auto& get_profiles(this auto& self) { return self.profiles; }
 
-public:
+    inline constexpr void add_profile(this auto& self, TabletProfile const& profile) { self.profiles.emplace(profile.name, profile); }
+
+private:
     std::string profile = "INVALID";
     std::map<std::string, TabletProfile> profiles { { "INVALID", {} } };
 };
