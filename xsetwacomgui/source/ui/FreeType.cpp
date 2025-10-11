@@ -13,14 +13,14 @@ std::map<std::string, std::vector<Font>> get_available_fonts()
     FT_Library library {};
     FT_Init_FreeType(&library);
 
-    static std::array FONT_PATHS {
+    static std::array fontPaths {
         get_system_home_path() / ".fonts",
         get_system_home_path() / ".local/share/fonts",
         std::filesystem::path("/usr/share/fonts"),
         std::filesystem::path("/usr/local/share/fonts")
     };
 
-    for (auto const& path : FONT_PATHS)
+    for (auto const& path : fontPaths)
     {
         if (!std::filesystem::exists(path)) continue;
 
