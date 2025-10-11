@@ -7,13 +7,13 @@
 #include <magic_enum/magic_enum.hpp>
 #include <range/v3/view.hpp>
 
-#include <sys/wait.h>
 #include <fcntl.h>
 #include <poll.h>
+#include <sys/wait.h>
 
-#include <ranges>
 #include <algorithm>
 #include <functional>
+#include <ranges>
 #include <regex>
 #include <sstream>
 

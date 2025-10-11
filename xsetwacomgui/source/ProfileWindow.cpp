@@ -4,9 +4,9 @@
 #include "ui/Localisation.hpp"
 #include "ui/Scaling.hpp"
 
-#include <liberror/Try.hpp>
-#include <imgui/imgui.hpp>
 #include <imgui/extensions/imgui_toast.hpp>
+#include <imgui/imgui.hpp>
+#include <liberror/Try.hpp>
 
 using namespace liberror;
 using namespace std::literals;

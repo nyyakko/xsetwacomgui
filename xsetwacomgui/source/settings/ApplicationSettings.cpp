@@ -1,10 +1,10 @@
 #include "settings/ApplicationSettings.hpp"
 
-#include <magic_enum/magic_enum.hpp>
 #include <fmt/format.h>
 #include <liberror/Result.hpp>
 #include <liberror/Try.hpp>
 #include <libexec/Execute.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <nlohmann/json.hpp>
 
 #include <cstdlib>

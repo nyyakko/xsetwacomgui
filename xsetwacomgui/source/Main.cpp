@@ -24,8 +24,8 @@
 #include <liberror/Try.hpp>
 #include <libexec/Execute.hpp>
 #include <magic_enum/magic_enum.hpp>
-#include <scn/scan.h>
 #include <range/v3/view.hpp>
+#include <scn/scan.h>
 
 #include <sys/poll.h>
 

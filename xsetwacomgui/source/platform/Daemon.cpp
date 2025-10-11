@@ -6,10 +6,10 @@
 #include <fmt/format.h>
 
 #include <fcntl.h>
-#include <sys/wait.h>
 #include <syslog.h>
 #include <sys/stat.h>
 #include <sys/syslog.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 #include <algorithm>

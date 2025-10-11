@@ -5,9 +5,9 @@
 #include <libexec/Execute.hpp>
 #include <range/v3/view.hpp>
 
+#include <algorithm>
 #include <cstdlib>
 #include <regex>
-#include <algorithm>
 
 using namespace liberror;
 
