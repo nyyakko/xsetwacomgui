@@ -70,5 +70,5 @@ private:
 };
 
 liberror::Result<TabletSettings, SettingsError> load_tablet_settings();
-void save_tablet_settings(TabletSettings const& settings);
 liberror::Result<void> migrate_tablet_settings(TabletSettings const& settings);
+void save_tablet_settings(TabletSettings const& settings);
