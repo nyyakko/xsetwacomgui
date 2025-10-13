@@ -543,10 +543,10 @@ Result<void> render_main_window(Context& context)
 
             context.display = TRY(get_primary_display());
 
-            context.settings.tablet.add_profile(TRY(make_profile("Default", context.tablet, context.display)));
+            context.settings.tablet.add_profile(TRY(make_tablet_profile("Default", context.tablet, context.display)));
             context.settings.tablet.set_profile("Default");
 
-            TRY(load_profile_to_tablet(context.settings.tablet.get_profile(), context.tablet, context.display));
+            TRY(load_tablet_profile(context.settings.tablet.get_profile(), context.tablet, context.display));
 
             switch (result.error().message())
             {
@@ -593,7 +593,7 @@ Result<void> render_main_window(Context& context)
 
             context.display = *std::ranges::find(context.displays, context.settings.tablet.get_profile().display.name, &Display::name);
 
-            TRY(load_profile_to_tablet(context.settings.tablet.get_profile(), context.tablet, context.display));
+            TRY(load_tablet_profile(context.settings.tablet.get_profile(), context.tablet, context.display));
         }
 
         hasTriedToInitializeDeviceSettings = true;
@@ -628,10 +628,10 @@ Result<void> render_main_window(Context& context)
 
                 context.display = TRY(get_primary_display());
 
-                context.settings.tablet.add_profile(TRY(make_profile("Default", context.tablet, context.display)));
+                context.settings.tablet.add_profile(TRY(make_tablet_profile("Default", context.tablet, context.display)));
                 context.settings.tablet.set_profile("Default");
 
-                TRY(load_profile_to_tablet(context.settings.tablet.get_profile(), context.tablet, context.display));
+                TRY(load_tablet_profile(context.settings.tablet.get_profile(), context.tablet, context.display));
 
                 switch (result.error().message())
                 {
@@ -687,7 +687,7 @@ Result<void> render_main_window(Context& context)
                 context.hasChangedDisplay = true;
                 context.hasChangedProfile = true;
 
-                TRY(load_profile_to_tablet(context.settings.tablet.get_profile(), context.tablet, context.display));
+                TRY(load_tablet_profile(context.settings.tablet.get_profile(), context.tablet, context.display));
             }
 
             break;
@@ -763,7 +763,7 @@ Result<void> render_main_window(Context& context)
             TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Saved))
         );
         save_tablet_settings(context.settings.tablet);
-        TRY(load_profile_to_tablet(context.settings.tablet.get_profile(), context.tablet, context.display));
+        TRY(load_tablet_profile(context.settings.tablet.get_profile(), context.tablet, context.display));
     }
     else if (pressedSecondary)
     {

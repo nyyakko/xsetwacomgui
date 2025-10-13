@@ -1,6 +1,6 @@
 #include <spdlog/spdlog.h>
 
-#include "settings/TabletSettings.hpp"
+#include "settings/SettingsTablet.hpp"
 
 #include "platform/hid/X11/Device.hpp"
 
@@ -18,9 +18,9 @@
 
 using namespace liberror;
 
-Result<TabletSettings, SettingsError> load_tablet_settings()
+Result<SettingsTablet, SettingsError> load_tablet_settings()
 {
-    TabletSettings settings {};
+    SettingsTablet settings {};
 
     if (!std::filesystem::exists(TABLET_SETTINGS_FILE))
     {
@@ -35,7 +35,7 @@ Result<TabletSettings, SettingsError> load_tablet_settings()
     {
         auto json = nlohmann::json::parse(content.str());
 
-        if (json["version"].is_null() || json["version"].get<std::string>() != TabletSettings::SCHEMA_VERSION)
+        if (json["version"].is_null() || json["version"].get<std::string>() != SettingsTablet::SCHEMA_VERSION)
         {
             return make_error<SettingsError>(SettingsError::Type::OUTDATED_SCHEMA);
         }
@@ -103,7 +103,7 @@ Result<TabletSettings, SettingsError> load_tablet_settings()
     return settings;
 }
 
-Result<void> migrate_tablet_settings(TabletSettings const& settings)
+Result<void> migrate_tablet_settings(SettingsTablet const& settings)
 {
     static auto newSettingsSchema = get_application_config_path() / "tablet_settings.json";
     static auto oldSettingsSchema = get_application_config_path() / "tablet_settings.old.json";
@@ -123,10 +123,10 @@ Result<void> migrate_tablet_settings(TabletSettings const& settings)
     return {};
 }
 
-void save_tablet_settings(TabletSettings const& settings)
+void save_tablet_settings(SettingsTablet const& settings)
 {
     nlohmann::ordered_json json {
-        { "version", TabletSettings::SCHEMA_VERSION },
+        { "version", SettingsTablet::SCHEMA_VERSION },
         { "profile", settings.profile },
         { "profiles", nlohmann::json::array() }
     };
@@ -209,7 +209,7 @@ void save_tablet_settings(TabletSettings const& settings)
     stream << std::setw(4) << json;
 }
 
-Result<TabletProfile> make_profile(std::string_view name, Tablet const& tablet, Display const& display)
+Result<TabletProfile> make_tablet_profile(std::string_view name, Tablet const& tablet, Display const& display)
 {
     TabletProfile profile {};
 
@@ -236,7 +236,7 @@ Result<TabletProfile> make_profile(std::string_view name, Tablet const& tablet, 
     return profile;
 }
 
-Result<void> load_profile_to_tablet(TabletProfile const& profile, Tablet const& tablet, Display const& display)
+Result<void> load_tablet_profile(TabletProfile const& profile, Tablet const& tablet, Display const& display)
 {
     TRY(set_stylus_area(tablet.stylus, profile.stylus.area));
     TRY(set_stylus_handedness(tablet.stylus, profile.stylus.handedness));

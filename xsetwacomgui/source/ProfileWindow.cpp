@@ -1,6 +1,5 @@
 #include "ProfileWindow.hpp"
 
-#include "settings/TabletSettings.hpp"
 #include "ui/Localisation.hpp"
 #include "ui/Scaling.hpp"
 
@@ -35,7 +34,7 @@ Result<void> render_profile_window(Context& context)
                 TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),
                 TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Profile_Created))
             );
-            context.settings.tablet.add_profile(TRY(make_profile(profileName.data(), context.tablet, context.display)));
+            context.settings.tablet.add_profile(TRY(make_tablet_profile(profileName.data(), context.tablet, context.display)));
             save_tablet_settings(context.settings.tablet);
         }
     }

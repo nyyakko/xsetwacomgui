@@ -44,17 +44,17 @@ struct TabletProfile
     DisplaySettings display;
 };
 
-liberror::Result<TabletProfile> make_profile(std::string_view name, Tablet const& tablet, Display const& display);
-liberror::Result<void> load_profile_to_tablet(TabletProfile const& profile, Tablet const& tablet, Display const& display);
+liberror::Result<TabletProfile> make_tablet_profile(std::string_view name, Tablet const& tablet, Display const& display);
+liberror::Result<void> load_tablet_profile(TabletProfile const& profile, Tablet const& tablet, Display const& display);
 
-class TabletSettings
+class SettingsTablet
 {
 private:
     // Should be updated every time a change is made
     static constexpr auto SCHEMA_VERSION = "1.4";
 
-    friend liberror::Result<TabletSettings, SettingsError> load_tablet_settings();
-    friend void save_tablet_settings(TabletSettings const& settings);
+    friend liberror::Result<SettingsTablet, SettingsError> load_tablet_settings();
+    friend void save_tablet_settings(SettingsTablet const& settings);
 
 public:
     inline constexpr auto& get_profile(this auto& self) { return self.profiles.at(self.profile); }
@@ -69,6 +69,6 @@ private:
     std::map<std::string, TabletProfile> profiles { { "INVALID", {} } };
 };
 
-liberror::Result<TabletSettings, SettingsError> load_tablet_settings();
-liberror::Result<void> migrate_tablet_settings(TabletSettings const& settings);
-void save_tablet_settings(TabletSettings const& settings);
+liberror::Result<SettingsTablet, SettingsError> load_tablet_settings();
+liberror::Result<void> migrate_tablet_settings(SettingsTablet const& settings);
+void save_tablet_settings(SettingsTablet const& settings);

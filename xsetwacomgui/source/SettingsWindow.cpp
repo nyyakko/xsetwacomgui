@@ -24,7 +24,7 @@ static Result<void> render_appearance_tab(Context& context)
 
     if (context.hasChangedTheme)
     {
-        context.settings.application.theme = ApplicationSettings::Theme(themeIndex);
+        context.settings.application.theme = SettingsApplication::Theme(themeIndex);
     }
 
     static auto fonts = get_available_fonts();

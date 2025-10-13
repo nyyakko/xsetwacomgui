@@ -94,7 +94,7 @@ Result<void> render_mappings_window(Context& context)
             TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Saved))
         );
         save_tablet_settings(context.settings.tablet);
-        TRY(load_profile_to_tablet(context.settings.tablet.get_profile(), context.tablet, context.display));
+        TRY(load_tablet_profile(context.settings.tablet.get_profile(), context.tablet, context.display));
     }
     ImGui::SetCursorPos(previousCursorPosition);
 

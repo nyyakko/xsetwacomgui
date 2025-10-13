@@ -1,10 +1,10 @@
 #pragma once
 
-#include "settings/ApplicationSettings.hpp"
-#include "settings/TabletSettings.hpp"
+#include "settings/SettingsApplication.hpp"
+#include "settings/SettingsTablet.hpp"
 
 struct Settings
 {
-    TabletSettings tablet;
-    ApplicationSettings application;
+    SettingsTablet tablet;
+    SettingsApplication application;
 };

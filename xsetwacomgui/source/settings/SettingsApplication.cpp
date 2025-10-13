@@ -1,4 +1,4 @@
-#include "settings/ApplicationSettings.hpp"
+#include "settings/SettingsApplication.hpp"
 
 #include <fmt/format.h>
 #include <liberror/Result.hpp>
@@ -14,9 +14,9 @@
 
 using namespace liberror;
 
-Result<ApplicationSettings, SettingsError> load_application_settings()
+Result<SettingsApplication, SettingsError> load_application_settings()
 {
-    ApplicationSettings settings {};
+    SettingsApplication settings {};
 
     if (!std::filesystem::exists(APPLICATION_SETTINGS_FILE))
     {
@@ -31,12 +31,12 @@ Result<ApplicationSettings, SettingsError> load_application_settings()
     {
         auto json = nlohmann::json::parse(content.str());
 
-        if (json["version"].is_null() || json["version"].get<std::string>() != ApplicationSettings::SCHEMA_VERSION)
+        if (json["version"].is_null() || json["version"].get<std::string>() != SettingsApplication::SCHEMA_VERSION)
         {
             return make_error<SettingsError>(SettingsError::Type::OUTDATED_SCHEMA);
         }
 
-        settings.theme       = *magic_enum::enum_cast<ApplicationSettings::Theme>(json["appearance"]["theme"].get<std::string>());
+        settings.theme       = *magic_enum::enum_cast<SettingsApplication::Theme>(json["appearance"]["theme"].get<std::string>());
         settings.font.path   = json["appearance"]["font"]["path"].get<std::string>();
         settings.font.family = json["appearance"]["font"]["family"].get<std::string>();
         settings.font.style  = json["appearance"]["font"]["style"].get<std::string>();
@@ -51,7 +51,7 @@ Result<ApplicationSettings, SettingsError> load_application_settings()
     return settings;
 }
 
-Result<void> migrate_application_settings(ApplicationSettings const& settings)
+Result<void> migrate_application_settings(SettingsApplication const& settings)
 {
     static auto newSettingsSchema = get_application_config_path() / "application_settings.json";
     static auto oldSettingsSchema = get_application_config_path() / "application_settings.old.json";
@@ -71,13 +71,13 @@ Result<void> migrate_application_settings(ApplicationSettings const& settings)
     return {};
 }
 
-void save_application_settings(ApplicationSettings const& settings)
+void save_application_settings(SettingsApplication const& settings)
 {
     nlohmann::ordered_json json {
-        { "version", ApplicationSettings::SCHEMA_VERSION },
+        { "version", SettingsApplication::SCHEMA_VERSION },
         {
             "appearance", {
-                { "theme", magic_enum::enum_name<ApplicationSettings::Theme>(settings.theme) },
+                { "theme", magic_enum::enum_name<SettingsApplication::Theme>(settings.theme) },
                 { "font", {
                         { "path", settings.font.path },
                         { "family", settings.font.family },
