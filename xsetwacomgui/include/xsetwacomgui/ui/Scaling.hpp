@@ -1,6 +1,17 @@
 #pragma once
 
-float operator""_scaled(unsigned long long i);
+inline auto& get_scale()
+{
+    static float scale = 1.0f;
+    return scale;
+}
 
-float& the_scale();
-void set_scale(float value);
+inline void set_scale(float value)
+{
+    get_scale() = value;
+}
+
+inline auto operator""_scaled(unsigned long long value)
+{
+    return float(value) * get_scale();
+}
