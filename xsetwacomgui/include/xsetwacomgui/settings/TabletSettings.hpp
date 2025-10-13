@@ -60,9 +60,9 @@ public:
     inline constexpr auto& get_profile(this auto& self) { return self.profiles.at(self.profile); }
     inline constexpr void set_profile(this auto& self, std::string_view profile) { assert(self.profiles.contains(profile.data())); self.profile = profile; }
 
-    inline constexpr auto& get_profiles(this auto& self) { return self.profiles; }
-
     inline constexpr void add_profile(this auto& self, TabletProfile const& profile) { self.profiles.emplace(profile.name, profile); }
+
+    inline constexpr auto& get_profiles(this auto& self) { return self.profiles; }
 
 private:
     std::string profile = "INVALID";
