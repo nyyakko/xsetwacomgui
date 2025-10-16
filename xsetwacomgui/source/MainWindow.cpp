@@ -27,6 +27,7 @@
 #include <span>
 
 using namespace liberror;
+using namespace libcoro;
 
 static Result<void> render_area_mappers(Context& context)
 {
@@ -754,16 +755,34 @@ Result<void> render_main_window(Context& context)
 
     auto previousCursorPosition = ImGui::GetCursorPos();
     ImGui::SetCursorPosY(ImGui::GetWindowHeight() - (35_scaled + ImGui::GetStyle().WindowPadding.x));
+    static auto isDropupButtonDisabled = false;
+    ImGui::BeginDisabled(isDropupButtonDisabled);
     auto [pressedPrimary, pressedSecondary] = DropupButton(TRY(Localisation::get(context.settings.application.language, Localisation::Save_Apply)), &itemIndex, items, { 200_scaled, 35_scaled });
+    ImGui::EndDisabled();
     ImGui::SetCursorPos(previousCursorPosition);
     if (pressedPrimary)
     {
-        ImGui::PushToast(
-            TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),
-            TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Saved))
-        );
-        save_tablet_settings(context.settings.tablet);
-        TRY(load_tablet_profile(context.settings.tablet.get_profile(), context.tablet, context.display));
+        isDropupButtonDisabled = true;
+
+        context.tasks.push(Scheduler::the().schedule_with_result([] (Tablet tablet, TabletProfile profile, Display display, Settings& settings) -> Task<std::function<Result<void>()>> {
+            auto result = load_tablet_profile(profile, tablet, display);
+
+            isDropupButtonDisabled = false;
+
+            if (!result.has_value())
+            {
+                co_return [result = std::move(result)] { return make_error(result.error()); };
+            }
+
+            co_return [&settings] -> Result<void> {
+                ImGui::PushToast(
+                    TRY(Localisation::get(settings.application.language, Localisation::Toast_Success)),
+                    TRY(Localisation::get(settings.application.language, Localisation::Toast_Device_Settings_Saved))
+                );
+                save_tablet_settings(settings.tablet);
+                return {};
+            };
+        }(context.tablet, context.settings.tablet.get_profile(), context.display, context.settings)));
     }
     else if (pressedSecondary)
     {

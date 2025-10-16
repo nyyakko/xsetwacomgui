@@ -4,12 +4,15 @@
 #include "ui/Scaling.hpp"
 
 #include <imgui/extensions/imgui_toast.hpp>
+#include <imgui/imgui.hpp>
+#include <libcoro/Task.hpp>
 #include <liberror/Try.hpp>
 #include <range/v3/view.hpp>
 
 #include <algorithm>
 
 using namespace liberror;
+using namespace libcoro;
 
 static Result<void> render_appearance_tab(Context& context)
 {
@@ -131,14 +134,26 @@ Result<void> render_settings_window(Context& context)
 
     auto previousCursorPosition = ImGui::GetCursorPos();
     ImGui::SetCursorPosY(ImGui::GetWindowHeight() - (25_scaled + ImGui::GetStyle().WindowPadding.x));
+    static auto isSaveButtonDisabled = false;
+    ImGui::BeginDisabled(isSaveButtonDisabled);
     if (ImGui::Button(TRY(Localisation::get(context.settings.application.language, Localisation::Save)), { 150_scaled, 25_scaled }))
     {
-        ImGui::PushToast(
-            TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),
-            TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Application_Settings_Saved))
-        );
-        save_application_settings(context.settings.application);
+        isSaveButtonDisabled = true;
+
+        context.tasks.push(Scheduler::the().schedule_with_result([] (Settings& settings) -> Task<std::function<Result<void>()>> {
+            isSaveButtonDisabled = false;
+
+            co_return [&settings] -> Result<void> {
+                ImGui::PushToast(
+                    TRY(Localisation::get(settings.application.language, Localisation::Toast_Success)),
+                    TRY(Localisation::get(settings.application.language, Localisation::Toast_Application_Settings_Saved))
+                );
+                save_application_settings(settings.application);
+                return {};
+            };
+        }(context.settings)));
     }
+    ImGui::EndDisabled();
     ImGui::SetCursorPos(previousCursorPosition);
 
     return {};

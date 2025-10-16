@@ -32,6 +32,7 @@
 #include <span>
 
 using namespace liberror;
+using namespace libcoro;
 using namespace std::literals;
 
 Result<void> push_system_toast(std::string_view message)
@@ -94,11 +95,21 @@ Result<void> run_gui(Context& context)
         font = io.Fonts->AddFontFromFileTTF(context.settings.application.font.path.string().data(), 20_scaled, nullptr, ranges.Data);
     }
 
+    std::thread schedulerThread {
+        [] {
+            Scheduler::the().start();
+        }
+    };
+
     while (!glfwWindowShouldClose(window))
     {
         glClear(GL_COLOR_BUFFER_BIT);
 
-        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) break;
+        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        {
+            Scheduler::the().stop();
+            break;
+        }
 
         if (context.settings.application.theme == SettingsApplication::Theme::DARK)
         {
@@ -120,8 +131,16 @@ Result<void> run_gui(Context& context)
             ImGui::SetNextWindowPos({});
             ImGui::SetNextWindowSize({ float(windowWidth), float(windowHeight) });
             ImGui::Begin(NAME, nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar);
-            ImGui::RenderToasts();
             {
+                ImGui::RenderToasts();
+
+                if (!context.tasks.empty() && context.tasks.top().wait_for(0s) == std::future_status::ready)
+                {
+                    auto task = std::move(context.tasks.top());
+                    context.tasks.pop();
+                    TRY(std::invoke(task.get()));
+                }
+
                 static auto isSettingsWindowOpen = false;
                 static auto isGoddessWindowOpen = false;
 
@@ -197,6 +216,8 @@ Result<void> run_gui(Context& context)
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+
+    schedulerThread.join();
 
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
@@ -368,7 +389,8 @@ Result<void> safe_main(std::span<char const*> const& arguments)
     Context context {
         {},
         TRY(get_available_devices()),
-        TRY(get_available_displays())
+        TRY(get_available_displays()),
+        {}
     };
 
     if (auto posConfig = std::ranges::find(arguments, "config"sv); posConfig != arguments.end())

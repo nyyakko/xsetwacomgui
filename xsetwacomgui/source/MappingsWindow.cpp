@@ -8,11 +8,13 @@
 
 #include <imgui/extensions/imgui_toast.hpp>
 #include <imgui/imgui.hpp>
+#include <libcoro/Task.hpp>
 #include <liberror/Try.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <range/v3/view.hpp>
 
 using namespace liberror;
+using namespace libcoro;
 
 static Result<void> render_stylus_tab(Context& context)
 {
@@ -87,15 +89,33 @@ Result<void> render_mappings_window(Context& context)
 
     auto previousCursorPosition = ImGui::GetCursorPos();
     ImGui::SetCursorPosY(ImGui::GetWindowHeight() - (25_scaled + ImGui::GetStyle().WindowPadding.x));
+    static auto isSaveApplyButtonDisabled = false;
+    ImGui::BeginDisabled(isSaveApplyButtonDisabled);
     if (ImGui::Button(TRY(Localisation::get(context.settings.application.language, Localisation::Save_Apply)), { 150_scaled, 25_scaled }))
     {
-        ImGui::PushToast(
-            TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),
-            TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Saved))
-        );
-        save_tablet_settings(context.settings.tablet);
-        TRY(load_tablet_profile(context.settings.tablet.get_profile(), context.tablet, context.display));
+        isSaveApplyButtonDisabled = true;
+
+        context.tasks.push(Scheduler::the().schedule_with_result([] (Tablet tablet, TabletProfile profile, Display display, Settings& settings) -> Task<std::function<Result<void>()>> {
+            auto result = load_tablet_profile(profile, tablet, display);
+
+            isSaveApplyButtonDisabled = false;
+
+            if (!result.has_value())
+            {
+                co_return [result = std::move(result)] { return make_error(result.error()); };
+            }
+
+            co_return [&settings] -> Result<void> {
+                ImGui::PushToast(
+                    TRY(Localisation::get(settings.application.language, Localisation::Toast_Success)),
+                    TRY(Localisation::get(settings.application.language, Localisation::Toast_Device_Settings_Saved))
+                );
+                save_tablet_settings(settings.tablet);
+                return {};
+            };
+        }(context.tablet, context.settings.tablet.get_profile(), context.display, context.settings)));
     }
+    ImGui::EndDisabled();
     ImGui::SetCursorPos(previousCursorPosition);
 
     return {};

@@ -2,12 +2,20 @@
 
 #include "settings/Settings.hpp"
 
+#include <liberror/Result.hpp>
+
+#include <functional>
+#include <future>
+#include <stack>
+
 struct Context
 {
     Settings settings;
 
     std::vector<Device> devices;
     std::vector<Display> displays;
+
+    std::stack<std::future<std::function<liberror::Result<void>()>>> tasks;
 
     Tablet tablet {};
     Display display {};
