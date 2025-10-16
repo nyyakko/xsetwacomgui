@@ -3,10 +3,7 @@ cmake_minimum_required(VERSION 3.25)
 project(xsetwacomgui LANGUAGES CXX)
 
 include(cmake/get_cpm.cmake)
-include(cmake/find_executable.cmake)
 
-find_executable(xrandr REQUIRED)
-find_executable(xsetwacom REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(Freetype REQUIRED)
 
