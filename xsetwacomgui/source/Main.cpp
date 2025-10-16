@@ -134,9 +134,9 @@ Result<void> run_gui(Context& context)
             {
                 ImGui::RenderToasts();
 
-                if (!context.tasks.empty() && context.tasks.top().wait_for(0s) == std::future_status::ready)
+                if (!context.tasks.empty() && context.tasks.front().wait_for(0s) == std::future_status::ready)
                 {
-                    auto task = std::move(context.tasks.top());
+                    auto task = std::move(context.tasks.front());
                     context.tasks.pop();
                     TRY(std::invoke(task.get()));
                 }

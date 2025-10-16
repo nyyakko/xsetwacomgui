@@ -6,7 +6,7 @@
 
 #include <functional>
 #include <future>
-#include <stack>
+#include <queue>
 
 struct Context
 {
@@ -15,7 +15,7 @@ struct Context
     std::vector<Device> devices;
     std::vector<Display> displays;
 
-    std::stack<std::future<std::function<liberror::Result<void>()>>> tasks;
+    std::queue<std::future<std::function<liberror::Result<void>()>>> tasks;
 
     Tablet tablet {};
     Display display {};

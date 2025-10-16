@@ -29,6 +29,30 @@
 using namespace liberror;
 using namespace libcoro;
 
+static Task<std::function<Result<void>()>> make_default_profile_async(SettingsError::Type error, Tablet tablet, Display display, Settings& settings)
+{
+    auto result = make_tablet_profile("Default", tablet, display);
+
+    if (!result.has_value())
+    {
+        co_return [result = std::move(result)] { return make_error(result.error()); };
+    }
+
+    co_return [&settings, error, tablet, display, result = std::move(result)] -> Result<void> {
+        settings.tablet.add_profile(*result);
+        settings.tablet.set_profile("Default");
+
+        if (error == SettingsError::Type::FILE_NOT_FOUND)
+        {
+            save_tablet_settings(settings.tablet);
+        }
+
+        TRY(load_tablet_profile(settings.tablet.get_profile(), tablet, display));
+
+        return {};
+    };
+}
+
 static Result<void> render_area_mappers(Context& context)
 {
     ImGui::BeginGroup();
@@ -544,10 +568,7 @@ Result<void> render_main_window(Context& context)
 
             context.display = TRY(get_primary_display());
 
-            context.settings.tablet.add_profile(TRY(make_tablet_profile("Default", context.tablet, context.display)));
-            context.settings.tablet.set_profile("Default");
-
-            TRY(load_tablet_profile(context.settings.tablet.get_profile(), context.tablet, context.display));
+            context.tasks.push(Scheduler::the().schedule_with_result(make_default_profile_async(result.error().message(), context.tablet, context.display, context.settings)));
 
             switch (result.error().message())
             {
@@ -557,7 +578,6 @@ Result<void> render_main_window(Context& context)
                     TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Warning)),
                     TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Missing))
                 );
-                save_tablet_settings(context.settings.tablet);
                 break;
             }
             case SettingsError::Type::PROFILE_NOT_FOUND: {
@@ -629,10 +649,7 @@ Result<void> render_main_window(Context& context)
 
                 context.display = TRY(get_primary_display());
 
-                context.settings.tablet.add_profile(TRY(make_tablet_profile("Default", context.tablet, context.display)));
-                context.settings.tablet.set_profile("Default");
-
-                TRY(load_tablet_profile(context.settings.tablet.get_profile(), context.tablet, context.display));
+                context.tasks.push(Scheduler::the().schedule_with_result(make_default_profile_async(result.error().message(), context.tablet, context.display, context.settings)));
 
                 switch (result.error().message())
                 {
@@ -715,7 +732,7 @@ Result<void> render_main_window(Context& context)
         }
     }
 
-    ImGui::BeginDisabled(context.handleOutdatedDeviceSettings);
+    ImGui::BeginDisabled(context.handleOutdatedDeviceSettings || context.settings.tablet.get_profile().name == "INVALID");
 
     TRY(render_area_mappers(context));
 
