@@ -17,9 +17,8 @@ Before building, make sure you have the following depencies installed on your sy
 * freetype development package
 * udev development package
 * opengl development package
-* glfw development package
-* xrandr
-* xsetwacom
+
+and, of course, a X11 installation with `xsetwacom` available.
 
 You will also need a [C++23 compiler](https://github.com/llvm/llvm-project/releases) and [cmake](https://cmake.org/) installed.
 
