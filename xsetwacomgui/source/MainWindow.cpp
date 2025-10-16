@@ -29,30 +29,6 @@
 using namespace liberror;
 using namespace libcoro;
 
-static Task<std::function<Result<void>()>> make_default_profile_async(SettingsError::Type error, Tablet tablet, Display display, Settings& settings)
-{
-    auto result = make_tablet_profile("Default", tablet, display);
-
-    if (!result.has_value())
-    {
-        co_return [result = std::move(result)] { return make_error(result.error()); };
-    }
-
-    co_return [&settings, error, tablet, display, result = std::move(result)] -> Result<void> {
-        settings.tablet.add_profile(*result);
-        settings.tablet.set_profile("Default");
-
-        if (error == SettingsError::Type::FILE_NOT_FOUND)
-        {
-            save_tablet_settings(settings.tablet);
-        }
-
-        TRY(load_tablet_profile(settings.tablet.get_profile(), tablet, display));
-
-        return {};
-    };
-}
-
 static Result<void> render_area_mappers(Context& context)
 {
     ImGui::BeginGroup();
@@ -568,7 +544,28 @@ Result<void> render_main_window(Context& context)
 
             context.display = TRY(get_primary_display());
 
-            context.tasks.push(Scheduler::the().schedule_with_result(make_default_profile_async(result.error().message(), context.tablet, context.display, context.settings)));
+            context.tasks.push(Scheduler::the().schedule_with_result([] (SettingsError::Type error, Tablet tablet, Display display, Settings& settings) -> Task<std::function<Result<void>()>> {
+                auto result = make_tablet_profile("Default", tablet, display);
+
+                if (!result.has_value())
+                {
+                    co_return [result = std::move(result)] { return make_error(result.error()); };
+                }
+
+                co_return [&settings, error, tablet, display, result = std::move(result)] -> Result<void> {
+                    settings.tablet.add_profile(*result);
+                    settings.tablet.set_profile("Default");
+
+                    if (error == SettingsError::Type::FILE_NOT_FOUND)
+                    {
+                        save_tablet_settings(settings.tablet);
+                    }
+
+                    TRY(load_tablet_profile(settings.tablet.get_profile(), tablet, display));
+
+                    return {};
+                };
+            }(result.error().message(), context.tablet, context.display, context.settings)));
 
             switch (result.error().message())
             {
