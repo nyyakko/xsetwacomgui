@@ -85,15 +85,15 @@ Result<SettingsTablet, SettingsError> load_tablet_settings()
                 });
             }
 
-            settings.profiles.emplace(profileJson.begin().key(), profile);
+            settings.profiles_.emplace(profileJson.begin().key(), profile);
         }
 
-        if (!settings.profiles.contains(json["profile"].get<std::string>()))
+        if (!settings.profiles_.contains(json["profile"].get<std::string>()))
         {
             return make_error<SettingsError>(SettingsError::Type::PROFILE_NOT_FOUND);
         }
 
-        settings.profile = json["profile"].get<std::string>();
+        settings.profile_ = json["profile"].get<std::string>();
     }
     catch (std::exception const& error)
     {
@@ -127,11 +127,11 @@ void save_tablet_settings(SettingsTablet const& settings)
 {
     nlohmann::ordered_json json {
         { "version", SettingsTablet::SCHEMA_VERSION },
-        { "profile", settings.profile },
+        { "profile", settings.profile_ },
         { "profiles", nlohmann::json::array() }
     };
 
-    for (auto const& [name, profile] : settings.profiles | std::views::filter([] (auto const& profile) { return profile.first != "INVALID"; }))
+    for (auto const& [name, profile] : settings.profiles_ | std::views::filter([] (auto const& profile) { return profile.first != "INVALID"; }))
     {
         nlohmann::ordered_json profileJson {};
 
