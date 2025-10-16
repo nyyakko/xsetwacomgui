@@ -716,7 +716,7 @@ Result<void> render_main_window(Context& context)
 
     ImGui::BeginDisabled(context.handleOutdatedDeviceSettings);
 
-    render_area_mappers(context);
+    TRY(render_area_mappers(context));
 
     if (ImGui::BeginTabBar("##Tabs"))
     {

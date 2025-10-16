@@ -260,7 +260,7 @@ Result<void> run_no_gui(Context& context)
 
             if (context.devices.empty())
             {
-                push_system_toast(TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Devices_Missing)));
+                TRY(push_system_toast(TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Devices_Missing))));
                 break;
             }
 
