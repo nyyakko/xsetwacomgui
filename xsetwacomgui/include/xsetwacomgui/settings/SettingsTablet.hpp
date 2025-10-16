@@ -57,16 +57,16 @@ private:
     friend void save_tablet_settings(SettingsTablet const& settings);
 
 public:
-    inline constexpr auto& get_profile(this auto& self) { return self.profiles.at(self.profile); }
-    inline constexpr void set_profile(this auto& self, std::string_view profile) { assert(self.profiles.contains(profile.data())); self.profile = profile; }
+    inline constexpr auto& profiles(this auto& self) { return self.profiles_; }
 
-    inline constexpr void add_profile(this auto& self, TabletProfile const& profile) { self.profiles.emplace(profile.name, profile); }
+    inline constexpr auto& profile(this auto& self) { return self.profiles_.at(self.profile_); }
+    inline constexpr void set_profile(this auto& self, std::string_view profile) { assert(self.profiles_.contains(profile.data())); self.profile_ = profile; }
 
-    inline constexpr auto& get_profiles(this auto& self) { return self.profiles; }
+    inline constexpr void add_profile(this auto& self, TabletProfile const& profile) { self.profiles_.emplace(profile.name, profile); }
 
 private:
-    std::string profile = "INVALID";
-    std::map<std::string, TabletProfile> profiles { { "INVALID", {} } };
+    std::string profile_ = "INVALID";
+    std::map<std::string, TabletProfile> profiles_ { { "INVALID", {} } };
 };
 
 liberror::Result<SettingsTablet, SettingsError> load_tablet_settings();
