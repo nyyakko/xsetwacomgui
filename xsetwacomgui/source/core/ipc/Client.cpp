@@ -6,7 +6,6 @@
 #include <mqueue.h>
 #include <unistd.h>
 
-#include <random>
 #include <csignal>
 
 using namespace liberror;
@@ -50,11 +49,7 @@ Result<void> IPCClient::configure(Mode mode)
     attributes.mq_msgsize = 32;
     attributes.mq_curmsgs = 0;
 
-    std::random_device device;
-    std::mt19937 generator(device());
-    std::uniform_int_distribution<> distribution(1, 32);
-
-    name_ = fmt::format("{}-{}", CLIENT_NAME, distribution(generator));
+    name_ = fmt::format("{}-{}", CLIENT_NAME, getpid());
 
     auto flags = O_RDONLY | O_CREAT | (mode == Mode::ASYNC ? O_NONBLOCK : 0);
     auto clientFd = mq_open(name_.data(), flags, 0660, &attributes);
