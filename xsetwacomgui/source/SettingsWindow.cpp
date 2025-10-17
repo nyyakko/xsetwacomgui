@@ -140,18 +140,17 @@ Result<void> render_settings_window(Context& context)
     {
         isSaveButtonDisabled = true;
 
-        context.tasks.push(Scheduler::the().schedule_with_result([] (Settings& settings) -> Task<std::function<Result<void>()>> {
+        context.tasks.push(Scheduler::the().schedule_with_result([] (Settings settings, Context& context) -> Task<std::function<Result<void>()>> {
             isSaveButtonDisabled = false;
-
-            co_return [&settings] -> Result<void> {
+            save_application_settings(settings.application);
+            co_return [&context] -> Result<void> {
                 ImGui::PushToast(
-                    TRY(Localisation::get(settings.application.language, Localisation::Toast_Success)),
-                    TRY(Localisation::get(settings.application.language, Localisation::Toast_Application_Settings_Saved))
+                    TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),
+                    TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Application_Settings_Saved))
                 );
-                save_application_settings(settings.application);
                 return {};
             };
-        }(context.settings)));
+        }(context.settings, context)));
     }
     ImGui::EndDisabled();
     ImGui::SetCursorPos(previousCursorPosition);

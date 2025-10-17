@@ -544,28 +544,26 @@ Result<void> render_main_window(Context& context)
 
             context.display = TRY(get_primary_display());
 
-            context.tasks.push(Scheduler::the().schedule_with_result([] (SettingsError::Type error, Tablet tablet, Display display, Settings& settings) -> Task<std::function<Result<void>()>> {
-                auto result = make_tablet_profile("Default", tablet, display);
+            context.tasks.push(Scheduler::the().schedule_with_result([] (SettingsError::Type error, Tablet tablet, Display display, Settings settings, Context& context) -> Task<std::function<Result<void>()>> {
+                auto maybeProfile = make_tablet_profile("Default", tablet, display);
 
-                if (!result.has_value())
+                if (!maybeProfile.has_value())
                 {
-                    co_return [result = std::move(result)] { return make_error(result.error()); };
+                    co_return [result = std::move(maybeProfile)] { return make_error(result.error()); };
                 }
 
-                co_return [&settings, error, tablet, display, result = std::move(result)] -> Result<void> {
-                    settings.tablet.add_profile(*result);
-                    settings.tablet.set_profile("Default");
+                if (error == SettingsError::Type::FILE_NOT_FOUND) save_tablet_settings(settings.tablet);
 
-                    if (error == SettingsError::Type::FILE_NOT_FOUND)
-                    {
-                        save_tablet_settings(settings.tablet);
-                    }
+                settings.tablet.add_profile(*maybeProfile);
+                settings.tablet.set_profile("Default");
 
-                    TRY(load_tablet_profile(settings.tablet.profile(), tablet, display));
+                auto maybeLoaded = load_tablet_profile(settings.tablet.profile(), tablet, display);
 
-                    return {};
+                co_return [maybeLoaded = std::move(maybeLoaded), settings = std::move(settings), &context] -> Result<void> {
+                    context.settings = settings;
+                    return maybeLoaded;
                 };
-            }(result.error().message(), context.tablet, context.display, context.settings)));
+            }(result.error().message(), context.tablet, context.display, context.settings, context)));
 
             switch (result.error().message())
             {
@@ -730,25 +728,25 @@ Result<void> render_main_window(Context& context)
     {
         isDropupButtonDisabled = true;
 
-        context.tasks.push(Scheduler::the().schedule_with_result([] (Tablet tablet, TabletProfile profile, Display display, Settings& settings) -> Task<std::function<Result<void>()>> {
-            auto result = load_tablet_profile(profile, tablet, display);
-
+        context.tasks.push(Scheduler::the().schedule_with_result([] (Tablet tablet, Display display, Settings settings, Context& context) -> Task<std::function<Result<void>()>> {
+            auto maybeLoaded = load_tablet_profile(settings.tablet.profile(), tablet, display);
             isDropupButtonDisabled = false;
 
-            if (!result.has_value())
+            if (!maybeLoaded.has_value())
             {
-                co_return [result = std::move(result)] { return make_error(result.error()); };
+                co_return [result = std::move(maybeLoaded)] { return make_error(result.error()); };
             }
 
-            co_return [&settings] -> Result<void> {
+            save_tablet_settings(settings.tablet);
+
+            co_return [&context] -> Result<void> {
                 ImGui::PushToast(
-                    TRY(Localisation::get(settings.application.language, Localisation::Toast_Success)),
-                    TRY(Localisation::get(settings.application.language, Localisation::Toast_Device_Settings_Saved))
+                    TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),
+                    TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Saved))
                 );
-                save_tablet_settings(settings.tablet);
                 return {};
             };
-        }(context.tablet, context.settings.tablet.profile(), context.display, context.settings)));
+        }(context.tablet, context.display, context.settings, context)));
     }
     else if (pressedSecondary)
     {

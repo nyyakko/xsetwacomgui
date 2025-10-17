@@ -36,26 +36,27 @@ Result<void> render_profile_window(Context& context)
         {
             isCreateButtonDisabled = true;
 
-            context.tasks.push(Scheduler::the().schedule_with_result([] (Tablet tablet, Display display, Settings& settings) -> Task<std::function<Result<void>()>> {
-                auto result = make_tablet_profile(profileName.data(), tablet, display);
-
+            context.tasks.push(Scheduler::the().schedule_with_result([] (Tablet tablet, Display display, Settings settings, Context& context) -> Task<std::function<Result<void>()>> {
+                auto maybeProfile = make_tablet_profile(profileName.data(), tablet, display);
                 isCreateButtonDisabled = false;
 
-                if (!result.has_value())
+                if (!maybeProfile.has_value())
                 {
-                    co_return [result = std::move(result)] { return make_error(result.error()); };
+                    co_return [result = std::move(maybeProfile)] { return make_error(result.error()); };
                 }
 
-                co_return [&settings, result = std::move(result)] -> Result<void> {
+                settings.tablet.add_profile(*maybeProfile);
+                save_tablet_settings(settings.tablet);
+
+                co_return [&context, settings = std::move(settings)] -> Result<void> {
                     ImGui::PushToast(
-                        TRY(Localisation::get(settings.application.language, Localisation::Toast_Success)),
-                        TRY(Localisation::get(settings.application.language, Localisation::Toast_Profile_Created))
+                        TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),
+                        TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Profile_Created))
                     );
-                    settings.tablet.add_profile(*result);
-                    save_tablet_settings(settings.tablet);
+                    context.settings = settings;
                     return {};
                 };
-            }(context.tablet, context.display, context.settings)));
+            }(context.tablet, context.display, context.settings, context)));
         }
     }
     ImGui::EndDisabled();

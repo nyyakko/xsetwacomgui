@@ -95,25 +95,25 @@ Result<void> render_mappings_window(Context& context)
     {
         isSaveApplyButtonDisabled = true;
 
-        context.tasks.push(Scheduler::the().schedule_with_result([] (Tablet tablet, TabletProfile profile, Display display, Settings& settings) -> Task<std::function<Result<void>()>> {
-            auto result = load_tablet_profile(profile, tablet, display);
-
+        context.tasks.push(Scheduler::the().schedule_with_result([] (Tablet tablet, Display display, Settings settings, Context& context) -> Task<std::function<Result<void>()>> {
+            auto maybeLoaded = load_tablet_profile(settings.tablet.profile(), tablet, display);
             isSaveApplyButtonDisabled = false;
 
-            if (!result.has_value())
+            if (!maybeLoaded.has_value())
             {
-                co_return [result = std::move(result)] { return make_error(result.error()); };
+                co_return [result = std::move(maybeLoaded)] { return make_error(result.error()); };
             }
 
-            co_return [&settings] -> Result<void> {
+            save_tablet_settings(settings.tablet);
+
+            co_return [&context] -> Result<void> {
                 ImGui::PushToast(
-                    TRY(Localisation::get(settings.application.language, Localisation::Toast_Success)),
-                    TRY(Localisation::get(settings.application.language, Localisation::Toast_Device_Settings_Saved))
+                    TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),
+                    TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Saved))
                 );
-                save_tablet_settings(settings.tablet);
                 return {};
             };
-        }(context.tablet, context.settings.tablet.profile(), context.display, context.settings)));
+        }(context.tablet, context.display, context.settings, context)));
     }
     ImGui::EndDisabled();
     ImGui::SetCursorPos(previousCursorPosition);
