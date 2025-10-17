@@ -63,11 +63,3 @@ Result<void> render_profile_window(Context& context)
 
     return {};
 }
-
-// cppcheck-suppress [constParameterReference]
-Result<void> render_profile_window(Context& context, size_t profileId)
-{
-    (void)context; (void)profileId;
-    assert(false && "UNIMPLEMENTED");
-    return {};
-}
