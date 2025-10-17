@@ -76,23 +76,21 @@ Result<void> run_gui(Context& context)
 
     ImFont* font = nullptr;
 
-    ImVector<ImWchar> ranges {};
-    ImFontGlyphRangesBuilder rangeBuilder {};
-
-    static const ImWchar rangesData[] = {
+    ImVector<ImWchar> glyphRanges {};
+    ImFontGlyphRangesBuilder glyphRangesBuilder {};
+    static const ImWchar glyphRangesData[] = {
         0x0020, 0x00FF, // Basic Latin + Latin Supplement
         0x0400, 0x052F, // Cyrillic + Cyrillic Supplement
         0x2DE0, 0x2DFF, // Cyrillic Extended-A
         0xA640, 0xA69F, // Cyrillic Extended-B
         0,
     };
-
-    rangeBuilder.AddRanges(rangesData);
-    rangeBuilder.BuildRanges(&ranges);
+    glyphRangesBuilder.AddRanges(glyphRangesData);
+    glyphRangesBuilder.BuildRanges(&glyphRanges);
 
     if (context.settings.application.font.family != "Default")
     {
-        font = io.Fonts->AddFontFromFileTTF(context.settings.application.font.path.string().data(), 20_scaled, nullptr, ranges.Data);
+        font = io.Fonts->AddFontFromFileTTF(context.settings.application.font.path.string().data(), 20_scaled, nullptr, glyphRanges.Data);
     }
 
     std::thread schedulerThread {
