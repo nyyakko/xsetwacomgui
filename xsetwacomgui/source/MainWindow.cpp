@@ -544,7 +544,7 @@ Result<void> render_main_window(Context& context)
 
             context.display = TRY(get_primary_display());
 
-            context.tasks.push(Scheduler::the().schedule_with_result([] (SettingsError::Type error, Tablet tablet, Display display, Settings settings, Context& context) -> Task<std::function<Result<void>()>> {
+            context.tasks.push(Scheduler::the().schedule([] (SettingsError::Type error, Tablet tablet, Display display, Settings settings, Context& context) -> Task<std::function<Result<void>()>> {
                 auto maybeProfile = make_tablet_profile("Default", tablet, display);
 
                 if (!maybeProfile.has_value())
@@ -728,7 +728,7 @@ Result<void> render_main_window(Context& context)
     {
         isDropupButtonDisabled = true;
 
-        context.tasks.push(Scheduler::the().schedule_with_result([] (Tablet tablet, Display display, Settings settings, Context& context) -> Task<std::function<Result<void>()>> {
+        context.tasks.push(Scheduler::the().schedule([] (Tablet tablet, Display display, Settings settings, Context& context) -> Task<std::function<Result<void>()>> {
             auto maybeLoaded = load_tablet_profile(settings.tablet.profile(), tablet, display);
             isDropupButtonDisabled = false;
 

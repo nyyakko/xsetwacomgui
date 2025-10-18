@@ -95,7 +95,7 @@ Result<void> render_mappings_window(Context& context)
     {
         isSaveApplyButtonDisabled = true;
 
-        context.tasks.push(Scheduler::the().schedule_with_result([] (Tablet tablet, Display display, Settings settings, Context& context) -> Task<std::function<Result<void>()>> {
+        context.tasks.push(Scheduler::the().schedule([] (Tablet tablet, Display display, Settings settings, Context& context) -> Task<std::function<Result<void>()>> {
             auto maybeLoaded = load_tablet_profile(settings.tablet.profile(), tablet, display);
             isSaveApplyButtonDisabled = false;
 

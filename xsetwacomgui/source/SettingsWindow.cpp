@@ -140,9 +140,11 @@ Result<void> render_settings_window(Context& context)
     {
         isSaveButtonDisabled = true;
 
-        context.tasks.push(Scheduler::the().schedule_with_result([] (Settings settings, Context& context) -> Task<std::function<Result<void>()>> {
+        context.tasks.push(Scheduler::the().schedule([] (Settings settings, Context& context) -> Task<std::function<Result<void>()>> {
             isSaveButtonDisabled = false;
+
             save_application_settings(settings.application);
+
             co_return [&context] -> Result<void> {
                 ImGui::PushToast(
                     TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),

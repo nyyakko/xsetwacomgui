@@ -36,7 +36,7 @@ Result<void> render_profile_window(Context& context)
         {
             isCreateButtonDisabled = true;
 
-            context.tasks.push(Scheduler::the().schedule_with_result([] (Tablet tablet, Display display, Settings settings, Context& context) -> Task<std::function<Result<void>()>> {
+            context.tasks.push(Scheduler::the().schedule([] (Tablet tablet, Display display, Settings settings, Context& context) -> Task<std::function<Result<void>()>> {
                 auto maybeProfile = make_tablet_profile(profileName.data(), tablet, display);
                 isCreateButtonDisabled = false;
 

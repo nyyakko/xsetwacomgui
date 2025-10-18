@@ -3,9 +3,9 @@
 #include "settings/Settings.hpp"
 
 #include <liberror/Result.hpp>
+#include <libcoro/Task.hpp>
 
 #include <functional>
-#include <future>
 #include <queue>
 
 struct Context
@@ -15,7 +15,7 @@ struct Context
     std::vector<Device> devices;
     std::vector<Display> displays;
 
-    std::queue<std::future<std::function<liberror::Result<void>()>>> tasks;
+    std::queue<libcoro::Task<std::function<liberror::Result<void>()>>> tasks;
 
     Tablet tablet {};
     Display display {};
