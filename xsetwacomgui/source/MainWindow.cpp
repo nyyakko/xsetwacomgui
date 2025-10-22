@@ -4,6 +4,7 @@
 #include "MainWindow.hpp"
 
 #include "core/ipc/Client.hpp"
+#include "core/Scheduler.hpp"
 #include "MappingsWindow.hpp"
 #include "platform/udev/UDevDevice.hpp"
 #include "ProfileWindow.hpp"
@@ -27,7 +28,6 @@
 #include <span>
 
 using namespace liberror;
-using namespace libcoro;
 
 static Result<void> render_area_mappers(Context& context)
 {
@@ -544,7 +544,7 @@ Result<void> render_main_window(Context& context)
 
             context.display = TRY(get_primary_display());
 
-            context.tasks.push(Scheduler::the().schedule([] (SettingsError::Type error, Tablet tablet, Display display, Settings settings, Context& context) -> Task<std::function<Result<void>()>> {
+            context.scheduler.run([] (auto error, auto tablet, auto display, auto settings, auto& context) -> coro::task<std::function<Result<void>()>> {
                 auto maybeProfile = make_tablet_profile("Default", tablet, display);
 
                 if (!maybeProfile.has_value())
@@ -552,10 +552,10 @@ Result<void> render_main_window(Context& context)
                     co_return [result = std::move(maybeProfile)] { return make_error(result.error()); };
                 }
 
-                if (error == SettingsError::Type::FILE_NOT_FOUND) save_tablet_settings(settings.tablet);
-
                 settings.tablet.add_profile(*maybeProfile);
                 settings.tablet.set_profile("Default");
+
+                if (error == SettingsError::Type::FILE_NOT_FOUND) save_tablet_settings(settings.tablet);
 
                 auto maybeLoaded = load_tablet_profile(settings.tablet.profile(), tablet, display);
 
@@ -563,7 +563,7 @@ Result<void> render_main_window(Context& context)
                     context.settings = settings;
                     return maybeLoaded;
                 };
-            }(result.error().message(), context.tablet, context.display, context.settings, context)));
+            }(result.error().message(), context.tablet, context.display, context.settings, context));
 
             switch (result.error().message())
             {
@@ -728,7 +728,7 @@ Result<void> render_main_window(Context& context)
     {
         isDropupButtonDisabled = true;
 
-        context.tasks.push(Scheduler::the().schedule([] (Tablet tablet, Display display, Settings settings, Context& context) -> Task<std::function<Result<void>()>> {
+        context.scheduler.run([] (auto tablet, auto display, auto settings, auto const& context) -> coro::task<std::function<Result<void>()>> {
             auto maybeLoaded = load_tablet_profile(settings.tablet.profile(), tablet, display);
             isDropupButtonDisabled = false;
 
@@ -746,7 +746,7 @@ Result<void> render_main_window(Context& context)
                 );
                 return {};
             };
-        }(context.tablet, context.display, context.settings, context)));
+        }(context.tablet, context.display, context.settings, context));
     }
     else if (pressedSecondary)
     {

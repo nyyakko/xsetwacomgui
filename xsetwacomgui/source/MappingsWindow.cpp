@@ -2,19 +2,18 @@
 
 #include "MappingsWindow.hpp"
 
+#include "core/Scheduler.hpp"
 #include "platform/hid/X11/Device.hpp"
 #include "ui/Localisation.hpp"
 #include "ui/Scaling.hpp"
 
 #include <imgui/extensions/imgui_toast.hpp>
 #include <imgui/imgui.hpp>
-#include <libcoro/Task.hpp>
 #include <liberror/Try.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <range/v3/view.hpp>
 
 using namespace liberror;
-using namespace libcoro;
 
 static Result<void> render_stylus_tab(Context& context)
 {
@@ -95,7 +94,7 @@ Result<void> render_mappings_window(Context& context)
     {
         isSaveApplyButtonDisabled = true;
 
-        context.tasks.push(Scheduler::the().schedule([] (Tablet tablet, Display display, Settings settings, Context& context) -> Task<std::function<Result<void>()>> {
+        context.scheduler.run([] (auto tablet, auto display, auto settings, auto const& context) -> coro::task<std::function<Result<void>()>> {
             auto maybeLoaded = load_tablet_profile(settings.tablet.profile(), tablet, display);
             isSaveApplyButtonDisabled = false;
 
@@ -113,7 +112,7 @@ Result<void> render_mappings_window(Context& context)
                 );
                 return {};
             };
-        }(context.tablet, context.display, context.settings, context)));
+        }(context.tablet, context.display, context.settings, context));
     }
     ImGui::EndDisabled();
     ImGui::SetCursorPos(previousCursorPosition);

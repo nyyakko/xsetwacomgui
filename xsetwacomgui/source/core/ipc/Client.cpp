@@ -9,7 +9,6 @@
 #include <csignal>
 
 using namespace liberror;
-using namespace libcoro;
 
 static constexpr auto SERVER_NAME = "/" NAME "-server";
 static constexpr auto CLIENT_NAME = "/" NAME "-client";

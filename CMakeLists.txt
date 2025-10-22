@@ -12,10 +12,10 @@ CPMAddPackage(URI "gh:ericniebler/range-v3#master" EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:fmtlib/fmt#10.2.1"           EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:gabime/spdlog@1.15.3"        EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:glfw/glfw#3.4"               EXCLUDE_FROM_ALL YES)
+CPMAddPackage(URI "gh:jbaldwin/libcoro#main"       EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:Neargye/magic_enum@0.9.7"    EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:nlohmann/json@3.12.0"        EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:nyyakko/imgui#master"        EXCLUDE_FROM_ALL YES)
-CPMAddPackage(URI "gh:nyyakko/LibCoro#master"      EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:nyyakko/LibError#master"     EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:nyyakko/LibExec#master"      EXCLUDE_FROM_ALL YES)
 
@@ -30,7 +30,7 @@ set(xsetwacomgui_ExternalLibraries
     freetype
     glfw
     imgui::imgui
-    LibCoro::LibCoro
+    libcoro
     LibError::LibError
     LibExec::LibExec
     magic_enum::magic_enum

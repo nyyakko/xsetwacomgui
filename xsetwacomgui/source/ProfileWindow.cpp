@@ -1,15 +1,14 @@
 #include "ProfileWindow.hpp"
 
+#include "core/Scheduler.hpp"
 #include "ui/Localisation.hpp"
 #include "ui/Scaling.hpp"
 
 #include <imgui/extensions/imgui_toast.hpp>
 #include <imgui/imgui.hpp>
-#include <libcoro/Task.hpp>
 #include <liberror/Try.hpp>
 
 using namespace liberror;
-using namespace libcoro;
 using namespace std::literals;
 
 Result<void> render_profile_window(Context& context)
@@ -36,7 +35,7 @@ Result<void> render_profile_window(Context& context)
         {
             isCreateButtonDisabled = true;
 
-            context.tasks.push(Scheduler::the().schedule([] (Tablet tablet, Display display, Settings settings, Context& context) -> Task<std::function<Result<void>()>> {
+            context.scheduler.run([] (auto tablet, auto display, auto settings, auto& context) -> coro::task<std::function<Result<void>()>> {
                 auto maybeProfile = make_tablet_profile(profileName.data(), tablet, display);
                 isCreateButtonDisabled = false;
 
@@ -56,7 +55,7 @@ Result<void> render_profile_window(Context& context)
                     context.settings = settings;
                     return {};
                 };
-            }(context.tablet, context.display, context.settings, context)));
+            }(context.tablet, context.display, context.settings, context));
         }
     }
     ImGui::EndDisabled();

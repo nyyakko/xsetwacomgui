@@ -1,18 +1,17 @@
 #include "SettingsWindow.hpp"
 
+#include "core/Scheduler.hpp"
 #include "ui/Localisation.hpp"
 #include "ui/Scaling.hpp"
 
 #include <imgui/extensions/imgui_toast.hpp>
 #include <imgui/imgui.hpp>
-#include <libcoro/Task.hpp>
 #include <liberror/Try.hpp>
 #include <range/v3/view.hpp>
 
 #include <algorithm>
 
 using namespace liberror;
-using namespace libcoro;
 
 static Result<void> render_appearance_tab(Context& context)
 {
@@ -140,7 +139,7 @@ Result<void> render_settings_window(Context& context)
     {
         isSaveButtonDisabled = true;
 
-        context.tasks.push(Scheduler::the().schedule([] (Settings settings, Context& context) -> Task<std::function<Result<void>()>> {
+        context.scheduler.run([] (auto settings, auto const& context) -> coro::task<std::function<Result<void>()>> {
             isSaveButtonDisabled = false;
 
             save_application_settings(settings.application);
@@ -152,7 +151,7 @@ Result<void> render_settings_window(Context& context)
                 );
                 return {};
             };
-        }(context.settings, context)));
+        }(context.settings, context));
     }
     ImGui::EndDisabled();
     ImGui::SetCursorPos(previousCursorPosition);

@@ -2,9 +2,10 @@
 
 #include "core/MutexProtected.hpp"
 
+#include <coro/task.hpp>
+#include <coro/thread_pool.hpp>
 #include <liberror/Result.hpp>
 #include <liberror/Try.hpp>
-#include <libcoro/Task.hpp>
 
 #include <mqueue.h>
 #include <sys/poll.h>
@@ -13,6 +14,9 @@ class IPCServer
 {
 public:
     IPCServer() : server_{-1}, clients_{} {}
+
+    IPCServer(IPCServer const&) = delete;
+    IPCServer& operator=(IPCServer const&) = delete;
 
     IPCServer(IPCServer&& that)
         : server_(std::exchange(that.server_, -1))
@@ -28,23 +32,22 @@ public:
 
     ~IPCServer();
 
+public:
     static IPCServer& the()
     {
         static auto the = MUST(IPCServer::create());
         return the;
     }
 
-private:
-    static liberror::Result<IPCServer> create();
-
-public:
     void start();
 
 private:
+    static liberror::Result<IPCServer> create();
+
     void stop();
 
-    libcoro::Task<void> message_receiver();
-    libcoro::Task<void> message_sender();
+    coro::task<void> message_receiver(std::unique_ptr<coro::thread_pool>& pool);
+    coro::task<void> message_sender(std::unique_ptr<coro::thread_pool>& pool);
 
 private:
     mqd_t server_;

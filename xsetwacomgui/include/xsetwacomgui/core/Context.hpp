@@ -1,21 +1,20 @@
 #pragma once
 
+#include "core/Scheduler.hpp"
 #include "settings/Settings.hpp"
 
 #include <liberror/Result.hpp>
-#include <libcoro/Task.hpp>
-
-#include <functional>
-#include <queue>
+#include <coro/task.hpp>
+#include <coro/thread_pool.hpp>
 
 struct Context
 {
-    Settings settings;
+    Settings settings {};
 
     std::vector<Device> devices;
     std::vector<Display> displays;
 
-    std::queue<libcoro::Task<std::function<liberror::Result<void>()>>> tasks;
+    Scheduler scheduler {};
 
     Tablet tablet {};
     Display display {};

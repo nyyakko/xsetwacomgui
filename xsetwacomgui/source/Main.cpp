@@ -2,10 +2,11 @@
 
 #include <spdlog/spdlog.h>
 
+#include "cli/Help.hpp"
 #include "core/Context.hpp"
-#include "core/Help.hpp"
 #include "core/ipc/Client.hpp"
 #include "core/ipc/Server.hpp"
+#include "core/Scheduler.hpp"
 #include "GoddessWindow.hpp"
 #include "MainWindow.hpp"
 #include "platform/Daemon.hpp"
@@ -15,6 +16,7 @@
 #include "ui/Localisation.hpp"
 #include "ui/Scaling.hpp"
 
+#include <coro/sync_wait.hpp>
 #include <GLFW/glfw3.h>
 #include <GL/gl.h>
 #include <imgui/extensions/imgui_toast.hpp>
@@ -32,7 +34,6 @@
 #include <span>
 
 using namespace liberror;
-using namespace libcoro;
 using namespace std::literals;
 
 Result<void> push_system_toast(std::string_view message)
@@ -93,19 +94,12 @@ Result<void> run_gui(Context& context)
         font = io.Fonts->AddFontFromFileTTF(context.settings.application.font.path.string().data(), 20_scaled, nullptr, glyphRanges.Data);
     }
 
-    std::thread schedulerThread {
-        [] {
-            Scheduler::the().start();
-        }
-    };
-
     while (!glfwWindowShouldClose(window))
     {
         glClear(GL_COLOR_BUFFER_BIT);
 
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         {
-            Scheduler::the().stop();
             break;
         }
 
@@ -132,12 +126,7 @@ Result<void> run_gui(Context& context)
             {
                 ImGui::RenderToasts();
 
-                if (!context.tasks.empty() && context.tasks.front().state() == Task<>::State::FINISHED)
-                {
-                    auto task = std::move(context.tasks.front());
-                    context.tasks.pop();
-                    TRY(std::invoke(task.result()));
-                }
+                TRY(context.scheduler.update());
 
                 static auto isSettingsWindowOpen = false;
                 static auto isGoddessWindowOpen = false;
@@ -214,8 +203,6 @@ Result<void> run_gui(Context& context)
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
-
-    schedulerThread.join();
 
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
@@ -343,10 +330,8 @@ Result<void> safe_main(std::span<char const*> const& arguments)
     }
 
     Context context {
-        {},
-        TRY(get_available_devices()),
-        TRY(get_available_displays()),
-        {}
+        .devices = TRY(get_available_devices()),
+        .displays = TRY(get_available_displays()),
     };
 
     if (auto posConfig = std::ranges::find(arguments, "config"sv); posConfig != arguments.end())

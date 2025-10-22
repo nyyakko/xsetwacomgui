@@ -6,7 +6,18 @@ template <class T>
 class MutexProtected
 {
 public:
-    MutexProtected() : data_ {}, mutex_ {} {}
+    MutexProtected(T&& data)
+        : data_(std::move(data))
+        , mutex_ {}
+    {}
+
+    MutexProtected()
+        : data_ {}
+        , mutex_ {}
+    {}
+
+    MutexProtected(MutexProtected const&) = delete;
+    MutexProtected& operator=(MutexProtected const&) = delete;
 
     MutexProtected(MutexProtected&& that)
         : data_(std::move(that.data_))
@@ -18,11 +29,6 @@ public:
         this->data_ = std::move(that.data_);
         return *this;
     }
-
-    MutexProtected(T&& data)
-        : data_(std::move(data))
-        , mutex_ {}
-    {}
 
     decltype(auto) with(auto&& functor)
     {

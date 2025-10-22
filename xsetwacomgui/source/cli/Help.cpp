@@ -1,4 +1,4 @@
-#include "core/Help.hpp"
+#include "cli/Help.hpp"
 
 #include <fmt/format.h>
 

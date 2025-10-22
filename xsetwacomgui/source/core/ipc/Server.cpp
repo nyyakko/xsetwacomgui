@@ -1,3 +1,4 @@
+#include <coro/sync_wait.hpp>
 #include <spdlog/spdlog.h>
 
 #include "core/ipc/Server.hpp"
@@ -5,7 +6,7 @@
 #include "platform/udev/UDevDevice.hpp"
 #include "platform/udev/UDevMonitor.hpp"
 
-#include <libcoro/Task.hpp>
+#include <coro/when_all.hpp>
 #include <liberror/Try.hpp>
 #include <magic_enum/magic_enum.hpp>
 
@@ -19,12 +20,8 @@
 #include <csignal>
 
 using namespace liberror;
-using namespace libcoro;
 
 static constexpr auto SERVER_NAME = "/" NAME "-server";
-
-static Task<int> poll(std::vector<pollfd>& fds);
-static Task<Result<std::array<char, 32>>> receive(mqd_t fd);
 
 IPCServer::~IPCServer()
 {
@@ -76,18 +73,10 @@ Result<IPCServer> IPCServer::create()
 
 void IPCServer::start()
 {
-    std::thread schedulerThread {
-        [] {
-            Scheduler::the().start();
-        }
-    };
-
-    Scheduler::the().schedule(message_receiver());
-    Scheduler::the().schedule(message_sender());
-
     spdlog::info("Server started");
 
-    schedulerThread.join();
+    auto pool = coro::thread_pool::make_unique();
+    coro::sync_wait(coro::when_all(message_receiver(pool), message_sender(pool)));
 
     assert(false && "UNREACHABLE");
 }
@@ -100,23 +89,25 @@ void IPCServer::stop()
     mq_unlink(SERVER_NAME);
 }
 
-Task<void> IPCServer::message_receiver()
+coro::task<void> IPCServer::message_receiver(std::unique_ptr<coro::thread_pool>& pool)
 {
+    co_await pool->schedule();
+
     while (true)
     {
-        auto result = co_await receive(server_);
+        std::array<char, 32> buffer {};
 
-        if (!result.has_value())
+        if (mq_receive(server_, buffer.data(), buffer.size(), nullptr) < 0)
         {
-            spdlog::error("{}", result.error().message());
+            spdlog::error("{}: mq_receive failed: {}", __FUNCTION__, strerror(errno));
             std::exit(EXIT_FAILURE);
         }
 
-        std::string_view buffer(*result);
+        std::string_view message(buffer);
 
-        if (buffer.starts_with("CONN"))
+        if (message.starts_with("CONN"))
         {
-            auto clientName = std::next(buffer.data(), 5);
+            auto clientName = std::next(message.data(), 5);
             auto clientFd = mq_open(clientName, O_WRONLY);
 
             if (clientFd < 0)
@@ -128,37 +119,36 @@ Task<void> IPCServer::message_receiver()
             clients_.with([=] (auto& clients) { clients.insert({ clientName, clientFd }); });
             spdlog::info("Client {} connected", clientName);
         }
-        else if (buffer.starts_with("QUIT"))
+        else if (message.starts_with("QUIT"))
         {
-            auto clientName = std::next(buffer.data(), 5);
+            auto clientName = std::next(message.data(), 5);
             clients_.with([&] (auto& clients) { clients.erase(clientName); });
             spdlog::info("Client {} disconnected", clientName);
         }
     }
 
-    co_return {};
+    co_return;
 }
 
-Task<void> IPCServer::message_sender()
+coro::task<void> IPCServer::message_sender(std::unique_ptr<coro::thread_pool>& pool)
 {
+    co_await pool->schedule();
+
     UDev udev;
 
     UDevMonitor monitor(udev);
     monitor.add_subsystem("usb");
     monitor.enable();
 
-    std::vector<pollfd> fds {
-        {
-            .fd=udev_monitor_get_fd(monitor.get()),
-            .events=POLLIN,
-            .revents={}
-        }
+    pollfd fd {
+        .fd=udev_monitor_get_fd(monitor.get()),
+        .events=POLLIN,
+        .revents={}
     };
 
     while (true)
     {
-        auto result = co_await poll(fds);
-
+        auto result = poll(&fd, 1, -1);
         if (result == 0) continue;
 
         if (result < 0)
@@ -187,22 +177,5 @@ Task<void> IPCServer::message_sender()
         }
     }
 
-    co_return {};
-}
-
-Task<int> poll(std::vector<pollfd>& fds)
-{
-    co_return poll(fds.data(), fds.size(), -1);
-}
-
-Task<Result<std::array<char, 32>>> receive(mqd_t fd)
-{
-    std::array<char, 32> buffer {};
-
-    if (mq_receive(fd, buffer.data(), buffer.size(), nullptr) < 0)
-    {
-        co_return make_error("{}: mq_receive failed: {}", __FUNCTION__, strerror(errno));
-    }
-
-    co_return buffer;
+    co_return;
 }
