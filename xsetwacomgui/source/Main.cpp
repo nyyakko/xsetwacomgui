@@ -36,14 +36,6 @@
 using namespace liberror;
 using namespace std::literals;
 
-Result<void> push_system_toast(std::string_view message)
-{
-    static auto icon = get_application_icon_path() / "64x64" / "apps" / NAME".png";
-    auto [out, err] = TRY(libexec::execute("notify-send", { "XSetWacomGUI", message.data(), "--icon", icon.string() }));
-    if (!err.empty()) return make_error(err);
-    return {};
-}
-
 Result<void> run_gui(Context& context)
 {
     TRY(IPCClient::the().configure(IPCClient::Mode::ASYNC));
@@ -266,7 +258,9 @@ Result<void> run_no_gui(Context& context)
 
             if (context.devices.empty())
             {
-                TRY(push_system_toast(TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Devices_Missing))));
+                static auto icon = get_application_icon_path() / "64x64" / "apps" / NAME".png";
+                auto [out, err] = TRY(libexec::execute("notify-send", { "XSetWacomGUI", message.data(), "--icon", icon.string() }));
+                if (!err.empty()) return make_error(err);
                 break;
             }
 
