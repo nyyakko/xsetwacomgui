@@ -32,10 +32,10 @@ void get_help()
     fmt::println("Usage: " NAME " [--help] [--no-gui] {{config}}");
     fmt::println("\na graphical xsetwacom wrapper for ease of use");
     fmt::println("\nOptional arguments:");
-    fmt::println("  --help .. shows help message");
-    fmt::println("  --no-gui .. runs the program in the background");
+    fmt::println("  --help {:>21}", "shows help message");
+    fmt::println("  --no-gui {:>35}", "runs the program in the background");
     fmt::println("\nSubcommands:");
-    fmt::println("  config .. manages device related configuration");
+    fmt::println("  config {:>39}", "manages device related configuration");
 }
 
 void get_config_help()
@@ -43,6 +43,6 @@ void get_config_help()
     fmt::println("Usage: " NAME " config [--help] [--load]");
     fmt::println("\nmanages device related configuration");
     fmt::println("\nOptional arguments:");
-    fmt::println("  --help .. shows help message");
-    fmt::println("  --load .. loads the saved tablet configuration");
+    fmt::println("  --help {:>21}", "shows help message");
+    fmt::println("  --load {:>39}", "loads the saved tablet configuration");
 }
