@@ -17,6 +17,7 @@ private:
 
     friend liberror::Result<SettingsApplication, SettingsError> load_application_settings();
     friend void save_application_settings(SettingsApplication const& settings);
+
 public:
     enum class Theme { DARK, LIGHT };
 

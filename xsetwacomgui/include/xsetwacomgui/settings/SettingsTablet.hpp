@@ -53,18 +53,18 @@ private:
     // Should be updated every time a change is made
     static constexpr auto SCHEMA_VERSION = "1.4";
 
-    friend liberror::Result<SettingsTablet, SettingsError> load_tablet_settings();
-    friend void save_tablet_settings(SettingsTablet const& settings);
-
 public:
+    inline constexpr void add_profile(this auto& self, TabletProfile const& profile) { self.profiles_.emplace(profile.name, profile); }
+
     inline constexpr auto& profiles(this auto& self) { return self.profiles_; }
 
     inline constexpr auto& profile(this auto& self) { return self.profiles_.at(self.profile_); }
-    inline constexpr void set_profile(this auto& self, std::string_view profile) { assert(self.profiles_.contains(profile.data())); self.profile_ = profile; }
-
-    inline constexpr void add_profile(this auto& self, TabletProfile const& profile) { self.profiles_.emplace(profile.name, profile); }
+    inline constexpr void profile(this auto& self, std::string_view profile) { assert(self.profiles_.contains(profile.data())); self.profile_ = profile; }
 
 private:
+    friend liberror::Result<SettingsTablet, SettingsError> load_tablet_settings();
+    friend void save_tablet_settings(SettingsTablet const& settings);
+
     std::string profile_ = "INVALID";
     std::map<std::string, TabletProfile> profiles_ { { "INVALID", {} } };
 };

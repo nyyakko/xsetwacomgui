@@ -553,7 +553,7 @@ Result<void> render_main_window(Context& context)
                 }
 
                 settings.tablet.add_profile(*maybeProfile);
-                settings.tablet.set_profile("Default");
+                settings.tablet.profile("Default");
 
                 if (error == SettingsError::Type::FILE_NOT_FOUND) save_tablet_settings(settings.tablet);
 
@@ -757,7 +757,7 @@ Result<void> render_main_window(Context& context)
         }
         else
         {
-            context.settings.tablet.set_profile(profileNames.at(size_t(itemIndex.second)));
+            context.settings.tablet.profile(profileNames.at(size_t(itemIndex.second)));
             context.hasChangedProfile = true;
         }
     }
