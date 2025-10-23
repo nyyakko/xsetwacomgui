@@ -2,7 +2,6 @@
 
 #include <spdlog/spdlog.h>
 
-#include "cli/Help.hpp"
 #include "core/Context.hpp"
 #include "core/ipc/Client.hpp"
 #include "core/ipc/Server.hpp"
@@ -315,9 +314,38 @@ Result<void> run_no_gui(Context& context)
 
 Result<void> safe_main(std::span<char const*> const& arguments)
 {
-    if (std::ranges::find(arguments, "--help"sv) != arguments.end())
+    auto mainHelp = [] {
+        fmt::println("Usage: " NAME " [--help] [--no-gui] {{config}}");
+        fmt::println("\na graphical xsetwacom wrapper for ease of use");
+        fmt::println("\nOptional arguments:");
+        fmt::println("  --help {:>21}", "shows help message");
+        fmt::println("  --no-gui {:>35}", "runs the program in the background");
+        fmt::println("\nSubcommands:");
+        fmt::println("  config {:>39}", "manages device related configuration");
+    };
+
+    auto configHelp = [] {
+        fmt::println("Usage: " NAME " config [--help] [--load]");
+        fmt::println("\nmanages device related configuration");
+        fmt::println("\nOptional arguments:");
+        fmt::println("  --help {:>21}", "shows help message");
+        fmt::println("  --load {:>39}", "loads the saved tablet configuration");
+    };
+
+    if (auto posHelp = std::ranges::find(arguments, "--help"sv); posHelp != arguments.end())
     {
-        get_help(arguments);
+        if (std::distance(arguments.begin(), posHelp) == 1) mainHelp();
+
+        if (auto posConfig = std::ranges::find(arguments, "config"sv); posConfig != arguments.end())
+        {
+            auto commandArguments = arguments.subspan(size_t(std::distance(arguments.begin(), posConfig)));
+
+            if (posHelp = std::ranges::find(commandArguments, "--help"sv); posHelp != arguments.end())
+            {
+                configHelp();
+            }
+        }
+
         return {};
     }
 

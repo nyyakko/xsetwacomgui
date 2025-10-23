@@ -2,7 +2,6 @@ add_subdirectory(core)
 add_subdirectory(platform)
 add_subdirectory(settings)
 add_subdirectory(ui)
-add_subdirectory(cli)
 
 set(DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
