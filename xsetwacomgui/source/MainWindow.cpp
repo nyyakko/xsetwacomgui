@@ -28,6 +28,7 @@
 #include <span>
 
 using namespace liberror;
+using namespace std::literals;
 
 static Result<void> render_area_mappers(Context& context)
 {
@@ -626,7 +627,21 @@ Result<void> render_main_window(Context& context)
         case UDevDevice::Action::BIND: {
             if (std::ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) >= 1) break;
 
-            context.devices = TRY(get_available_devices());
+            while (context.devices = TRY(get_available_devices()), context.devices.empty())
+            {
+                if (static auto retry = 0; retry++ == 3) break;
+                spdlog::info("No devices were found, retrying...");
+                std::this_thread::sleep_for(250ms);
+            }
+
+            if (context.devices.empty())
+            {
+                ImGui::PushToast(
+                    TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Error)),
+                    TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Devices_Missing))
+                );
+                break;
+            }
 
             auto result = load_tablet_settings();
             assert(result.has_value() && "how did you even manage to make this happen?");
