@@ -221,11 +221,9 @@ Result<TabletProfile> make_tablet_profile(std::string_view name, Tablet const& t
     profile.stylus.pressure = { 0, 0, 1, 1 };
     profile.stylus.forceFullArea = false;
     profile.stylus.forceAspectRatio = false;
-    // FIXME: find a way to get the default mappings
     profile.stylus.mappings = TRY(get_device_default_button_mappings(tablet.stylus));
 
     profile.pad.name = tablet.pad.name;
-    // FIXME: find a way to get the default mappings
     profile.pad.mappings = TRY(get_device_default_button_mappings(tablet.pad));
 
     profile.display.name = display.name;
