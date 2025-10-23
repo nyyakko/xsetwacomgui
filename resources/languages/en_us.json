@@ -17,7 +17,8 @@
         "deviceSettingsOutdatedSchema": "The schema of the present tablet configuration file is outdated",
         "devicesMissing": "No devices were found",
         "profileNameEmpty": "Profile name cannot be empty",
-        "profileCreated": "Profile created successfully"
+        "profileCreated": "Profile created successfully",
+        "profileMissing": "Profile could not be found"
     },
 
     "menubar": {

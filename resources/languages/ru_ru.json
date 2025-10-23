@@ -17,7 +17,8 @@
         "deviceSettingsOutdatedSchema": "Формат настроек планшета устарел",
         "devicesMissing": "Устройства не обнаружены",
         "profileNameEmpty": "Profile name cannot be empty (FIXME)",
-        "profileCreated": "Profile created successfully (FIXME)"
+        "profileCreated": "Profile created successfully (FIXME)",
+        "profileMissing": "Profile could not be found (FIXME)"
     },
 
     "menubar": {

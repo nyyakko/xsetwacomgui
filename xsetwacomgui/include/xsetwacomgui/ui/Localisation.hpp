@@ -20,7 +20,7 @@ public:
         Toast_Device_Settings_Load_Success,
         Toast_Device_Settings_Outdated_Schema,
         Toast_Device_Settings_Missing,
-        Toast_Device_Settings_Profile_Missing,
+        Toast_Profile_Missing,
         Toast_Devices_Missing,
         Toast_Profile_Name_Empty,
         Toast_Profile_Created,

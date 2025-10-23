@@ -579,7 +579,7 @@ Result<void> render_main_window(Context& context)
             case SettingsError::Type::PROFILE_NOT_FOUND: {
                 ImGui::PushToast(
                     TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Error)),
-                    TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Profile_Missing))
+                    TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Profile_Missing))
                 );
                 break;
             }

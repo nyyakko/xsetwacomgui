@@ -17,7 +17,8 @@
         "deviceSettingsOutdatedSchema": "O schema do arquivo de configuração do tablet presente está desatualizado",
         "devicesMissing": "Nenhum tablet foi encontrado",
         "profileNameEmpty": "O nome do perfil não pode estar vazio",
-        "profileCreated": "Perfil criado com sucesso"
+        "profileCreated": "Perfil criado com sucesso",
+        "profileMissing": "O perfil não pôde ser encontrado"
     },
 
     "menubar": {
