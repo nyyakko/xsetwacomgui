@@ -27,10 +27,11 @@
 #include <libexec/Execute.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <range/v3/view.hpp>
-#include <scn/scan.h>
 
 #include <sys/poll.h>
 
+#include <iostream>
+#include <limits>
 #include <span>
 
 using namespace liberror;
@@ -377,12 +378,23 @@ Result<void> safe_main(std::span<char const*> const& arguments)
             fmt::println("1. Overwrite Everything");
             fmt::println("2. Migrate Manually\n");
 
-            auto choice = scn::prompt<int>("How would you like to proceed? (choose a value) ", "{}");
-
-            if (choice)
+            while (true)
             {
-                if (choice->value() == 1) save_application_settings(context.settings.application);
-                else if (choice->value() == 2) migrate_application_settings(context.settings.application);
+                fmt::print("How would you like to proceed? (choose a value): ");
+
+                auto choice = 0; std::cin >> choice;
+                if (choice == 1 || choice == 2)
+                {
+                    if (choice == 1) save_application_settings(context.settings.application);
+                    if (choice == 2) migrate_application_settings(context.settings.application);
+                    break;
+                }
+                else
+                {
+                    fmt::println("\nInvalid option. Choose either 1 or 2.\n");
+                    std::cin.clear();
+                    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                }
             }
 
             fmt::println("Done. Restart the application.");

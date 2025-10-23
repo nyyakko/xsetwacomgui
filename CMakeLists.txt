@@ -7,7 +7,6 @@ include(cmake/get_cpm.cmake)
 find_package(OpenGL REQUIRED)
 find_package(Freetype REQUIRED)
 
-CPMAddPackage(URI "gh:eliaskosunen/scnlib@4.0.1"   EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:ericniebler/range-v3#master" EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:fmtlib/fmt#10.2.1"           EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:gabime/spdlog@1.15.3"        EXCLUDE_FROM_ALL YES)
@@ -37,7 +36,6 @@ set(xsetwacomgui_ExternalLibraries
     nlohmann_json::nlohmann_json
     OpenGL::GL
     range-v3::range-v3
-    scn::scn
     spdlog::spdlog
     udev
 )
