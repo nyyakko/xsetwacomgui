@@ -259,7 +259,9 @@ Result<void> run_no_gui(Context& context)
             if (context.devices.empty())
             {
                 static auto icon = get_application_icon_path() / "64x64" / "apps" / NAME".png";
-                auto [out, err] = TRY(libexec::execute("notify-send", { "XSetWacomGUI", message.data(), "--icon", icon.string() }));
+                auto [out, err] = TRY(libexec::execute("notify-send", {
+                    "XSetWacomGUI", TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Devices_Missing)), "--icon", icon.string()
+                }));
                 if (!err.empty()) return make_error(err);
                 break;
             }
