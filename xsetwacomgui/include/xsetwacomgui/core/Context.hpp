@@ -1,11 +1,9 @@
 #pragma once
 
-#include "core/Scheduler.hpp"
 #include "settings/Settings.hpp"
 
+#include <asio.hpp>
 #include <liberror/Result.hpp>
-#include <coro/task.hpp>
-#include <coro/thread_pool.hpp>
 
 struct Context
 {
@@ -14,7 +12,8 @@ struct Context
     std::vector<Device> devices;
     std::vector<Display> displays;
 
-    Scheduler scheduler {};
+    asio::io_context stExecutor {};
+    asio::thread_pool mtExecutor {8};
 
     Tablet tablet {};
     Display display {};

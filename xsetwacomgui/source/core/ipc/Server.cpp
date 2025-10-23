@@ -1,4 +1,3 @@
-#include <coro/sync_wait.hpp>
 #include <spdlog/spdlog.h>
 
 #include "core/ipc/Server.hpp"
@@ -6,7 +5,7 @@
 #include "platform/udev/UDevDevice.hpp"
 #include "platform/udev/UDevMonitor.hpp"
 
-#include <coro/when_all.hpp>
+#include <asio.hpp>
 #include <liberror/Try.hpp>
 #include <magic_enum/magic_enum.hpp>
 
@@ -17,6 +16,7 @@
 #include <sys/syslog.h>
 #include <unistd.h>
 
+#include <functional>
 #include <csignal>
 
 using namespace liberror;
@@ -75,8 +75,12 @@ void IPCServer::start()
 {
     spdlog::info("Server started");
 
-    auto pool = coro::thread_pool::make_unique();
-    coro::sync_wait(coro::when_all(message_receiver(pool), message_sender(pool)));
+    asio::thread_pool pool(8);
+
+    asio::post(pool, std::bind_front(std::mem_fn(&IPCServer::message_receiver), this));
+    asio::post(pool, std::bind_front(std::mem_fn(&IPCServer::message_sender), this));
+
+    pool.join();
 
     assert(false && "UNREACHABLE");
 }
@@ -89,10 +93,8 @@ void IPCServer::stop()
     mq_unlink(SERVER_NAME);
 }
 
-coro::task<void> IPCServer::message_receiver(std::unique_ptr<coro::thread_pool>& pool)
+void IPCServer::message_receiver()
 {
-    co_await pool->schedule();
-
     while (true)
     {
         std::array<char, 32> buffer {};
@@ -126,14 +128,10 @@ coro::task<void> IPCServer::message_receiver(std::unique_ptr<coro::thread_pool>&
             spdlog::info("Client {} disconnected", clientName);
         }
     }
-
-    co_return;
 }
 
-coro::task<void> IPCServer::message_sender(std::unique_ptr<coro::thread_pool>& pool)
+void IPCServer::message_sender()
 {
-    co_await pool->schedule();
-
     UDev udev;
 
     UDevMonitor monitor(udev);
@@ -176,6 +174,4 @@ coro::task<void> IPCServer::message_sender(std::unique_ptr<coro::thread_pool>& p
 #endif
         }
     }
-
-    co_return;
 }

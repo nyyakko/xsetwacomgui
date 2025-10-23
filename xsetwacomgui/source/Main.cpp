@@ -5,7 +5,6 @@
 #include "core/Context.hpp"
 #include "core/ipc/Client.hpp"
 #include "core/ipc/Server.hpp"
-#include "core/Scheduler.hpp"
 #include "GoddessWindow.hpp"
 #include "MainWindow.hpp"
 #include "platform/Daemon.hpp"
@@ -15,7 +14,6 @@
 #include "ui/Localisation.hpp"
 #include "ui/Scaling.hpp"
 
-#include <coro/sync_wait.hpp>
 #include <GLFW/glfw3.h>
 #include <GL/gl.h>
 #include <imgui/extensions/imgui_toast.hpp>
@@ -108,6 +106,8 @@ Result<void> run_gui(Context& context)
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
+        context.stExecutor.poll();
+
         ImGui::PushFont(font);
         {
             int windowWidth, windowHeight;
@@ -117,8 +117,6 @@ Result<void> run_gui(Context& context)
             ImGui::Begin(NAME, nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar);
             {
                 ImGui::RenderToasts();
-
-                TRY(context.scheduler.update());
 
                 static auto isSettingsWindowOpen = false;
                 static auto isGoddessWindowOpen = false;

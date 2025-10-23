@@ -1,10 +1,7 @@
-#include <spdlog/spdlog.h>
-
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "MainWindow.hpp"
 
 #include "core/ipc/Client.hpp"
-#include "core/Scheduler.hpp"
 #include "MappingsWindow.hpp"
 #include "platform/udev/UDevDevice.hpp"
 #include "ProfileWindow.hpp"
@@ -512,7 +509,7 @@ Result<void> render_main_window(Context& context)
 
             if (ImGui::Button(TRY(Localisation::get(context.settings.application.language, Localisation::Popup_Outdated_Device_Settings_Migrate)), { 0, 25_scaled }))
             {
-                migrate_tablet_settings(context.settings.tablet);
+                TRY(migrate_tablet_settings(context.settings.tablet));
             }
         }
         ImGui::End();
@@ -543,28 +540,51 @@ Result<void> render_main_window(Context& context)
                 | ranges::to_vector
             ).back();
 
-            context.display = TRY(get_primary_display());
+            context.display = (context.displays
+                | ranges::views::filter(&Display::primary)
+                | ranges::to_vector
+            ).back();
 
-            context.scheduler.run([] (auto error, auto tablet, auto display, auto settings, auto& context) -> coro::task<std::function<Result<void>()>> {
-                auto maybeProfile = make_tablet_profile("Default", tablet, display);
+            asio::co_spawn(context.stExecutor, [] (Context& context, auto error) -> asio::awaitable<void> {
+                auto maybeProfile = co_await asio::co_spawn(context.mtExecutor, [] (auto tablet, auto display) -> asio::awaitable<Result<TabletProfile>> {
+                    co_return make_tablet_profile("Default", tablet, display);
+                }(context.tablet, context.display));
 
                 if (!maybeProfile.has_value())
                 {
-                    co_return [result = std::move(maybeProfile)] { return make_error(result.error()); };
+                    ImGui::PushToast(
+                        MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Error)),
+                        "Failed to create profile"
+                    );
+                    co_return;
                 }
 
-                settings.tablet.add_profile(*maybeProfile);
-                settings.tablet.profile("Default");
+                context.settings.tablet.add_profile(*maybeProfile);
+                context.settings.tablet.profile("Default");
 
-                if (error == SettingsError::Type::FILE_NOT_FOUND) save_tablet_settings(settings.tablet);
+                if (error == SettingsError::Type::FILE_NOT_FOUND)
+                {
+                    co_await asio::co_spawn(context.mtExecutor, [] (auto settings) -> asio::awaitable<void> {
+                        save_tablet_settings(settings);
+                        co_return;
+                    }(context.settings.tablet));
+                }
 
-                auto maybeLoaded = load_tablet_profile(settings.tablet.profile(), tablet, display);
+                auto maybeLoaded = co_await asio::co_spawn(context.mtExecutor, [] (auto settings, auto tablet, auto display) -> asio::awaitable<Result<void>> {
+                    co_return load_tablet_profile(settings.profile(), tablet, display);
+                }(context.settings.tablet, context.tablet, context.display));
 
-                co_return [maybeLoaded = std::move(maybeLoaded), settings = std::move(settings), &context] -> Result<void> {
-                    context.settings = settings;
-                    return maybeLoaded;
-                };
-            }(result.error().message(), context.tablet, context.display, context.settings, context));
+                if (!maybeLoaded.has_value())
+                {
+                    ImGui::PushToast(
+                        MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Error)),
+                        "Failed to load profile"
+                    );
+                }
+
+                co_return;
+            }(context, result.error().message()), asio::detached);
+            context.stExecutor.restart();
 
             switch (result.error().message())
             {
@@ -622,75 +642,96 @@ Result<void> render_main_window(Context& context)
         auto action = magic_enum::enum_cast<UDevDevice::Action>(message->data());
         assert(action && "INVALID ACTION");
 
-        switch (*action)
-        {
-        case UDevDevice::Action::BIND: {
-            if (std::ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) >= 1) break;
+        static auto fnGetAvailableDevices = [] (auto shouldRetry) -> asio::awaitable<Result<std::vector<Device>>> {
+            Result<std::vector<Device>> maybeDevices {};
 
-            while (context.devices = TRY(get_available_devices()), context.devices.empty())
+            for (auto i = 0; i < 3; i += 1)
             {
-                if (static auto retry = 0; retry++ == 3) break;
-                spdlog::info("No devices were found, retrying...");
+                maybeDevices = get_available_devices();
+                if (!maybeDevices.has_value()) co_return make_error(maybeDevices.error());
+                if (!(maybeDevices->empty() && shouldRetry)) break;
                 std::this_thread::sleep_for(250ms);
             }
 
-            if (context.devices.empty())
-            {
-                ImGui::PushToast(
-                    TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Error)),
-                    TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Devices_Missing))
-                );
-                break;
-            }
+            co_return maybeDevices;
+        };
 
-            auto result = load_tablet_settings();
-            assert(result.has_value() && "how did you even manage to make this happen?");
+        if (*action == UDevDevice::Action::BIND && std::ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) < 1)
+        {
+            asio::co_spawn(context.stExecutor, [] (Context& context) -> asio::awaitable<void> {
+                auto maybeDevices = co_await asio::co_spawn(context.mtExecutor, fnGetAvailableDevices(true));
+                if (!maybeDevices.has_value()) make_error(maybeDevices.error());
 
-            ImGui::PushToast(
-                TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),
-                TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Load_Success))
-            );
+                if (maybeDevices->empty())
+                {
+                    ImGui::PushToast(
+                        MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Error)),
+                        MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Devices_Missing))
+                    );
+                    co_return;
+                }
 
-            context.settings.tablet = *result;
+                context.devices = *maybeDevices;
 
-            auto stylus = std::ranges::find(context.devices, context.settings.tablet.profile().stylus.name, &Device::name);
-            assert(stylus != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
-            context.tablet.stylus = *stylus;
+                auto maybeSettings = co_await asio::co_spawn(context.mtExecutor, [] -> asio::awaitable<Result<SettingsTablet, SettingsError>> {
+                    co_return load_tablet_settings();
+                });
+                assert(maybeSettings.has_value() && "how did you even manage to make this happen?");
 
-            auto pad = std::ranges::find(context.devices, context.settings.tablet.profile().pad.name, &Device::name);
-            assert(pad != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
-            context.tablet.pad = *pad;
+                context.settings.tablet = *maybeSettings;
 
-            context.display = *std::ranges::find(context.displays, context.settings.tablet.profile().display.name, &Display::name);
+                auto stylus = std::ranges::find(context.devices, context.settings.tablet.profile().stylus.name, &Device::name);
+                assert(stylus != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
+                context.tablet.stylus = *stylus;
 
-            context.hasChangedDeviceHandedness = true;
-            context.hasChangedDevice = true;
-            context.hasChangedDisplay = true;
-            context.hasChangedProfile = true;
+                auto pad = std::ranges::find(context.devices, context.settings.tablet.profile().pad.name, &Device::name);
+                assert(pad != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
+                context.tablet.pad = *pad;
 
-            TRY(load_tablet_profile(context.settings.tablet.profile(), context.tablet, context.display));
+                context.display = *std::ranges::find(context.displays, context.settings.tablet.profile().display.name, &Display::name);
 
-            break;
+                context.hasChangedDeviceHandedness = true;
+                context.hasChangedDevice = true;
+                context.hasChangedDisplay = true;
+                context.hasChangedProfile = true;
+
+                auto maybeLoaded = co_await asio::co_spawn(context.mtExecutor, [] (auto settings, auto tablet, auto display) -> asio::awaitable<Result<void>> {
+                    co_return load_tablet_profile(settings.profile(), tablet, display);
+                }(context.settings.tablet, context.tablet, context.display));
+
+                if (!maybeLoaded.has_value())
+                {
+                    ImGui::PushToast(
+                        MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Error)),
+                        "Failed to load profile"
+                    );
+                }
+
+                co_return;
+            }(context), asio::detached);
+            context.stExecutor.restart();
         }
-        case UDevDevice::Action::UNBIND: {
-            if (std::ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) > 1) break;
 
-            context.devices = TRY(get_available_devices());
+        if (*action == UDevDevice::Action::UNBIND && std::ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) <= 1)
+        {
+            asio::co_spawn(context.stExecutor, [] (Context& context) -> asio::awaitable<void> {
+                auto maybeDevices = co_await asio::co_spawn(context.mtExecutor, fnGetAvailableDevices(false));
+                if (!maybeDevices.has_value()) make_error(maybeDevices.error());
 
-            auto maybeDevice = std::ranges::find(context.devices, context.settings.tablet.profile().stylus.name, &Device::name);
+                context.devices = *maybeDevices;
 
-            if (maybeDevice == context.devices.end())
-            {
-                context.display = {};
-                context.settings.tablet = {};
-                context.tablet = {};
-            }
+                auto maybeDevice = std::ranges::find(context.devices, context.settings.tablet.profile().stylus.name, &Device::name);
 
-            break;
-        }
-        case UDevDevice::Action::REMOVE: break;
-        case UDevDevice::Action::ADD: break;
-        case UDevDevice::Action::NONE: break;
+                if (maybeDevice == context.devices.end())
+                {
+                    context.display = {};
+                    context.settings.tablet = {};
+                    context.tablet = {};
+                }
+
+                co_return;
+            }(context), asio::detached);
+            context.stExecutor.restart();
         }
     }
 
@@ -742,26 +783,35 @@ Result<void> render_main_window(Context& context)
     if (pressedPrimary)
     {
         isDropupButtonDisabled = true;
+        asio::co_spawn(context.stExecutor, [] (Context& context) -> asio::awaitable<void> {
+            auto result = co_await asio::co_spawn(context.mtExecutor, [] (auto settings, auto tablet, auto display) -> asio::awaitable<Result<void>> {
+                co_return load_tablet_profile(settings.tablet.profile(), tablet, display);
+            }(context.settings, context.tablet, context.display));
 
-        context.scheduler.run([] (auto tablet, auto display, auto settings, auto const& context) -> coro::task<std::function<Result<void>()>> {
-            auto maybeLoaded = load_tablet_profile(settings.tablet.profile(), tablet, display);
             isDropupButtonDisabled = false;
 
-            if (!maybeLoaded.has_value())
+            if (!result)
             {
-                co_return [result = std::move(maybeLoaded)] { return make_error(result.error()); };
+                ImGui::PushToast(
+                    MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Error)),
+                    "Failed to load profile"
+                );
+                co_return;
             }
 
-            save_tablet_settings(settings.tablet);
+            co_await asio::co_spawn(context.mtExecutor, [] (auto settings) -> asio::awaitable<void> {
+                save_tablet_settings(settings);
+                co_return;
+            }(context.settings.tablet));
 
-            co_return [&context] -> Result<void> {
-                ImGui::PushToast(
-                    TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),
-                    TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Saved))
-                );
-                return {};
-            };
-        }(context.tablet, context.display, context.settings, context));
+            ImGui::PushToast(
+                MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),
+                MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Saved))
+            );
+
+            co_return;
+        }(context), asio::detached);
+        context.stExecutor.restart();
     }
     else if (pressedSecondary)
     {

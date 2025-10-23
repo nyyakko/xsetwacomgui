@@ -1,6 +1,5 @@
 #include "SettingsWindow.hpp"
 
-#include "core/Scheduler.hpp"
 #include "ui/Localisation.hpp"
 #include "ui/Scaling.hpp"
 
@@ -138,20 +137,19 @@ Result<void> render_settings_window(Context& context)
     if (ImGui::Button(TRY(Localisation::get(context.settings.application.language, Localisation::Save)), { 150_scaled, 25_scaled }))
     {
         isSaveButtonDisabled = true;
-
-        context.scheduler.run([] (auto settings, auto const& context) -> coro::task<std::function<Result<void>()>> {
+        asio::co_spawn(context.stExecutor, [] (Context& context) -> asio::awaitable<void> {
+            co_await asio::co_spawn(context.mtExecutor, [] (auto settings) -> asio::awaitable<void> {
+                save_application_settings(settings);
+                co_return;
+            }(context.settings.application));
             isSaveButtonDisabled = false;
-
-            save_application_settings(settings.application);
-
-            co_return [&context] -> Result<void> {
-                ImGui::PushToast(
-                    TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),
-                    TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Application_Settings_Saved))
-                );
-                return {};
-            };
-        }(context.settings, context));
+            ImGui::PushToast(
+                MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),
+                MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Application_Settings_Saved))
+            );
+            co_return;
+        }(context), asio::detached);
+        context.stExecutor.restart();
     }
     ImGui::EndDisabled();
     ImGui::SetCursorPos(previousCursorPosition);

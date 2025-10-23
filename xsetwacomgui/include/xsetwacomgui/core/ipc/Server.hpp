@@ -2,8 +2,6 @@
 
 #include "core/MutexProtected.hpp"
 
-#include <coro/task.hpp>
-#include <coro/thread_pool.hpp>
 #include <liberror/Result.hpp>
 #include <liberror/Try.hpp>
 
@@ -46,8 +44,8 @@ private:
 
     void stop();
 
-    coro::task<void> message_receiver(std::unique_ptr<coro::thread_pool>& pool);
-    coro::task<void> message_sender(std::unique_ptr<coro::thread_pool>& pool);
+    void message_receiver();
+    void message_sender();
 
 private:
     mqd_t server_;

@@ -1,6 +1,5 @@
 #include "ProfileWindow.hpp"
 
-#include "core/Scheduler.hpp"
 #include "ui/Localisation.hpp"
 #include "ui/Scaling.hpp"
 
@@ -34,28 +33,34 @@ Result<void> render_profile_window(Context& context)
         else
         {
             isCreateButtonDisabled = true;
-
-            context.scheduler.run([] (auto tablet, auto display, auto settings, auto& context) -> coro::task<std::function<Result<void>()>> {
-                auto maybeProfile = make_tablet_profile(profileName.data(), tablet, display);
+            asio::co_spawn(context.stExecutor, [] (Context& context) -> asio::awaitable<void> {
+                auto maybeProfile = co_await asio::co_spawn(context.mtExecutor, [] (auto tablet, auto display) -> asio::awaitable<Result<TabletProfile>> {
+                    co_return make_tablet_profile(profileName.data(), tablet, display);
+                }(context.tablet, context.display));
                 isCreateButtonDisabled = false;
 
                 if (!maybeProfile.has_value())
                 {
-                    co_return [result = std::move(maybeProfile)] { return make_error(result.error()); };
+                    ImGui::PushToast(
+                        MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Error)),
+                        "Failed to create profile"
+                    );
+                    co_return;
                 }
 
-                settings.tablet.add_profile(*maybeProfile);
-                save_tablet_settings(settings.tablet);
+                context.settings.tablet.add_profile(*maybeProfile);
 
-                co_return [&context, settings = std::move(settings)] -> Result<void> {
-                    ImGui::PushToast(
-                        TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),
-                        TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Profile_Created))
-                    );
-                    context.settings = settings;
-                    return {};
-                };
-            }(context.tablet, context.display, context.settings, context));
+                co_await asio::co_spawn(context.mtExecutor, [] (auto settings) -> asio::awaitable<void> {
+                    save_tablet_settings(settings);
+                    co_return;
+                }(context.settings.tablet));
+
+                ImGui::PushToast(
+                    MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),
+                    MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Profile_Created))
+                );
+            }(context), asio::detached);
+            context.stExecutor.restart();
         }
     }
     ImGui::EndDisabled();
