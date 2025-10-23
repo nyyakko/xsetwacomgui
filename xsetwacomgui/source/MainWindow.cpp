@@ -646,12 +646,12 @@ Result<void> render_main_window(Context& context)
             auto result = load_tablet_settings();
             assert(result.has_value() && "how did you even manage to make this happen?");
 
-            context.settings.tablet = *result;
-
             ImGui::PushToast(
                 TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),
                 TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Load_Success))
             );
+
+            context.settings.tablet = *result;
 
             auto stylus = std::ranges::find(context.devices, context.settings.tablet.profile().stylus.name, &Device::name);
             assert(stylus != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
