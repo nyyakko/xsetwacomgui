@@ -4,4 +4,4 @@
 
 #include "core/Context.hpp"
 
-liberror::Result<void> render_main_window(Context& context);
+liberror::Result<void> render_main_window(bool isWindowVisible, Context& context);

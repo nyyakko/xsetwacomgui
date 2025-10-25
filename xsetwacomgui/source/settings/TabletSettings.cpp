@@ -1,6 +1,4 @@
-#include <spdlog/spdlog.h>
-
-#include "settings/SettingsTablet.hpp"
+#include "settings/TabletSettings.hpp"
 
 #include "platform/hid/X11/Device.hpp"
 
@@ -18,9 +16,9 @@
 
 using namespace liberror;
 
-Result<SettingsTablet, SettingsError> load_tablet_settings()
+Result<TabletSettings, SettingsError> load_tablet_settings()
 {
-    SettingsTablet settings {};
+    TabletSettings settings {};
 
     if (!std::filesystem::exists(TABLET_SETTINGS_FILE))
     {
@@ -35,7 +33,7 @@ Result<SettingsTablet, SettingsError> load_tablet_settings()
     {
         auto json = nlohmann::json::parse(content.str());
 
-        if (json["version"].is_null() || json["version"].get<std::string>() != SettingsTablet::SCHEMA_VERSION)
+        if (json["version"].is_null() || json["version"].get<std::string>() != TabletSettings::SCHEMA_VERSION)
         {
             return make_error<SettingsError>(SettingsError::Type::OUTDATED_SCHEMA);
         }
@@ -103,7 +101,7 @@ Result<SettingsTablet, SettingsError> load_tablet_settings()
     return settings;
 }
 
-Result<void> migrate_tablet_settings(SettingsTablet const& settings)
+Result<void> migrate_tablet_settings(TabletSettings const& settings)
 {
     static auto newSettingsSchema = get_application_config_path() / "tablet_settings.json";
     static auto oldSettingsSchema = get_application_config_path() / "tablet_settings.old.json";
@@ -123,10 +121,10 @@ Result<void> migrate_tablet_settings(SettingsTablet const& settings)
     return {};
 }
 
-void save_tablet_settings(SettingsTablet const& settings)
+void save_tablet_settings(TabletSettings const& settings)
 {
     nlohmann::ordered_json json {
-        { "version", SettingsTablet::SCHEMA_VERSION },
+        { "version", TabletSettings::SCHEMA_VERSION },
         { "profile", settings.profile().name },
         { "profiles", nlohmann::json::array() }
     };

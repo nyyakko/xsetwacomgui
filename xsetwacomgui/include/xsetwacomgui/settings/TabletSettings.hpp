@@ -28,7 +28,7 @@ struct PadSettings
     std::map<int, X11Action> mappings = {};
 };
 
-struct DisplaySettings
+struct SettingsDisplay
 {
     std::string name = "INVALID";
     Display::Area area = { -1, -1, -1, -1 };
@@ -41,13 +41,13 @@ struct TabletProfile
     std::string name = "INVALID";
     StylusSettings stylus;
     PadSettings pad;
-    DisplaySettings display;
+    SettingsDisplay display;
 };
 
 liberror::Result<TabletProfile> make_tablet_profile(std::string_view name, Tablet const& tablet, Display const& display);
 liberror::Result<void> load_tablet_profile(TabletProfile const& profile, Tablet const& tablet, Display const& display);
 
-class SettingsTablet
+class TabletSettings
 {
 private:
     // Should be updated every time a change is made
@@ -60,15 +60,16 @@ public:
 
     inline constexpr auto& profile(this auto& self) { return self.profiles_.at(self.profile_); }
     inline constexpr void profile(this auto& self, std::string_view profile) { assert(self.profiles_.contains(profile.data())); self.profile_ = profile; }
+    inline constexpr void profile(this auto& self, TabletProfile const& profile) { assert(self.profiles_.contains(profile.name)); self.profiles_.at(profile.name) = profile; }
 
 private:
-    friend liberror::Result<SettingsTablet, SettingsError> load_tablet_settings();
-    friend void save_tablet_settings(SettingsTablet const& settings);
+    friend liberror::Result<TabletSettings, SettingsError> load_tablet_settings();
+    friend void save_tablet_settings(TabletSettings const& settings);
 
     std::string profile_ = "INVALID";
     std::map<std::string, TabletProfile> profiles_ { { "INVALID", {} } };
 };
 
-liberror::Result<SettingsTablet, SettingsError> load_tablet_settings();
-liberror::Result<void> migrate_tablet_settings(SettingsTablet const& settings);
-void save_tablet_settings(SettingsTablet const& settings);
+liberror::Result<TabletSettings, SettingsError> load_tablet_settings();
+liberror::Result<void> migrate_tablet_settings(TabletSettings const& settings);
+void save_tablet_settings(TabletSettings const& settings);

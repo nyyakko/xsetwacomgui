@@ -9,14 +9,14 @@
 
 inline std::filesystem::path APPLICATION_SETTINGS_FILE = get_application_config_path() / "application_settings.json";
 
-struct SettingsApplication
+struct ApplicationSettings
 {
 private:
     // Should be updated every time a change is made
     static constexpr auto SCHEMA_VERSION = "1.1";
 
-    friend liberror::Result<SettingsApplication, SettingsError> load_application_settings();
-    friend void save_application_settings(SettingsApplication const& settings);
+    friend liberror::Result<ApplicationSettings, SettingsError> load_application_settings();
+    friend void save_application_settings(ApplicationSettings const& settings);
 
 public:
     enum class Theme { DARK, LIGHT };
@@ -27,6 +27,6 @@ public:
     Font font = { "Default", "Regular", "" };
 };
 
-liberror::Result<SettingsApplication, SettingsError> load_application_settings();
-liberror::Result<void> migrate_application_settings(SettingsApplication const& settings);
-void save_application_settings(SettingsApplication const& settings);
+liberror::Result<ApplicationSettings, SettingsError> load_application_settings();
+liberror::Result<void> migrate_application_settings(ApplicationSettings const& settings);
+void save_application_settings(ApplicationSettings const& settings);

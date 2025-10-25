@@ -108,7 +108,7 @@ static Result<void> run_gui(Context& context)
             break;
         }
 
-        if (context.settings.application.theme == SettingsApplication::Theme::DARK)
+        if (context.settings.application.theme == ApplicationSettings::Theme::DARK)
         {
             ImGui::StyleColorsDark();
         }
@@ -119,6 +119,13 @@ static Result<void> run_gui(Context& context)
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
+
+        if (context.hasChangedFont || context.hasChangedFontStyle)
+        {
+            font = io.Fonts->AddFontFromFileTTF(context.settings.application.font.path.string().data(), 20_scaled, nullptr, glyphRanges.Data);
+            ImGui_ImplOpenGL3_CreateFontsTexture();
+        }
+
         ImGui::NewFrame();
 
         context.stExecutor.poll();
@@ -195,7 +202,7 @@ static Result<void> run_gui(Context& context)
 
                 ImGui::BeginDisabled(context.devices.empty());
                 {
-                    TRY(render_main_window(context));
+                    TRY(render_main_window(true, context));
                 }
                 ImGui::EndDisabled();
             }
