@@ -2,17 +2,17 @@
 
 #include <spdlog/spdlog.h>
 
-#include "core/Context.hpp"
-#include "core/ipc/IPCClient.hpp"
-#include "core/ipc/IPCServer.hpp"
-#include "GoddessWindow.hpp"
-#include "MainWindow.hpp"
+#include "app/Context.hpp"
+#include "app/core/ipc/IPCClient.hpp"
+#include "app/core/ipc/IPCServer.hpp"
+#include "app/core/Localisation.hpp"
+#include "app/core/Scaling.hpp"
+#include "app/ui/GoddessWindow.hpp"
+#include "app/ui/MainWindow.hpp"
+#include "app/ui/SettingsWindow.hpp"
 #include "platform/Daemon.hpp"
 #include "platform/Environment.hpp"
 #include "platform/udev/UDevDevice.hpp"
-#include "SettingsWindow.hpp"
-#include "ui/Localisation.hpp"
-#include "ui/Scaling.hpp"
 
 #include <GLFW/glfw3.h>
 #include <GL/gl.h>

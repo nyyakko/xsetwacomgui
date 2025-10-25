@@ -1,10 +1,11 @@
-add_subdirectory(app)
-add_subdirectory(platform)
+add_subdirectory(ipc)
+add_subdirectory(settings)
 
 set(DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 set(xsetwacomgui_SourceFiles ${xsetwacomgui_SourceFiles}
-    "${DIR}/Main.cpp"
+    "${DIR}/FreeType.cpp"
+    "${DIR}/Localisation.cpp"
 
     PARENT_SCOPE
 )
