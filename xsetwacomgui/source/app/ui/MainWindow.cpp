@@ -453,6 +453,8 @@ static Result<void> render_display_tab(Context& context, TabletSettings& setting
 
 Result<void> render_main_window(bool isWindowVisible, Context& context)
 {
+    static auto settings = context.settings.tablet;
+
     static auto hasTriedToInitializeDeviceSettings = false;
 
     if (context.handleOutdatedDeviceSettings)
@@ -625,8 +627,6 @@ Result<void> render_main_window(bool isWindowVisible, Context& context)
 
         hasTriedToInitializeDeviceSettings = true;
     }
-
-    static auto settings = context.settings.tablet;
 
     auto message = TRY(IPCClient::the().receive_message_async());
     if (!message.empty())
