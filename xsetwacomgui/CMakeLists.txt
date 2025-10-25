@@ -28,6 +28,15 @@ target_include_directories(${PROJECT_NAME}
 
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_23)
 
+configure_file(
+    ${PROJECT_SOURCE_DIR}/resources/manifest/${PROJECT_NAME}.desktop.in
+    ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.desktop
+)
+
+install(FILES       ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.desktop
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/applications
+)
+
 install(TARGETS     ${PROJECT_NAME}
         RUNTIME
         FILE_SET    ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}

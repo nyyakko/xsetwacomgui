@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.25)
 
-project(xsetwacomgui LANGUAGES CXX)
+project(xsetwacomgui LANGUAGES CXX DESCRIPTION "A graphical xsetwacom wrapper for ease of use")
 
 include(cmake/get_cpm.cmake)
 
@@ -42,4 +42,3 @@ set(xsetwacomgui_ExternalLibraries
 )
 
 add_subdirectory(xsetwacomgui)
-
