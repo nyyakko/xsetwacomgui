@@ -44,7 +44,7 @@ static void configure_signal_handler(void(*handler)(int))
     sigaction(SIGTERM, &action, NULL);
 }
 
-Result<void> run_gui(Context& context)
+static Result<void> run_gui(Context& context)
 {
     TRY(IPCClient::the().configure(IPCClient::Mode::ASYNC));
     TRY(IPCClient::the().connect());
@@ -219,7 +219,7 @@ Result<void> run_gui(Context& context)
     return {};
 }
 
-Result<void> run_no_gui(Context& context)
+static Result<void> run_no_gui(Context& context)
 {
     TRY(daemonize(NAME"-client", Detached::TRUE));
 
