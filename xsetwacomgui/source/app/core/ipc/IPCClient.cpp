@@ -40,7 +40,7 @@ Result<void> IPCClient::connect()
 
     if (mqueue_.descriptor().value() == -1)
     {
-        return make_error("client descriptor was -1. did you call configure?");
+        return make_error("Client descriptor was -1. did you call configure?");
     }
 
     MQueueDescriptor server {};
@@ -56,11 +56,11 @@ Result<void> IPCClient::connect()
 
         static auto retry = 0;
 
-        spdlog::warn("could not connect to IPCServer ({}/3)", retry+1);
+        spdlog::warn("Could not connect to IPCServer ({}/3)", retry+1);
 
         if (retry++ == 3)
         {
-            return make_error("failed to connect to IPCServer");
+            return make_error("Failed to connect to IPCServer");
         }
 
         std::this_thread::sleep_for(1s);

@@ -27,7 +27,7 @@ IPCServer::~IPCServer()
 {
     if (mqueue_.descriptor().value() != -1)
     {
-        spdlog::info("server finished");
+        spdlog::info("Server finished");
     }
 }
 
@@ -39,9 +39,9 @@ Result<IPCServer> IPCServer::create()
     if (!mqueue.has_value())
     {
         if (mqueue.error().message() == strerror(EEXIST))
-            spdlog::warn("server already running");
+            spdlog::warn("Server already running");
         else
-            spdlog::error("could not create server mqueue: {}", mqueue.error().message());
+            spdlog::error("Could not create server mqueue: {}", mqueue.error().message());
         std::exit(EXIT_FAILURE);
     }
 
@@ -52,7 +52,7 @@ Result<IPCServer> IPCServer::create()
 
 void IPCServer::start()
 {
-    spdlog::info("server started");
+    spdlog::info("Server started");
 
     asio::thread_pool pool(8);
 
@@ -71,7 +71,7 @@ void IPCServer::message_receiver()
         auto buffer = mqueue_.receive();
         if (!buffer.has_value())
         {
-            spdlog::error("receive failed: {}", buffer.error().message());
+            spdlog::error("Receive failed: {}", buffer.error().message());
             std::exit(EXIT_FAILURE);
         }
 
@@ -83,19 +83,19 @@ void IPCServer::message_receiver()
             auto client = MQueueDescriptor::create(clientName, O_WRONLY);
             if (!client.has_value())
             {
-                spdlog::error("could not create client descriptor: {}", strerror(errno));
+                spdlog::error("Could not create client descriptor: {}", strerror(errno));
                 std::exit(EXIT_FAILURE);
             }
 
             clients_.with([&] (auto& clients) { clients.insert({ clientName, std::move(*client) }); });
-            spdlog::info("client {} connected", clientName);
+            spdlog::info("Client {} connected", clientName);
         }
 
         if (message.starts_with("QUIT"))
         {
             auto clientName = std::next(message.data(), 5);
             clients_.with([&] (auto& clients) { clients.erase(clientName); });
-            spdlog::info("client {} disconnected", clientName);
+            spdlog::info("Client {} disconnected", clientName);
         }
     }
 }
@@ -121,7 +121,7 @@ void IPCServer::message_sender()
         if (result == 0) continue;
         if (result < 0)
         {
-            spdlog::error("poll failed: {}", strerror(errno));
+            spdlog::error("Poll failed: {}", strerror(errno));
             std::exit(EXIT_FAILURE);
         }
 
@@ -136,11 +136,11 @@ void IPCServer::message_sender()
             auto maybeSent = client.second.send(action);
             if (!maybeSent.has_value())
             {
-                spdlog::error("send failed: {}", maybeSent.error().message());
+                spdlog::error("Send failed: {}", maybeSent.error().message());
                 std::exit(EXIT_FAILURE);
             }
 #if DEBUG
-            spdlog::info("sent '{}' to client {}", action, client.first);
+            spdlog::info("Sent '{}' to client {}", action, client.first);
 #endif
         }
     }
