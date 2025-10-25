@@ -46,9 +46,11 @@ Result<char const*> Localisation::get(std::string_view language, Message id)
                 { Localisation::Toast_Device_Settings_Load_Success, json["toast"]["deviceSettingsLoadSuccess"].get<std::string>() },
                 { Localisation::Toast_Device_Settings_Missing, json["toast"]["deviceSettingsMissing"].get<std::string>() },
                 { Localisation::Toast_Device_Settings_Outdated_Schema, json["toast"]["deviceSettingsOutdatedSchema"].get<std::string>() },
+                { Localisation::Toast_Profile_Create_Failed, json["toast"]["profileCreateFailed"].get<std::string>() },
+                { Localisation::Toast_Profile_Create_Success, json["toast"]["profileCreateSuccess"].get<std::string>() },
+                { Localisation::Toast_Profile_Load_Failed, json["toast"]["profileLoadFailed"].get<std::string>() },
                 { Localisation::Toast_Profile_Missing, json["toast"]["profileMissing"].get<std::string>() },
                 { Localisation::Toast_Profile_Name_Empty, json["toast"]["profileNameEmpty"].get<std::string>() },
-                { Localisation::Toast_Profile_Created, json["toast"]["profileCreated"].get<std::string>() },
 
                 { Localisation::MenuBar_Settings, json["menubar"]["settings"]["title"].get<std::string>() },
                 { Localisation::MenuBar_Settings_Application, json["window"]["settings"]["title"].get<std::string>() },

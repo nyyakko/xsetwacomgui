@@ -16,9 +16,11 @@
         "deviceSettingsMissing": "Не найдены настройки устройства, будут загружены данные из xsetwacom",
         "deviceSettingsOutdatedSchema": "Формат настроек планшета устарел",
         "devicesMissing": "Устройства не обнаружены",
-        "profileNameEmpty": "Profile name cannot be empty (FIXME)",
-        "profileCreated": "Profile created successfully (FIXME)",
-        "profileMissing": "Profile could not be found (FIXME)"
+        "profileCreateFailed": "Failed to create profile (FIXME)",
+        "profileCreateSuccess": "Profile created successfully (FIXME)",
+        "profileLoadFailed": "Failed to load profile (FIXME)",
+        "profileMissing": "Profile could not be found (FIXME)",
+        "profileNameEmpty": "Profile name cannot be empty (FIXME)"
     },
 
     "menubar": {

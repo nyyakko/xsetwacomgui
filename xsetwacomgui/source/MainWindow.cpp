@@ -556,7 +556,7 @@ Result<void> render_main_window(Context& context)
                 {
                     ImGui::PushToast(
                         MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Error)),
-                        "Failed to create profile"
+                        MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Profile_Create_Failed))
                     );
                     co_return;
                 }
@@ -580,7 +580,7 @@ Result<void> render_main_window(Context& context)
                 {
                     ImGui::PushToast(
                         MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Error)),
-                        "Failed to load profile"
+                        MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Profile_Load_Failed))
                     );
                 }
 
@@ -705,7 +705,7 @@ Result<void> render_main_window(Context& context)
                 {
                     ImGui::PushToast(
                         MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Error)),
-                        "Failed to load profile"
+                        MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Profile_Load_Failed))
                     );
                 }
 
@@ -796,7 +796,7 @@ Result<void> render_main_window(Context& context)
             {
                 ImGui::PushToast(
                     MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Error)),
-                    "Failed to load profile"
+                    MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Profile_Load_Failed))
                 );
                 co_return;
             }

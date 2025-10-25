@@ -102,7 +102,7 @@ Result<void> render_mappings_window(Context& context)
             {
                 ImGui::PushToast(
                     MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),
-                    "Failed to load profile"
+                    MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Profile_Load_Failed))
                 );
                 co_return;
             }

@@ -43,7 +43,7 @@ Result<void> render_profile_window(Context& context)
                 {
                     ImGui::PushToast(
                         MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Error)),
-                        "Failed to create profile"
+                        MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Profile_Create_Failed))
                     );
                     co_return;
                 }
@@ -57,7 +57,7 @@ Result<void> render_profile_window(Context& context)
 
                 ImGui::PushToast(
                     MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),
-                    MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Profile_Created))
+                    MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Profile_Create_Success))
                 );
             }(context), asio::detached);
             context.stExecutor.restart();
