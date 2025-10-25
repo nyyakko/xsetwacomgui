@@ -1,7 +1,9 @@
+#include <spdlog/spdlog.h>
+
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "MainWindow.hpp"
 
-#include "core/ipc/Client.hpp"
+#include "core/ipc/IPCClient.hpp"
 #include "MappingsWindow.hpp"
 #include "platform/udev/UDevDevice.hpp"
 #include "ProfileWindow.hpp"
@@ -637,9 +639,9 @@ Result<void> render_main_window(Context& context)
     }
 
     auto message = TRY(IPCClient::the().receive_message_async());
-    if (message.has_value())
+    if (!message.empty())
     {
-        auto action = magic_enum::enum_cast<UDevDevice::Action>(message->data());
+        auto action = magic_enum::enum_cast<UDevDevice::Action>(message.data());
         assert(action && "INVALID ACTION");
 
         static auto fnGetAvailableDevices = [] (auto shouldRetry) -> asio::awaitable<Result<std::vector<Device>>> {
@@ -847,7 +849,7 @@ Result<void> render_main_window(Context& context)
 
     ImGui::EndDisabled();
 
-    if (message.has_value())
+    if (!message.empty())
     {
         context.hasChangedDevice = false;
         context.hasChangedDisplay = false;

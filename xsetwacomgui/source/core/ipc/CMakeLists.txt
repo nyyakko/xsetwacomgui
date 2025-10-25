@@ -1,8 +1,8 @@
 set(DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 set(xsetwacomgui_SourceFiles ${xsetwacomgui_SourceFiles}
-    "${DIR}/Server.cpp"
-    "${DIR}/Client.cpp"
+    "${DIR}/IPCServer.cpp"
+    "${DIR}/IPCClient.cpp"
 
     PARENT_SCOPE
 )

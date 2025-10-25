@@ -1,11 +1,11 @@
 #pragma once
 
+#include "platform/mqueue/MQueue.hpp"
+
 #include <liberror/Result.hpp>
 #include <liberror/Try.hpp>
 
 #include <mqueue.h>
-
-#include <optional>
 
 class IPCClient
 {
@@ -42,13 +42,14 @@ public:
     liberror::Result<void> configure(Mode mode);
 
     liberror::Result<void> connect();
-    liberror::Result<void> disconnect();
 
-    liberror::Result<std::optional<std::array<char, 32>>> receive_message_async();
-    liberror::Result<std::array<char, 32>> receive_message();
+    liberror::Result<std::vector<char>> receive_message_async();
+    liberror::Result<std::vector<char>> receive_message();
 
 private:
     static liberror::Result<IPCClient> create();
+
+    MQueue mqueue_;
 
     std::string name_;
     mqd_t client_;

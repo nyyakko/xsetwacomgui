@@ -3,8 +3,8 @@
 #include <spdlog/spdlog.h>
 
 #include "core/Context.hpp"
-#include "core/ipc/Client.hpp"
-#include "core/ipc/Server.hpp"
+#include "core/ipc/IPCClient.hpp"
+#include "core/ipc/IPCServer.hpp"
 #include "GoddessWindow.hpp"
 #include "MainWindow.hpp"
 #include "platform/Daemon.hpp"
@@ -34,10 +34,25 @@
 using namespace liberror;
 using namespace std::literals;
 
+static void configure_signal_handler(void(*handler)(int))
+{
+    struct sigaction action;
+
+    action.sa_handler = handler;
+
+    sigaction(SIGINT, &action, NULL);
+    sigaction(SIGTERM, &action, NULL);
+}
+
 Result<void> run_gui(Context& context)
 {
     TRY(IPCClient::the().configure(IPCClient::Mode::ASYNC));
     TRY(IPCClient::the().connect());
+
+    configure_signal_handler([] (int) {
+        IPCClient::the().~IPCClient();
+        _exit(0);
+    });
 
     if (!glfwInit()) return make_error("Failed to initialize glfw");
 
@@ -206,10 +221,15 @@ Result<void> run_gui(Context& context)
 
 Result<void> run_no_gui(Context& context)
 {
-    TRY(daemonize(NAME"-client", QuitParent::TRUE));
+    TRY(daemonize(NAME"-client", Detached::TRUE));
 
     TRY(IPCClient::the().configure(IPCClient::Mode::SYNC));
     TRY(IPCClient::the().connect());
+
+    configure_signal_handler([] (int) {
+        IPCClient::the().~IPCClient();
+        _exit(0);
+    });
 
     if (!context.devices.empty())
     {
@@ -435,6 +455,11 @@ Result<void> safe_main(std::span<char const*> const& arguments)
 
     if (TRY(daemonize(NAME"-server")) == IsDaemon::TRUE)
     {
+        configure_signal_handler([] (int) {
+            IPCServer::the().~IPCServer();
+            _exit(0);
+        });
+
         IPCServer::the().start();
     }
     else
