@@ -10,7 +10,8 @@
 using namespace liberror;
 using namespace std::literals;
 
-Result<void> render_profile_window(Context& context)
+// cppcheck-suppress [constParameterReference]
+Result<void> render_profile_window(Context& context, TabletSettings& settings)
 {
     ImGui::Text("%s", TRY(Localisation::get(context.settings.application.language, Localisation::Window_Profile_Tab_Name)));
     static std::array<char, 256> profileName;
@@ -33,7 +34,7 @@ Result<void> render_profile_window(Context& context)
         else
         {
             isCreateButtonDisabled = true;
-            asio::co_spawn(context.stExecutor, [] (Context& context) -> asio::awaitable<void> {
+            asio::co_spawn(context.stExecutor, [] (Context& context, auto& settings) -> asio::awaitable<void> {
                 auto maybeProfile = co_await asio::co_spawn(context.mtExecutor, [] (auto tablet, auto display) -> asio::awaitable<Result<TabletProfile>> {
                     co_return make_tablet_profile(profileName.data(), tablet, display);
                 }(context.tablet, context.display));
@@ -48,18 +49,18 @@ Result<void> render_profile_window(Context& context)
                     co_return;
                 }
 
-                context.settings.tablet.add_profile(*maybeProfile);
+                settings.profiles().insert({ maybeProfile->name, *maybeProfile });
 
                 co_await asio::co_spawn(context.mtExecutor, [] (auto settings) -> asio::awaitable<void> {
                     save_tablet_settings(settings);
                     co_return;
-                }(context.settings.tablet));
+                }(settings));
 
                 ImGui::PushToast(
                     MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),
                     MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Profile_Create_Success))
                 );
-            }(context), asio::detached);
+            }(context, settings), asio::detached);
             context.stExecutor.restart();
         }
     }

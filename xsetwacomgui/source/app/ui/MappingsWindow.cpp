@@ -21,7 +21,7 @@ static Result<void> render_stylus_tab(Context& context, TabletSettings& settings
             | ranges::views::transform([] (auto& action) { return action.data(); })
             | ranges::to_vector;
 
-    for (auto const& mapping : settings.profile().stylus.mappings)
+    for (auto const& mapping : settings.profile()->second.stylus.mappings)
     {
         ImGui::Text("%s %d", TRY(Localisation::get(context.settings.application.language, Localisation::Window_Mappings_Tabs_Stylus_Button)), mapping.first);
         ImGui::SameLine();
@@ -33,7 +33,7 @@ static Result<void> render_stylus_tab(Context& context, TabletSettings& settings
         ImGui::SetNextItemWidth(180_scaled);
         if (ImGui::Combo(fmt::format("##Actions##Stylus##{}", mapping.first).data(), &actionIndexes[size_t(mapping.first)-1], actionNames.data(), int(actionNames.size())))
         {
-            settings.profile().stylus.mappings.at(mapping.first) = *magic_enum::enum_cast<X11Action>(actionIndexes[size_t(mapping.first)-1]+1);
+            settings.profile()->second.stylus.mappings.at(mapping.first) = *magic_enum::enum_cast<X11Action>(actionIndexes[size_t(mapping.first)-1]+1);
         }
     }
 
@@ -47,7 +47,7 @@ static Result<void> render_pad_tab(Context& context, TabletSettings& settings)
             | ranges::views::transform([] (auto& action) { return action.data(); })
             | ranges::to_vector;
 
-    for (auto const& mapping : settings.profile().pad.mappings)
+    for (auto const& mapping : settings.profile()->second.pad.mappings)
     {
         ImGui::Text("%s %d", TRY(Localisation::get(context.settings.application.language, Localisation::Window_Mappings_Tabs_Pad_Button)), mapping.first);
         ImGui::SameLine();
@@ -59,7 +59,7 @@ static Result<void> render_pad_tab(Context& context, TabletSettings& settings)
         ImGui::SetNextItemWidth(180_scaled);
         if (ImGui::Combo(fmt::format("##Actions##Pad##{}", mapping.first).data(), &actionIndexes[size_t(mapping.first)-1], actionNames.data(), int(actionNames.size())))
         {
-            settings.profile().pad.mappings.at(mapping.first) = *magic_enum::enum_cast<X11Action>(actionIndexes[size_t(mapping.first)-1]+1);
+            settings.profile()->second.pad.mappings.at(mapping.first) = *magic_enum::enum_cast<X11Action>(actionIndexes[size_t(mapping.first)-1]+1);
         }
     }
 

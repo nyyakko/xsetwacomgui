@@ -20,6 +20,7 @@ struct Context
 
     bool handleOutdatedDeviceSettings = false;
 
+    bool hasChangedDeviceSettings = false;
     bool hasChangedDevice = false;
     bool hasChangedDeviceHandedness = false;
     bool hasChangedDeviceArea = false;

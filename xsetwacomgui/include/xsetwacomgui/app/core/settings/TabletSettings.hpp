@@ -1,51 +1,15 @@
 #pragma once
 
-#include "SettingsError.hpp"
 #include "platform/Environment.hpp"
-#include "platform/hid/X11/Device.hpp"
-#include "platform/hid/X11/Display.hpp"
+#include "SettingsError.hpp"
+#include "TabletProfile.hpp"
 
 #include <imgui/imgui_internal.hpp>
 
+#include <algorithm>
 #include <map>
 
 inline std::filesystem::path TABLET_SETTINGS_FILE = get_application_config_path() / "tablet_settings.json";
-
-struct StylusSettings
-{
-    std::string name = "INVALID";
-    Device::Handedness handedness = Device::Handedness::RIGHT;
-    Device::Area area = { -1, -1, -1, -1 };
-    Device::Pressure pressure = { -1, -1, -1, -1 };
-    bool forceFullArea = false;
-    bool forceAspectRatio = false;
-    std::map<int, X11Action> mappings = {};
-};
-
-struct PadSettings
-{
-    std::string name = "INVALID";
-    std::map<int, X11Action> mappings = {};
-};
-
-struct SettingsDisplay
-{
-    std::string name = "INVALID";
-    Display::Area area = { -1, -1, -1, -1 };
-    bool forceFullArea = false;
-    bool forceAspectRatio = false;
-};
-
-struct TabletProfile
-{
-    std::string name = "INVALID";
-    StylusSettings stylus;
-    PadSettings pad;
-    SettingsDisplay display;
-};
-
-liberror::Result<TabletProfile> make_tablet_profile(std::string_view name, Tablet const& tablet, Display const& display);
-liberror::Result<void> load_tablet_profile(TabletProfile const& profile, Tablet const& tablet, Display const& display);
 
 class TabletSettings
 {
@@ -53,21 +17,73 @@ private:
     // Should be updated every time a change is made
     static constexpr auto SCHEMA_VERSION = "1.4";
 
-public:
-    inline constexpr void add_profile(this auto& self, TabletProfile const& profile) { self.profiles_.emplace(profile.name, profile); }
-
-    inline constexpr auto& profiles(this auto& self) { return self.profiles_; }
-
-    inline constexpr auto& profile(this auto& self) { return self.profiles_.at(self.profile_); }
-    inline constexpr void profile(this auto& self, std::string_view profile) { assert(self.profiles_.contains(profile.data())); self.profile_ = profile; }
-    inline constexpr void profile(this auto& self, TabletProfile const& profile) { assert(self.profiles_.contains(profile.name)); self.profiles_.at(profile.name) = profile; }
-
-private:
     friend liberror::Result<TabletSettings, SettingsError> load_tablet_settings();
     friend void save_tablet_settings(TabletSettings const& settings);
 
-    std::string profile_ = "INVALID";
-    std::map<std::string, TabletProfile> profiles_ { { "INVALID", {} } };
+public:
+    TabletSettings()
+        : profiles_{ { "INVALID", {} } }
+        , profile_{}
+    {
+        profile_ = std::ranges::find_if(this->profiles_, [&] (auto const& entry) {
+            return entry.first == "INVALID";
+        });
+    }
+
+    TabletSettings(TabletSettings&& that)
+        : profiles_{std::move(that.profiles_)}
+        , profile_{std::exchange(that.profile_, {})}
+    {}
+
+    TabletSettings& operator=(TabletSettings&& that)
+    {
+        this->profiles_ = std::move(that.profiles_);
+        this->profile_ = std::exchange(that.profile_, {});
+        return *this;
+    }
+
+    TabletSettings(TabletSettings const& that)
+        : profiles_{that.profiles_}
+        , profile_{}
+    {
+        this->profile_ = std::ranges::find_if(this->profiles_, [&] (auto const& entry) {
+            return entry.first == that.profile_->first;
+        });
+    }
+
+    TabletSettings& operator=(TabletSettings const& that)
+    {
+        this->profiles_ = that.profiles_;
+        this->profile_ = std::ranges::find_if(this->profiles_, [&] (auto const& entry) {
+            return entry.first == that.profile_->first;
+        });
+        return *this;
+    }
+
+public:
+    inline constexpr auto& profiles(this auto& self) { return self.profiles_; }
+
+    inline constexpr auto& profile(this auto& self)
+    {
+        assert(self.profile_ != self.profiles_.end());
+        return self.profile_;
+    }
+
+    inline constexpr void profile(TabletProfile const& profile)
+    {
+        assert(profile_ != profiles_.end());
+        assert(profile_->first == profile.name);
+        profile_->second = profile;
+    }
+
+    inline constexpr void profile(std::map<std::string, TabletProfile>::iterator iterator)
+    {
+        profile_ = iterator;
+    }
+
+private:
+    std::map<std::string, TabletProfile> profiles_;
+    std::map<std::string, TabletProfile>::iterator profile_;
 };
 
 liberror::Result<TabletSettings, SettingsError> load_tablet_settings();
