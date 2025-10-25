@@ -139,6 +139,15 @@ static Result<void> run_gui(Context& context)
             ImGui::Begin(NAME, nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar);
             {
                 ImGui::RenderToasts();
+#ifdef DEBUG
+                static auto warnDebugBuild = true;
+
+                if (warnDebugBuild)
+                {
+                    ImGui::PushToast("Debug", "You are running a DEBUG build!");
+                    warnDebugBuild = false;
+                }
+#endif
 
                 static auto isSettingsWindowOpen = false;
                 static auto isGoddessWindowOpen = false;

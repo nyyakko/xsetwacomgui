@@ -453,15 +453,6 @@ static Result<void> render_display_tab(Context& context, TabletSettings& setting
 
 Result<void> render_main_window(bool isWindowVisible, Context& context)
 {
-#ifdef DEBUG
-    static auto shouldWarnAboutDebugBuild = true;
-
-    if (shouldWarnAboutDebugBuild)
-    {
-        ImGui::PushToast("Debug", "You are running a debug build!");
-        shouldWarnAboutDebugBuild = false;
-    }
-#endif
     static auto hasTriedToInitializeDeviceSettings = false;
 
     if (context.handleOutdatedDeviceSettings)
