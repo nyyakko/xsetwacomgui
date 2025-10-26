@@ -69,6 +69,8 @@ public:
         return self.profile_;
     }
 
+    inline constexpr auto profile(TabletProfile const& profile) { profile_->second = profile; }
+
     inline constexpr void profile(std::map<std::string, TabletProfile>::iterator iterator)
     {
         profile_ = iterator;

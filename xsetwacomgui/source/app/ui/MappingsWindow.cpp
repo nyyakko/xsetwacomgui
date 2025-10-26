@@ -12,14 +12,14 @@
 
 using namespace liberror;
 
-static Result<void> render_stylus_tab(Context& context, TabletSettings& settings)
+static Result<void> render_stylus_tab(Context& context, TabletProfile& profile)
 {
     static auto actionNames =
         magic_enum::enum_names<X11Action>()
             | ranges::views::transform([] (auto& action) { return action.data(); })
             | ranges::to_vector;
 
-    for (auto const& mapping : settings.profile()->second.stylus.mappings)
+    for (auto const& mapping : profile.stylus.mappings)
     {
         ImGui::Text("%s %d", TRY(Localisation::get(context.settings.application.language, Localisation::Window_Mappings_Tabs_Stylus_Button)), mapping.first);
         ImGui::SameLine();
@@ -31,21 +31,21 @@ static Result<void> render_stylus_tab(Context& context, TabletSettings& settings
         ImGui::SetNextItemWidth(180_scaled);
         if (ImGui::Combo(fmt::format("##Actions##Stylus##{}", mapping.first).data(), &actionIndexes[size_t(mapping.first)-1], actionNames.data(), int(actionNames.size())))
         {
-            settings.profile()->second.stylus.mappings.at(mapping.first) = *magic_enum::enum_cast<X11Action>(actionIndexes[size_t(mapping.first)-1]+1);
+            profile.stylus.mappings.at(mapping.first) = *magic_enum::enum_cast<X11Action>(actionIndexes[size_t(mapping.first)-1]+1);
         }
     }
 
     return {};
 }
 
-static Result<void> render_pad_tab(Context& context, TabletSettings& settings)
+static Result<void> render_pad_tab(Context& context, TabletProfile& profile)
 {
     static auto actionNames =
         magic_enum::enum_names<X11Action>()
             | ranges::views::transform([] (auto& action) { return action.data(); })
             | ranges::to_vector;
 
-    for (auto const& mapping : settings.profile()->second.pad.mappings)
+    for (auto const& mapping : profile.pad.mappings)
     {
         ImGui::Text("%s %d", TRY(Localisation::get(context.settings.application.language, Localisation::Window_Mappings_Tabs_Pad_Button)), mapping.first);
         ImGui::SameLine();
@@ -57,28 +57,33 @@ static Result<void> render_pad_tab(Context& context, TabletSettings& settings)
         ImGui::SetNextItemWidth(180_scaled);
         if (ImGui::Combo(fmt::format("##Actions##Pad##{}", mapping.first).data(), &actionIndexes[size_t(mapping.first)-1], actionNames.data(), int(actionNames.size())))
         {
-            settings.profile()->second.pad.mappings.at(mapping.first) = *magic_enum::enum_cast<X11Action>(actionIndexes[size_t(mapping.first)-1]+1);
+            profile.pad.mappings.at(mapping.first) = *magic_enum::enum_cast<X11Action>(actionIndexes[size_t(mapping.first)-1]+1);
         }
     }
 
     return {};
 }
 
-Result<void> render_mappings_window(bool isWindowVisible, Context& context, TabletSettings& settings)
+Result<void> render_mappings_window(bool isWindowVisible, Context& context)
 {
-    static TabletSettings currentSettings = settings;
+    static TabletProfile profile = context.settings.tablet.profile()->second;
+
+    if (profile.name != context.settings.tablet.profile()->second.name)
+    {
+        profile = context.settings.tablet.profile()->second;
+    }
 
     if (ImGui::BeginTabBar("##Tabs"))
     {
         if (ImGui::BeginTabItem(TRY(Localisation::get(context.settings.application.language, Localisation::Window_Mappings_Tabs_Stylus_Title))))
         {
-            TRY(render_stylus_tab(context, currentSettings));
+            TRY(render_stylus_tab(context, profile));
             ImGui::EndTabItem();
         }
 
         if (ImGui::BeginTabItem(TRY(Localisation::get(context.settings.application.language, Localisation::Window_Mappings_Tabs_Pad_Title))))
         {
-            TRY(render_pad_tab(context, currentSettings));
+            TRY(render_pad_tab(context, profile));
             ImGui::EndTabItem();
         }
 
@@ -91,15 +96,9 @@ Result<void> render_mappings_window(bool isWindowVisible, Context& context, Tabl
     ImGui::BeginDisabled(isSaveApplyButtonDisabled);
     if (ImGui::Button(TRY(Localisation::get(context.settings.application.language, Localisation::Save)), { 150_scaled, 25_scaled }))
     {
-        settings = currentSettings;
-
         isSaveApplyButtonDisabled = true;
-        asio::co_spawn(context.stExecutor, [] (Context& context, TabletSettings& settings) -> asio::awaitable<void> {
-            auto profile = std::ranges::find_if(context.settings.tablet.profiles(), [&] (auto const& entry) {
-                return entry.first == settings.profile()->first;
-            });
-            assert(profile != context.settings.tablet.profiles().end());
-            profile->second = settings.profile()->second;
+        asio::co_spawn(context.stExecutor, [] (Context& context) -> asio::awaitable<void> {
+            context.settings.tablet.profile(profile);
 
             auto maybeLoaded = co_await asio::co_spawn(context.mtExecutor, [] (auto settings, auto tablet, auto display) -> asio::awaitable<Result<void>> {
                 co_return load_tablet_profile(settings.profile()->second, tablet, display);
@@ -124,7 +123,7 @@ Result<void> render_mappings_window(bool isWindowVisible, Context& context, Tabl
                 MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),
                 MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Mappings_Saved))
             );
-        }(context, settings), asio::detached);
+        }(context), asio::detached);
         context.stExecutor.restart();
     }
     ImGui::EndDisabled();
@@ -132,7 +131,7 @@ Result<void> render_mappings_window(bool isWindowVisible, Context& context, Tabl
 
     if (!isWindowVisible)
     {
-        currentSettings = settings;
+        profile = context.settings.tablet.profile()->second;
     }
 
     return {};
