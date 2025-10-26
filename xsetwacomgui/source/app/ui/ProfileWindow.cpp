@@ -10,7 +10,7 @@
 using namespace liberror;
 using namespace std::literals;
 
-Result<void> render_profile_window(Context& context, TabletSettings& settings)
+Result<void> render_profile_window(Context& context)
 {
     ImGui::Text("%s", TRY(Localisation::get(context.settings.application.language, Localisation::Window_Profile_Tab_Name)));
     static std::array<char, 256> profileName;
@@ -33,7 +33,7 @@ Result<void> render_profile_window(Context& context, TabletSettings& settings)
         else
         {
             isCreateButtonDisabled = true;
-            asio::co_spawn(context.stExecutor, [] (Context& context, TabletSettings& settings) -> asio::awaitable<void> {
+            asio::co_spawn(context.stExecutor, [] (Context& context) -> asio::awaitable<void> {
                 auto maybeProfile = co_await asio::co_spawn(context.mtExecutor, [] (auto tablet, auto display) -> asio::awaitable<Result<TabletProfile>> {
                     co_return make_tablet_profile(profileName.data(), tablet, display);
                 }(context.tablet, context.display));
@@ -61,7 +61,7 @@ Result<void> render_profile_window(Context& context, TabletSettings& settings)
                     MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),
                     MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Profile_Create_Success))
                 );
-            }(context, settings), asio::detached);
+            }(context), asio::detached);
             context.stExecutor.restart();
         }
     }
@@ -71,7 +71,7 @@ Result<void> render_profile_window(Context& context, TabletSettings& settings)
     return {};
 }
 
-Result<bool> render_profile_window(bool isWindowVisible, Context& context, TabletSettings& settings, TabletProfile& profile)
+Result<bool> render_profile_window(bool isWindowVisible, Context& context, TabletProfile& profile)
 {
     auto isWindowClosed = false;
 
@@ -106,7 +106,7 @@ Result<bool> render_profile_window(bool isWindowVisible, Context& context, Table
         else
         {
             isWindowClosed = true;
-            asio::co_spawn(context.stExecutor, [] (Context& context, TabletSettings& settings, TabletProfile profile) -> asio::awaitable<void> {
+            asio::co_spawn(context.stExecutor, [] (Context& context, TabletProfile profile) -> asio::awaitable<void> {
                 auto previousNameOfTheProfileBeingEdited = profile.name;
                 auto previousNameOfTheCurrentProfile = context.settings.tablet.profile()->first;
 
@@ -131,7 +131,7 @@ Result<bool> render_profile_window(bool isWindowVisible, Context& context, Table
                     MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),
                     MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Profile_Update_Success))
                 );
-            }(context, settings, profile), asio::detached);
+            }(context, profile), asio::detached);
             context.stExecutor.restart();
         }
     }
@@ -139,7 +139,7 @@ Result<bool> render_profile_window(bool isWindowVisible, Context& context, Table
 
     ImGui::SameLine();
 
-    ImGui::BeginDisabled(settings.profiles().size() <= 2);
+    ImGui::BeginDisabled(context.settings.tablet.profiles().size() <= 2);
     if (ImGui::Button(MUST(Localisation::get(context.settings.application.language, Localisation::Delete)), { 150_scaled, 25_scaled }))
     {
         isWindowClosed = true;
@@ -161,7 +161,7 @@ Result<bool> render_profile_window(bool isWindowVisible, Context& context, Table
                 MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),
                 MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Profile_Delete_Success))
             );
-        }(context, settings, profile), asio::detached);
+        }(context, context.settings.tablet, profile), asio::detached);
         context.stExecutor.restart();
     }
     ImGui::EndDisabled();

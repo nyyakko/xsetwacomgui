@@ -900,7 +900,7 @@ Result<void> render_main_window(Context& context)
                     return entry.first == profileNames.at(size_t(itemIndex.second));
                 });
                 assert(profile != context.settings.tablet.profiles().end());
-                auto isWindowClosed = TRY(render_profile_window(isProfileWindowOpen, context, settings, profile->second));
+                auto isWindowClosed = TRY(render_profile_window(isProfileWindowOpen, context, profile->second));
 
                 if (isWindowClosed || !isProfileWindowOpen)
                 {
@@ -912,7 +912,7 @@ Result<void> render_main_window(Context& context)
             }
             else
             {
-                TRY(render_profile_window(context, settings));
+                TRY(render_profile_window(context));
             }
         }
         ImGui::End();
