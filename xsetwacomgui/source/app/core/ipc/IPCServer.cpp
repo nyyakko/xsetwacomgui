@@ -116,32 +116,32 @@ void IPCServer::message_sender()
 
     while (true)
     {
-        auto result = poll(&fd, 1, -1);
-
-        if (result == 0) continue;
-        if (result < 0)
+        if (auto result = poll(&fd, 1, -1); result == 0) continue;
+        else if (result < 0)
         {
             spdlog::error("Poll failed: {}", strerror(errno));
             std::exit(EXIT_FAILURE);
         }
 
-        UDevDevice device(udev_monitor_receive_device(monitor.get()));
+        clients_.with([&monitor] (auto const& clients) {
+            UDevDevice device(udev_monitor_receive_device(monitor.get()));
 
-        if (!device.get_devnode()) continue;
+            if (!device.get_devnode()) return;
 
-        auto action = magic_enum::enum_name<UDevDevice::Action>(device.get_action());
+            auto action = magic_enum::enum_name<UDevDevice::Action>(device.get_action());
 
-        for (auto const& client : clients_.with([] (auto& clients) -> auto& { return clients; }))
-        {
-            auto maybeSent = client.second.send(action);
-            if (!maybeSent.has_value())
+            for (auto const& client : clients)
             {
-                spdlog::error("Send failed: {}", maybeSent.error().message());
-                std::exit(EXIT_FAILURE);
-            }
+                auto maybeSent = client.second.send(action);
+                if (!maybeSent.has_value())
+                {
+                    spdlog::error("Send failed: {}", maybeSent.error().message());
+                    std::exit(EXIT_FAILURE);
+                }
 #if DEBUG
-            spdlog::info("Sent '{}' to client {}", action, client.first);
+                spdlog::info("Sent '{}' to client {}", action, client.first);
 #endif
-        }
+            }
+        });
     }
 }
