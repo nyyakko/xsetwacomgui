@@ -24,7 +24,7 @@ struct Device
     enum class Kind { STYLUS, PAD, ERASER, TOUCH };
     enum class Handedness { LEFT, RIGHT };
 
-    std::string name;
+    std::string name = "INVALID";
     int id;
     Kind kind;
 };

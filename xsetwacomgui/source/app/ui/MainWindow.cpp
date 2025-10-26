@@ -36,14 +36,14 @@ static Result<void> render_area_mappers(Context& context, TabletSettings& settin
     auto previousCursorPosition = ImGui::GetCursorPos();
 
     static ImVec2 displayAreaAnchors[4] { { -1, -1 }, { -1, -1 }, { -1, -1 }, { -1, -1 } };
-    static auto displayDefaultArea = context.displays.empty() ? Display::Area {} : Display::Area { 0, 0, context.display.area.width, context.display.area.height };
+    static auto displayDefaultArea = context.displays.empty() || context.display.name == "INVALID" ? Display::Area {} : Display::Area { 0, 0, context.display.area.width, context.display.area.height };
 
     if (context.hasChangedDisplayArea && settings.profile()->second.display.forceFullArea && settings.profile()->second.display.name != "INVALID")
     {
         settings.profile()->second.display.area = displayDefaultArea;
     }
 
-    if (context.hasChangedDisplay && settings.profile()->second.display.name != "INVALID")
+    if ((context.hasChangedDeviceSettings && context.display.name != "INVALID") || (context.hasChangedDisplay && settings.profile()->second.display.name != "INVALID"))
     {
         displayDefaultArea = Display::Area { 0, 0, context.display.area.width, context.display.area.height };
     }
@@ -78,7 +78,15 @@ static Result<void> render_area_mappers(Context& context, TabletSettings& settin
     static const ImVec2 displayMapperSize { 20 * 16_scaled, 20 * 9_scaled };
     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - displayMapperSize.x)/2);
     static ImRect displayMapperPosition {};
-    context.hasChangedDisplayArea = AreaMapper(TRY(Localisation::get(context.settings.application.language, Localisation::Window_Main_Tabs_Display_Display)), displayAreaAnchors, displayMapperSize, &displayMapperPosition, settings.profile()->second.display.forceFullArea, settings.profile()->second.display.forceAspectRatio);
+    context.hasChangedDisplayArea =
+        AreaMapper(
+            TRY(Localisation::get(context.settings.application.language, Localisation::Window_Main_Tabs_Display_Display)),
+            displayAreaAnchors,
+            displayMapperSize,
+            &displayMapperPosition,
+            settings.profile()->second.display.forceFullArea,
+            settings.profile()->second.display.forceAspectRatio
+        );
     ImGui::SetCursorPosX(previousCursorPosition.x);
 
     if (context.hasChangedDisplayArea && settings.profile()->second.display.name != "INVALID")
@@ -92,14 +100,14 @@ static Result<void> render_area_mappers(Context& context, TabletSettings& settin
     }
 
     static ImVec2 deviceAreaAnchors[4] { { -1, -1 }, { -1, -1 }, { -1, -1 }, { -1, -1 } };
-    static auto deviceDefaultArea = context.devices.empty() ? Device::Area {} : TRY(get_stylus_default_area(context.tablet.stylus));
+    static auto deviceDefaultArea = context.devices.empty() || context.tablet.stylus.name == "INVALID" ? Device::Area {} : TRY(get_stylus_default_area(context.tablet.stylus));
 
     if (context.hasChangedDeviceArea && settings.profile()->second.stylus.forceFullArea && settings.profile()->second.stylus.name != "INVALID")
     {
         settings.profile()->second.stylus.area = deviceDefaultArea;
     }
 
-    if (context.hasChangedDevice && settings.profile()->second.stylus.name != "INVALID")
+    if ((context.hasChangedDeviceSettings && context.tablet.stylus.name != "INVALID") || (context.hasChangedDevice && settings.profile()->second.stylus.name != "INVALID"))
     {
         deviceDefaultArea = TRY(get_stylus_default_area(context.tablet.stylus));
     }
@@ -134,7 +142,15 @@ static Result<void> render_area_mappers(Context& context, TabletSettings& settin
     static const ImVec2 deviceMapperSize { 15 * 16_scaled, 15 * 9_scaled };
     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - deviceMapperSize.x)/2);
     static ImRect deviceMapperPosition {};
-    context.hasChangedDeviceArea = AreaMapper(TRY(Localisation::get(context.settings.application.language, Localisation::Window_Main_Tabs_Tablet_Device)), deviceAreaAnchors, deviceMapperSize, &deviceMapperPosition, settings.profile()->second.stylus.forceFullArea, settings.profile()->second.stylus.forceAspectRatio);
+    context.hasChangedDeviceArea =
+        AreaMapper(
+            TRY(Localisation::get(context.settings.application.language, Localisation::Window_Main_Tabs_Tablet_Device)),
+            deviceAreaAnchors,
+            deviceMapperSize,
+            &deviceMapperPosition,
+            settings.profile()->second.stylus.forceFullArea,
+            settings.profile()->second.stylus.forceAspectRatio
+        );
     ImGui::SetCursorPosX(previousCursorPosition.x);
 
     if (context.hasChangedDeviceArea && settings.profile()->second.stylus.name != "INVALID")
@@ -165,9 +181,9 @@ static Result<void> render_tablet_tab(Context& context, TabletSettings& settings
 {
     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - (250_scaled + 300_scaled + ImGui::GetStyle().WindowPadding.x))/2);
 
-    static auto deviceDefaultArea = context.devices.empty() ? Device::Area {} : TRY(get_stylus_default_area(context.tablet.stylus));
+    static auto deviceDefaultArea = context.tablet.stylus.name == "INVALID" || context.devices.empty() ? Device::Area {} : TRY(get_stylus_default_area(context.tablet.stylus));
 
-    if (context.hasChangedDevice && settings.profile()->second.stylus.name != "INVALID")
+    if ((context.hasChangedDeviceSettings && context.tablet.stylus.name != "INVALID") || (context.hasChangedDevice && settings.profile()->second.stylus.name != "INVALID"))
     {
         deviceDefaultArea = TRY(get_stylus_default_area(context.tablet.stylus));
     }
@@ -352,9 +368,9 @@ static Result<void> render_display_tab(Context& context, TabletSettings& setting
 {
     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - (300_scaled + ImGui::GetStyle().WindowPadding.x))/2);
 
-    static auto displayDefaultArea = context.displays.empty() ? Display::Area {} : Display::Area { 0, 0, context.display.area.width, context.display.area.height };
+    static auto displayDefaultArea = context.displays.empty() || context.display.name == "INVALID" ? Display::Area {} : Display::Area { 0, 0, context.display.area.width, context.display.area.height };
 
-    if (context.hasChangedDisplay && settings.profile()->second.display.name != "INVALID")
+    if ((context.hasChangedDeviceSettings && context.display.name != "INVALID") || (context.hasChangedDisplay && settings.profile()->second.display.name != "INVALID"))
     {
         displayDefaultArea = Display::Area { 0, 0, context.display.area.width, context.display.area.height };
     }
@@ -457,12 +473,6 @@ Result<void> render_main_window(Context& context)
 {
     static auto settings = context.settings.tablet;
 
-    if (context.hasChangedDeviceSettings)
-    {
-        context.hasChangedDeviceSettings = false;
-        settings = context.settings.tablet;
-    }
-
     static auto hasTriedToInitializeDeviceSettings = false;
 
     if (context.handleOutdatedDeviceSettings)
@@ -526,31 +536,33 @@ Result<void> render_main_window(Context& context)
 
     if (!(context.devices.empty() || hasTriedToInitializeDeviceSettings))
     {
-        auto result = load_tablet_settings();
+        asio::co_spawn(context.stExecutor, [] (Context& context) -> asio::awaitable<void> {
+            auto result = co_await asio::co_spawn(context.mtExecutor, [] () -> asio::awaitable<Result<TabletSettings, SettingsError>> {
+                co_return load_tablet_settings();
+            }());
 
-        if (!result.has_value())
-        {
-            context.tablet.stylus = (context.devices
-                | ranges::views::filter([] (auto kind) { return kind == Device::Kind::STYLUS; }, &Device::kind)
-                | ranges::to_vector
-            ).back();
+            if (!result.has_value())
+            {
+                context.tablet.stylus = (context.devices
+                    | ranges::views::filter([] (auto kind) { return kind == Device::Kind::STYLUS; }, &Device::kind)
+                    | ranges::to_vector
+                ).back();
 
-            context.tablet.pad = (context.devices
-                | ranges::views::filter([] (auto kind) { return kind == Device::Kind::PAD; }, &Device::kind)
-                | ranges::to_vector
-            ).back();
+                context.tablet.pad = (context.devices
+                    | ranges::views::filter([] (auto kind) { return kind == Device::Kind::PAD; }, &Device::kind)
+                    | ranges::to_vector
+                ).back();
 
-            context.display = (context.displays
-                | ranges::views::filter(&Display::primary)
-                | ranges::to_vector
-            ).back();
+                context.display = (context.displays
+                    | ranges::views::filter(&Display::primary)
+                    | ranges::to_vector
+                ).back();
 
-            asio::co_spawn(context.stExecutor, [] (Context& context, auto error) -> asio::awaitable<void> {
-                auto maybeProfile = co_await asio::co_spawn(context.mtExecutor, [] (auto tablet, auto display) -> asio::awaitable<Result<TabletProfile>> {
+                auto maybeCreated = co_await asio::co_spawn(context.mtExecutor, [] (auto tablet, auto display) -> asio::awaitable<Result<TabletProfile>> {
                     co_return make_tablet_profile("Default", tablet, display);
                 }(context.tablet, context.display));
 
-                if (!maybeProfile.has_value())
+                if (!maybeCreated.has_value())
                 {
                     ImGui::PushToast(
                         MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Error)),
@@ -559,10 +571,10 @@ Result<void> render_main_window(Context& context)
                     co_return;
                 }
 
-                auto [iterator, _] = context.settings.tablet.profiles().insert({ maybeProfile->name, *maybeProfile });
+                auto [iterator, _] = context.settings.tablet.profiles().insert({ maybeCreated->name, *maybeCreated });
                 context.settings.tablet.profile(iterator);
 
-                if (error == SettingsError::Type::FILE_NOT_FOUND)
+                if (result.error().message() == SettingsError::Type::FILE_NOT_FOUND)
                 {
                     co_await asio::co_spawn(context.mtExecutor, [] (auto settings) -> asio::awaitable<void> {
                         save_tablet_settings(settings);
@@ -582,60 +594,70 @@ Result<void> render_main_window(Context& context)
                     );
                 }
 
+                switch (result.error().message())
+                {
+                case SettingsError::Type::WRITE_FAILURE: break;
+                case SettingsError::Type::FILE_NOT_FOUND: {
+                    ImGui::PushToast(
+                        MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Warning)),
+                        MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Missing))
+                    );
+                    break;
+                }
+                case SettingsError::Type::PROFILE_NOT_FOUND: {
+                    ImGui::PushToast(
+                        MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Error)),
+                        MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Profile_Missing))
+                    );
+                    break;
+                }
+                case SettingsError::Type::READ_FAILURE: {
+                    ImGui::PushToast(
+                        MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Warning)),
+                        MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Load_Failed))
+                    );
+                    break;
+                }
+                case SettingsError::Type::OUTDATED_SCHEMA: {
+                    context.handleOutdatedDeviceSettings = true;
+                    break;
+                }
+                }
+
+                context.hasChangedDeviceSettings = true;
+            }
+            else
+            {
+                context.settings.tablet = std::move(*result);
+
+                auto stylus = std::ranges::find(context.devices, context.settings.tablet.profile()->second.stylus.name, &Device::name);
+                assert(stylus != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
+                context.tablet.stylus = *stylus;
+
+                auto pad = std::ranges::find(context.devices, context.settings.tablet.profile()->second.pad.name, &Device::name);
+                assert(pad != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
+                context.tablet.pad = *pad;
+
+                context.display = *std::ranges::find(context.displays, context.settings.tablet.profile()->second.display.name, &Display::name);
+
                 context.hasChangedDeviceSettings = true;
 
-                co_return;
-            }(context, result.error().message()), asio::detached);
-            context.stExecutor.restart();
+                auto maybeLoaded = co_await asio::co_spawn(context.mtExecutor, [] (auto settings, auto tablet, auto display) -> asio::awaitable<Result<void>> {
+                    co_return load_tablet_profile(settings.profile()->second, tablet, display);
+                }(context.settings.tablet, context.tablet, context.display));
 
-            switch (result.error().message())
-            {
-            case SettingsError::Type::WRITE_FAILURE: break;
-            case SettingsError::Type::FILE_NOT_FOUND: {
-                ImGui::PushToast(
-                    TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Warning)),
-                    TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Missing))
-                );
-                break;
+                if (!maybeLoaded.has_value())
+                {
+                    ImGui::PushToast(
+                        MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Error)),
+                        MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Profile_Load_Failed))
+                    );
+                }
             }
-            case SettingsError::Type::PROFILE_NOT_FOUND: {
-                ImGui::PushToast(
-                    TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Error)),
-                    TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Profile_Missing))
-                );
-                break;
-            }
-            case SettingsError::Type::READ_FAILURE: {
-                ImGui::PushToast(
-                    TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Warning)),
-                    TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Load_Failed))
-                );
-                break;
-            }
-            case SettingsError::Type::OUTDATED_SCHEMA: {
-                context.handleOutdatedDeviceSettings = true;
-                break;
-            }
-            }
-        }
-        else
-        {
-            context.settings.tablet = std::move(*result);
 
-            auto stylus = std::ranges::find(context.devices, context.settings.tablet.profile()->second.stylus.name, &Device::name);
-            assert(stylus != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
-            context.tablet.stylus = *stylus;
-
-            auto pad = std::ranges::find(context.devices, context.settings.tablet.profile()->second.pad.name, &Device::name);
-            assert(pad != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
-            context.tablet.pad = *pad;
-
-            context.display = *std::ranges::find(context.displays, context.settings.tablet.profile()->second.display.name, &Display::name);
-
-            context.hasChangedDeviceSettings = true;
-
-            TRY(load_tablet_profile(context.settings.tablet.profile()->second, context.tablet, context.display));
-        }
+            co_return;
+        }(context), asio::detached);
+        context.stExecutor.restart();
 
         hasTriedToInitializeDeviceSettings = true;
     }
@@ -684,11 +706,11 @@ Result<void> render_main_window(Context& context)
 
                 context.settings.tablet = *maybeSettings;
 
-                auto stylus = std::ranges::find(context.devices, settings.profile()->second.stylus.name, &Device::name);
+                auto stylus = std::ranges::find(context.devices, context.settings.tablet.profile()->second.stylus.name, &Device::name);
                 assert(stylus != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
                 context.tablet.stylus = *stylus;
 
-                auto pad = std::ranges::find(context.devices, settings.profile()->second.pad.name, &Device::name);
+                auto pad = std::ranges::find(context.devices, context.settings.tablet.profile()->second.pad.name, &Device::name);
                 assert(pad != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
                 context.tablet.pad = *pad;
 
@@ -730,8 +752,8 @@ Result<void> render_main_window(Context& context)
                 if (maybeDevice == context.devices.end())
                 {
                     context.display = {};
-                    context.settings.tablet = {};
                     context.tablet = {};
+                    context.settings.tablet = {};
                 }
 
                 context.hasChangedDeviceSettings = true;
@@ -855,6 +877,12 @@ Result<void> render_main_window(Context& context)
     {
         context.hasChangedDevice = false;
         context.hasChangedDisplay = false;
+    }
+
+    if (context.hasChangedDeviceSettings)
+    {
+        context.hasChangedDeviceSettings = false;
+        settings = context.settings.tablet;
     }
 
     return {};
