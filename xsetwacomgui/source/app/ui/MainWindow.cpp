@@ -185,7 +185,13 @@ static Result<void> render_tablet_tab(Context& context, TabletSettings& settings
 
     if ((context.hasChangedDeviceSettings && context.tablet.stylus.name != "INVALID") || (context.hasChangedDevice && settings.profile()->second.stylus.name != "INVALID"))
     {
-        deviceDefaultArea = TRY(get_stylus_default_area(context.tablet.stylus));
+        asio::co_spawn(context.stExecutor, [] (Context& context) -> asio::awaitable<void> {
+            deviceDefaultArea = co_await asio::co_spawn(context.mtExecutor, [] (auto& context) -> asio::awaitable<Device::Area> {
+                co_return MUST(get_stylus_default_area(context.tablet.stylus));
+            }(context));
+            co_return;
+        }(context), asio::detached);
+        context.stExecutor.restart();
     }
 
     ImGui::BeginGroup();
@@ -214,13 +220,19 @@ static Result<void> render_tablet_tab(Context& context, TabletSettings& settings
 
         if (context.hasChangedDevice)
         {
-            context.tablet.stylus = context.devices.at(size_t(deviceIndex));
-            settings.profile()->second.stylus.name = context.tablet.stylus.name;
-            settings.profile()->second.stylus.area = TRY(get_stylus_default_area(context.tablet.stylus));
-            settings.profile()->second.stylus.pressure = { 0, 0, 1, 1 };
-            settings.profile()->second.stylus.forceFullArea = false;
-            settings.profile()->second.stylus.forceAspectRatio = false;
-            settings.profile()->second.stylus.handedness = Device::Handedness::RIGHT;
+            asio::co_spawn(context.stExecutor, [] (Context& context, TabletSettings& settings) -> asio::awaitable<void> {
+                context.tablet.stylus = context.devices.at(size_t(deviceIndex));
+                settings.profile()->second.stylus.area = co_await asio::co_spawn(context.mtExecutor, [] (auto& context) -> asio::awaitable<Device::Area> {
+                    co_return MUST(get_stylus_default_area(context.tablet.stylus));
+                }(context));
+                settings.profile()->second.stylus.name = context.tablet.stylus.name;
+                settings.profile()->second.stylus.pressure = { 0, 0, 1, 1 };
+                settings.profile()->second.stylus.forceFullArea = false;
+                settings.profile()->second.stylus.forceAspectRatio = false;
+                settings.profile()->second.stylus.handedness = Device::Handedness::RIGHT;
+                co_return;
+            }(context, settings), asio::detached);
+            context.stExecutor.restart();
         }
 
         ImGui::BeginDisabled(settings.profile()->second.stylus.forceFullArea);
