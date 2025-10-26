@@ -1,5 +1,3 @@
-#include <spdlog/spdlog.h>
-
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "app/ui/MainWindow.hpp"
 

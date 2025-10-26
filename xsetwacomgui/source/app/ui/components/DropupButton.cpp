@@ -3,8 +3,6 @@
 
 #include "app/core/Scaling.hpp"
 
-#include <spdlog/spdlog.h>
-
 #include <numeric>
 
 #define DROPUP_BUTTON_COLOR        ImGui::GetStyle().Colors[ImGuiCol_FrameBg]

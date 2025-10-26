@@ -1,5 +1,3 @@
-#include <spdlog/spdlog.h>
-
 #include "platform/mqueue/MQueueDescriptor.hpp"
 
 using namespace liberror;

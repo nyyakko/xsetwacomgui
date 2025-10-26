@@ -1,5 +1,3 @@
-#include <spdlog/spdlog.h>
-
 #include "app/ui/MappingsWindow.hpp"
 
 #include "app/core/Localisation.hpp"
