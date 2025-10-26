@@ -34,7 +34,7 @@ Result<void> render_profile_window(Context& context, TabletSettings& settings)
         else
         {
             isCreateButtonDisabled = true;
-            asio::co_spawn(context.stExecutor, [] (Context& context, auto& settings) -> asio::awaitable<void> {
+            asio::co_spawn(context.stExecutor, [] (Context& context, TabletSettings& settings) -> asio::awaitable<void> {
                 auto maybeProfile = co_await asio::co_spawn(context.mtExecutor, [] (auto tablet, auto display) -> asio::awaitable<Result<TabletProfile>> {
                     co_return make_tablet_profile(profileName.data(), tablet, display);
                 }(context.tablet, context.display));
