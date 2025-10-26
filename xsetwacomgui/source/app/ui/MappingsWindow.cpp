@@ -92,8 +92,9 @@ Result<void> render_mappings_window(Context& context, TabletSettings& settings)
     if (ImGui::Button(TRY(Localisation::get(context.settings.application.language, Localisation::Save)), { 150_scaled, 25_scaled }))
     {
         isSaveApplyButtonDisabled = true;
-        asio::co_spawn(context.stExecutor, [] (Context& context, auto& settings) -> asio::awaitable<void> {
-            context.settings.tablet.profile(settings.profile()->second);
+        asio::co_spawn(context.stExecutor, [] (Context& context, TabletSettings& settings) -> asio::awaitable<void> {
+            context.settings.tablet.profile()->second = settings.profile()->second;
+
             auto result = co_await asio::co_spawn(context.mtExecutor, [] (auto settings, auto tablet, auto display) -> asio::awaitable<Result<void>> {
                 co_return load_tablet_profile(settings.tablet.profile()->second, tablet, display);
             }(context.settings, context.tablet, context.display));

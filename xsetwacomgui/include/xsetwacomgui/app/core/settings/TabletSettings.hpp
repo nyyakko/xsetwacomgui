@@ -69,13 +69,6 @@ public:
         return self.profile_;
     }
 
-    inline constexpr void profile(TabletProfile const& profile)
-    {
-        assert(profile_ != profiles_.end());
-        assert(profile_->first == profile.name);
-        profile_->second = profile;
-    }
-
     inline constexpr void profile(std::map<std::string, TabletProfile>::iterator iterator)
     {
         profile_ = iterator;

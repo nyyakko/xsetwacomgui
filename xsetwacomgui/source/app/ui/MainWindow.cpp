@@ -859,7 +859,8 @@ Result<void> render_main_window(Context& context)
         }
         else
         {
-            settings.profile(std::ranges::find_if(settings.profiles(), [&] (auto const& entry) {
+            context.hasChangedDeviceSettings = true;
+            context.settings.tablet.profile(std::ranges::find_if(context.settings.tablet.profiles(), [&] (auto const& entry) {
                 return entry.first == profileNames.at(size_t(itemIndex.second));
             }));
         }
