@@ -577,6 +577,8 @@ Result<void> render_main_window(Context& context)
                 auto [iterator, _] = context.settings.tablet.profiles().insert({ maybeCreated->name, *maybeCreated });
                 context.settings.tablet.profile(iterator);
 
+                context.hasChangedDeviceSettings = true;
+
                 if (result.error().message() == SettingsError::Type::FILE_NOT_FOUND)
                 {
                     co_await asio::co_spawn(context.mtExecutor, [] (auto settings) -> asio::awaitable<void> {
@@ -626,8 +628,6 @@ Result<void> render_main_window(Context& context)
                     break;
                 }
                 }
-
-                context.hasChangedDeviceSettings = true;
             }
             else
             {
@@ -717,10 +717,6 @@ Result<void> render_main_window(Context& context)
 
                 context.display = *std::ranges::find(context.displays, context.settings.tablet.profile()->second.display.name, &Display::name);
 
-                context.hasChangedDeviceHandedness = true;
-                context.hasChangedDevice = true;
-                context.hasChangedDisplay = true;
-
                 auto maybeLoaded = co_await asio::co_spawn(context.mtExecutor, [] (auto settings, auto tablet, auto display) -> asio::awaitable<Result<void>> {
                     co_return load_tablet_profile(settings.profile()->second, tablet, display);
                 }(context.settings.tablet, context.tablet, context.display));
@@ -746,14 +742,14 @@ Result<void> render_main_window(Context& context)
 
                 context.devices = *maybeDevices;
 
-                auto maybeDevice = std::ranges::find(context.devices, context.settings.tablet.profile()->second.stylus.name, &Device::name);
-
-                if (maybeDevice == context.devices.end())
+                if (std::ranges::find(context.devices, context.settings.tablet.profile()->second.stylus.name, &Device::name) != context.devices.end())
                 {
-                    context.display = {};
-                    context.tablet = {};
-                    context.settings.tablet = {};
+                    co_return;
                 }
+
+                context.display = {};
+                context.tablet = {};
+                context.settings.tablet = {};
 
                 context.hasChangedDeviceSettings = true;
             }(context), asio::detached);
@@ -915,12 +911,6 @@ Result<void> render_main_window(Context& context)
     }
 
     ImGui::EndDisabled();
-
-    if (!message.empty())
-    {
-        context.hasChangedDevice = false;
-        context.hasChangedDisplay = false;
-    }
 
     if (context.hasChangedDeviceSettings)
     {
