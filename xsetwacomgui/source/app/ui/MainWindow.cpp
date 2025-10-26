@@ -795,16 +795,22 @@ Result<void> render_main_window(Context& context)
     }
 
     auto profileNames =
-        settings.profiles()
+        context.settings.tablet.profiles()
             | ranges::views::keys
             | ranges::views::filter([] (auto const& profile) { return profile != "INVALID"; })
             | ranges::views::transform([] (auto const& profile) { return profile.c_str(); })
             | ranges::to_vector;
 
     std::vector<std::vector<char const*>> items { { TRY(Localisation::get(context.settings.application.language, Localisation::New_Profile)) }, profileNames };
-    std::pair<int, int> itemIndex { 1, settings.profile()->second.name == "INVALID" ? 0 : std::distance(profileNames.begin(), std::ranges::find(profileNames, settings.profile()->second.name)) };
+    static std::pair<int, int> itemIndex { 1, settings.profile()->second.name == "INVALID" ? 0 : std::distance(profileNames.begin(), std::ranges::find(profileNames, settings.profile()->second.name)) };
+
+    if (context.hasChangedDeviceSettings && context.settings.tablet.profile()->second.name != "INVALID")
+    {
+        itemIndex = { 1, std::distance(profileNames.begin(), std::ranges::find(profileNames, context.settings.tablet.profile()->second.name)) };
+    }
 
     static auto isProfileWindowOpen = false;
+    static auto isProfileEditWindowOpen = false;
 
     auto previousCursorPosition = ImGui::GetCursorPos();
     ImGui::SetCursorPosY(ImGui::GetWindowHeight() - (35_scaled + ImGui::GetStyle().WindowPadding.x));
@@ -847,18 +853,25 @@ Result<void> render_main_window(Context& context)
         }(context), asio::detached);
         context.stExecutor.restart();
     }
-    else if (pressedSecondary)
+    else if (pressedSecondary != -1)
     {
-        if (itemIndex.first == 0)
+        if (pressedSecondary == ImGuiMouseButton_Left)
         {
-            isProfileWindowOpen = true;
-            itemIndex = { 1, std::distance(profileNames.begin(), std::ranges::find(profileNames, settings.profile()->second.name)) };
+            if (itemIndex.first == 0)
+            {
+                isProfileWindowOpen = true;
+                itemIndex = { 1, std::distance(profileNames.begin(), std::ranges::find(profileNames, settings.profile()->second.name)) };
+            }
+            else
+            {
+                settings.profile(std::ranges::find_if(settings.profiles(), [&] (auto const& entry) {
+                    return entry.first == profileNames.at(size_t(itemIndex.second));
+                }));
+            }
         }
-        else
+        else if (pressedSecondary == ImGuiMouseButton_Right && itemIndex.first != 0)
         {
-            settings.profile(std::ranges::find_if(settings.profiles(), [&] (auto const& entry) {
-                return entry.first == profileNames.at(size_t(itemIndex.second));
-            }));
+            isProfileEditWindowOpen = isProfileWindowOpen = true;
         }
     }
 
@@ -875,7 +888,25 @@ Result<void> render_main_window(Context& context)
             ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
         );
         {
-            TRY(render_profile_window(context, settings));
+            if (isProfileEditWindowOpen)
+            {
+                auto profile = std::ranges::find_if(context.settings.tablet.profiles(), [&] (auto const& entry) {
+                    return entry.first == profileNames.at(size_t(itemIndex.second));
+                });
+                assert(profile != context.settings.tablet.profiles().end());
+                auto wasProfileDeleted = TRY(render_profile_window(isProfileWindowOpen, context, settings, profile->second));
+
+                if (wasProfileDeleted || !isProfileWindowOpen)
+                {
+                    isProfileWindowOpen = false;
+                }
+
+                isProfileEditWindowOpen = isProfileWindowOpen;
+            }
+            else
+            {
+                TRY(render_profile_window(context, settings));
+            }
         }
         ImGui::End();
     }

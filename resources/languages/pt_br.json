@@ -1,7 +1,8 @@
 {
-    "save": "Salvar",
     "create": "Criar",
+    "delete": "Deletar",
     "newProfile": "Novo Perfil",
+    "save": "Salvar",
 
     "toast": {
         "success": "Successo",
@@ -18,9 +19,11 @@
         "devicesMissing": "Nenhum tablet foi encontrado",
         "profileCreateFailed": "Failed to create profile",
         "profileCreateSuccess": "Perfil criado com sucesso",
+        "profileDeleteSuccess": "Perfil deletado com successo",
         "profileLoadFailed": "Failed to load profile",
         "profileMissing": "O perfil não pôde ser encontrado",
-        "profileNameEmpty": "O nome do perfil não pode estar vazio"
+        "profileNameEmpty": "O nome do perfil não pode estar vazio",
+        "profileUpdateSuccess": "Perfil atualizado com successo"
     },
 
     "menubar": {

@@ -63,25 +63,6 @@ public:
 public:
     inline constexpr auto& profiles(this auto& self) { return self.profiles_; }
 
-    inline constexpr void profiles(std::map<std::string, TabletProfile> const& profiles)
-    {
-        auto currentProfile = profile_->first;
-
-        profiles_ = profiles;
-        profile_ = std::ranges::find_if(profiles_, [&] (auto const& entry) {
-            return entry.first == currentProfile;
-        });
-
-        if (profile_ == profiles_.end())
-        {
-            profile_ = std::ranges::find_if(profiles_, [&] (auto const& entry) {
-                return entry.first == "INVALID";
-            });
-        }
-
-        assert(profile_ != profiles_.end());
-    }
-
     inline constexpr auto& profile(this auto& self)
     {
         assert(self.profile_ != self.profiles_.end());

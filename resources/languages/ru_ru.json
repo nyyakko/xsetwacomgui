@@ -1,7 +1,8 @@
 {
-    "save": "Сохранить",
     "create": "Create (FIXME)",
+    "delete": "Delete (FIXME)",
     "newProfile": "New Profile (FIXME)",
+    "save": "Сохранить",
 
     "toast": {
         "success": "Успех",
@@ -18,9 +19,11 @@
         "devicesMissing": "Устройства не обнаружены",
         "profileCreateFailed": "Failed to create profile (FIXME)",
         "profileCreateSuccess": "Profile created successfully (FIXME)",
+        "profileDeleteSuccess": "Profile deleted successfully (FIXME)",
         "profileLoadFailed": "Failed to load profile (FIXME)",
         "profileMissing": "Profile could not be found (FIXME)",
-        "profileNameEmpty": "Profile name cannot be empty (FIXME)"
+        "profileNameEmpty": "Profile name cannot be empty (FIXME)",
+        "profileUpdateSuccess": "Profile updated successfully (FIXME)"
     },
 
     "menubar": {

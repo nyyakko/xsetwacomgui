@@ -24,13 +24,16 @@ public:
         Toast_Devices_Missing,
         Toast_Profile_Create_Failed,
         Toast_Profile_Create_Success,
+        Toast_Profile_Delete_Success,
         Toast_Profile_Load_Failed,
         Toast_Profile_Missing,
         Toast_Profile_Name_Empty,
+        Toast_Profile_Update_Success,
 
-        Save,
         Create,
+        Delete,
         New_Profile,
+        Save,
 
         MenuBar_Settings,
         MenuBar_Settings_Application,

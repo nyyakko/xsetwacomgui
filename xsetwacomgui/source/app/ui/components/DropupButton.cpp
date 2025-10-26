@@ -10,9 +10,9 @@
 #define DROPUP_BUTTON_COLOR        ImGui::GetStyle().Colors[ImGuiCol_FrameBg]
 #define DROPUP_BUTTON_COLOR_ACTIVE ImGui::GetStyle().Colors[ImGuiCol_ButtonHovered]
 
-std::pair<bool, bool> DropupButton(char const* label, std::pair<int, int>* const itemIndex, std::vector<std::vector<char const*>> items, ImVec2 const& size)
+std::pair<bool, ImGuiMouseButton> DropupButton(char const* label, std::pair<int, int>* const itemIndex, std::vector<std::vector<char const*>> items, ImVec2 const& size)
 {
-    std::pair<bool, bool> pressed { false, false };
+    std::pair<bool, ImGuiMouseButton> pressed { false, -1 };
 
     auto [previousX, previousY] = ImGui::GetCursorPos();
 
@@ -53,16 +53,19 @@ std::pair<bool, bool> DropupButton(char const* label, std::pair<int, int>* const
     {
         for (auto i = 0; i < int(items.size()); i += 1)
         {
-            auto clicked = false;
-
             for (auto j = 0; j < int(items.at(size_t(i)).size()); j += 1)
             {
                 ImGui::PushID(i + j);
-                if (clicked = ImGui::Selectable(items.at(size_t(i)).at(size_t(j)), i == itemIndex->first && j == itemIndex->second, 0, { 0, 25_scaled }); clicked)
+
+                ImGui::Selectable(items.at(size_t(i)).at(size_t(j)), i == itemIndex->first && j == itemIndex->second, 0, { 0, 25_scaled });
+
+                if (ImGui::IsItemClicked(ImGuiMouseButton_Left) || ImGui::IsItemClicked(ImGuiMouseButton_Right))
                 {
-                    pressed.second = true;
                     *itemIndex = { i, j };
+                    if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) pressed.second = ImGuiMouseButton_Right;
+                    if (ImGui::IsItemClicked(ImGuiMouseButton_Left)) pressed.second = ImGuiMouseButton_Left;
                 }
+
                 ImGui::PopID();
             }
 

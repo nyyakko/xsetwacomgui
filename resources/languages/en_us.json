@@ -1,7 +1,8 @@
 {
-    "save": "Save",
     "create": "Create",
+    "delete": "Delete",
     "newProfile": "New Profile",
+    "save": "Save",
 
     "toast": {
         "success": "Success",
@@ -18,9 +19,11 @@
         "devicesMissing": "No devices were found",
         "profileCreateFailed": "Failed to create profile",
         "profileCreateSuccess": "Profile created successfully",
+        "profileDeleteSuccess": "Profile deleted successfully",
         "profileLoadFailed": "Failed to load profile",
         "profileMissing": "Profile could not be found",
-        "profileNameEmpty": "Profile name cannot be empty"
+        "profileNameEmpty": "Profile name cannot be empty",
+        "profileUpdateSuccess": "Profile updated successfully"
     },
 
     "menubar": {

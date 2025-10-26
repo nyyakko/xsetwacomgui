@@ -30,9 +30,10 @@ Result<char const*> Localisation::get(std::string_view language, Message id)
         {
             auto json = nlohmann::json::parse(content.str());
             the()[language.data()] = {
-                { Localisation::Save, json["save"].get<std::string>() },
                 { Localisation::Create, json["create"].get<std::string>() },
+                { Localisation::Delete, json["delete"].get<std::string>() },
                 { Localisation::New_Profile, json["newProfile"].get<std::string>() },
+                { Localisation::Save, json["save"].get<std::string>() },
 
                 { Localisation::Toast_Success, json["toast"]["success"].get<std::string>() },
                 { Localisation::Toast_Warning, json["toast"]["warning"].get<std::string>() },
@@ -48,9 +49,11 @@ Result<char const*> Localisation::get(std::string_view language, Message id)
                 { Localisation::Toast_Device_Mappings_Saved, json["toast"]["deviceMappingsSaved"].get<std::string>() },
                 { Localisation::Toast_Profile_Create_Failed, json["toast"]["profileCreateFailed"].get<std::string>() },
                 { Localisation::Toast_Profile_Create_Success, json["toast"]["profileCreateSuccess"].get<std::string>() },
+                { Localisation::Toast_Profile_Delete_Success, json["toast"]["profileDeleteSuccess"].get<std::string>() },
                 { Localisation::Toast_Profile_Load_Failed, json["toast"]["profileLoadFailed"].get<std::string>() },
                 { Localisation::Toast_Profile_Missing, json["toast"]["profileMissing"].get<std::string>() },
                 { Localisation::Toast_Profile_Name_Empty, json["toast"]["profileNameEmpty"].get<std::string>() },
+                { Localisation::Toast_Profile_Update_Success, json["toast"]["profileUpdateSuccess"].get<std::string>() },
 
                 { Localisation::MenuBar_Settings, json["menubar"]["settings"]["title"].get<std::string>() },
                 { Localisation::MenuBar_Settings_Application, json["window"]["settings"]["title"].get<std::string>() },
