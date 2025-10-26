@@ -1,6 +1,5 @@
 {
     "save": "Salvar",
-    "saveApply": "Salvar e Aplicar",
     "create": "Criar",
     "newProfile": "Novo Perfil",
 
@@ -15,6 +14,7 @@
         "deviceSettingsLoadSuccess": "As configurações do tablet foram carregadas com sucesso",
         "deviceSettingsMissing": "Não foi possível encontrar configurações salvas para o tablet, carregando diretamente do xsetwacom",
         "deviceSettingsOutdatedSchema": "O schema do arquivo de configuração do tablet presente está desatualizado",
+        "deviceMappingsSaved": "As configurações de mapeamento foram salvas com sucesso",
         "devicesMissing": "Nenhum tablet foi encontrado",
         "profileCreateFailed": "Failed to create profile",
         "profileCreateSuccess": "Perfil criado com sucesso",

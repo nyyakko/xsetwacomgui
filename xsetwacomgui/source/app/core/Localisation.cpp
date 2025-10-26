@@ -31,7 +31,6 @@ Result<char const*> Localisation::get(std::string_view language, Message id)
             auto json = nlohmann::json::parse(content.str());
             the()[language.data()] = {
                 { Localisation::Save, json["save"].get<std::string>() },
-                { Localisation::Save_Apply, json["saveApply"].get<std::string>() },
                 { Localisation::Create, json["create"].get<std::string>() },
                 { Localisation::New_Profile, json["newProfile"].get<std::string>() },
 
@@ -46,6 +45,7 @@ Result<char const*> Localisation::get(std::string_view language, Message id)
                 { Localisation::Toast_Device_Settings_Load_Success, json["toast"]["deviceSettingsLoadSuccess"].get<std::string>() },
                 { Localisation::Toast_Device_Settings_Missing, json["toast"]["deviceSettingsMissing"].get<std::string>() },
                 { Localisation::Toast_Device_Settings_Outdated_Schema, json["toast"]["deviceSettingsOutdatedSchema"].get<std::string>() },
+                { Localisation::Toast_Device_Mappings_Saved, json["toast"]["deviceMappingsSaved"].get<std::string>() },
                 { Localisation::Toast_Profile_Create_Failed, json["toast"]["profileCreateFailed"].get<std::string>() },
                 { Localisation::Toast_Profile_Create_Success, json["toast"]["profileCreateSuccess"].get<std::string>() },
                 { Localisation::Toast_Profile_Load_Failed, json["toast"]["profileLoadFailed"].get<std::string>() },

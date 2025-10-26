@@ -20,6 +20,7 @@ public:
         Toast_Device_Settings_Load_Success,
         Toast_Device_Settings_Outdated_Schema,
         Toast_Device_Settings_Missing,
+        Toast_Device_Mappings_Saved,
         Toast_Devices_Missing,
         Toast_Profile_Create_Failed,
         Toast_Profile_Create_Success,
@@ -28,7 +29,6 @@ public:
         Toast_Profile_Name_Empty,
 
         Save,
-        Save_Apply,
         Create,
         New_Profile,
 

@@ -66,10 +66,8 @@ static Result<void> render_pad_tab(Context& context, TabletSettings& settings)
     return {};
 }
 
-Result<void> render_mappings_window(bool isWindowVisible, Context& context)
+Result<void> render_mappings_window(Context& context, TabletSettings& settings)
 {
-    static auto settings = context.settings.tablet;
-
     if (ImGui::BeginTabBar("##Tabs"))
     {
         if (ImGui::BeginTabItem(TRY(Localisation::get(context.settings.application.language, Localisation::Window_Mappings_Tabs_Stylus_Title))))
@@ -94,26 +92,37 @@ Result<void> render_mappings_window(bool isWindowVisible, Context& context)
     if (ImGui::Button(TRY(Localisation::get(context.settings.application.language, Localisation::Save)), { 150_scaled, 25_scaled }))
     {
         isSaveApplyButtonDisabled = true;
-        asio::co_spawn(context.stExecutor, [] (Context& context) -> asio::awaitable<void> {
+        asio::co_spawn(context.stExecutor, [] (Context& context, auto& settings) -> asio::awaitable<void> {
+            context.settings.tablet.profile(settings.profile()->second);
+            auto result = co_await asio::co_spawn(context.mtExecutor, [] (auto settings, auto tablet, auto display) -> asio::awaitable<Result<void>> {
+                co_return load_tablet_profile(settings.tablet.profile()->second, tablet, display);
+            }(context.settings, context.tablet, context.display));
             isSaveApplyButtonDisabled = false;
 
-            context.settings.tablet.profile(settings.profile());
+            if (!result)
+            {
+                ImGui::PushToast(
+                    MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Error)),
+                    MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Profile_Load_Failed))
+                );
+                co_return;
+            }
+
+            co_await asio::co_spawn(context.mtExecutor, [] (auto settings) -> asio::awaitable<void> {
+                save_tablet_settings(settings);
+                co_return;
+            }(settings));
 
             ImGui::PushToast(
                 MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),
-                MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Saved))
+                MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Mappings_Saved))
             );
             co_return;
-        }(context), asio::detached);
+        }(context, settings), asio::detached);
         context.stExecutor.restart();
     }
     ImGui::EndDisabled();
     ImGui::SetCursorPos(previousCursorPosition);
-
-    if (!isWindowVisible)
-    {
-        settings = context.settings.tablet;
-    }
 
     return {};
 }

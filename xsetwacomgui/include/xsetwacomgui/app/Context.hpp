@@ -32,5 +32,4 @@ struct Context
     bool hasChangedFont = false;
     bool hasChangedFontStyle = false;
     bool hasChangedTheme = false;
-    bool hasChangedProfile = false;
 };

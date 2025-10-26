@@ -208,7 +208,7 @@ static Result<void> run_gui(Context& context)
 
                 ImGui::BeginDisabled(context.devices.empty());
                 {
-                    TRY(render_main_window(true, context));
+                    TRY(render_main_window(context));
                 }
                 ImGui::EndDisabled();
             }

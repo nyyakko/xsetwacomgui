@@ -1,6 +1,5 @@
 {
     "save": "Save",
-    "saveApply": "Save & Apply",
     "create": "Create",
     "newProfile": "New Profile",
 
@@ -15,6 +14,7 @@
         "deviceSettingsLoadSuccess": "Device settings loaded successfully",
         "deviceSettingsMissing": "No saved device settings could be found, reading directly from xsetwacom instead",
         "deviceSettingsOutdatedSchema": "The schema of the present tablet configuration file is outdated",
+        "deviceMappingsSaved": "Successfully saved device mappings",
         "devicesMissing": "No devices were found",
         "profileCreateFailed": "Failed to create profile",
         "profileCreateSuccess": "Profile created successfully",

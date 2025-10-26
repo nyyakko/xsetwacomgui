@@ -1,3 +1,5 @@
+#include <spdlog/spdlog.h>
+
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "app/ui/MainWindow.hpp"
 
@@ -286,7 +288,7 @@ static Result<void> render_tablet_tab(Context& context, TabletSettings& settings
                     ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
                 );
                 {
-                    TRY(render_mappings_window(isMappingsSettingsOpen, context));
+                    TRY(render_mappings_window(context, settings));
                 }
                 ImGui::End();
             }
@@ -451,7 +453,7 @@ static Result<void> render_display_tab(Context& context, TabletSettings& setting
     return {};
 }
 
-Result<void> render_main_window(bool isWindowVisible, Context& context)
+Result<void> render_main_window(Context& context)
 {
     static auto settings = context.settings.tablet;
 
@@ -695,7 +697,6 @@ Result<void> render_main_window(bool isWindowVisible, Context& context)
                 context.hasChangedDeviceHandedness = true;
                 context.hasChangedDevice = true;
                 context.hasChangedDisplay = true;
-                context.hasChangedProfile = true;
 
                 auto maybeLoaded = co_await asio::co_spawn(context.mtExecutor, [] (auto settings, auto tablet, auto display) -> asio::awaitable<Result<void>> {
                     co_return load_tablet_profile(settings.profile()->second, tablet, display);
@@ -770,12 +771,7 @@ Result<void> render_main_window(bool isWindowVisible, Context& context)
             | ranges::to_vector;
 
     std::vector<std::vector<char const*>> items { { TRY(Localisation::get(context.settings.application.language, Localisation::New_Profile)) }, profileNames };
-    static std::pair<int, int> itemIndex { 1, settings.profile()->second.name == "INVALID" ? 0 : std::distance(profileNames.begin(), std::ranges::find(profileNames, settings.profile()->second.name)) };
-
-    if (context.hasChangedProfile)
-    {
-        itemIndex = { 1, std::distance(profileNames.begin(), std::ranges::find(profileNames, settings.profile()->second.name)) };
-    }
+    std::pair<int, int> itemIndex { 1, settings.profile()->second.name == "INVALID" ? 0 : std::distance(profileNames.begin(), std::ranges::find(profileNames, settings.profile()->second.name)) };
 
     static auto isProfileWindowOpen = false;
 
@@ -783,7 +779,7 @@ Result<void> render_main_window(bool isWindowVisible, Context& context)
     ImGui::SetCursorPosY(ImGui::GetWindowHeight() - (35_scaled + ImGui::GetStyle().WindowPadding.x));
     static auto isDropupButtonDisabled = false;
     ImGui::BeginDisabled(isDropupButtonDisabled);
-    auto [pressedPrimary, pressedSecondary] = DropupButton(TRY(Localisation::get(context.settings.application.language, Localisation::Save_Apply)), &itemIndex, items, { 200_scaled, 35_scaled });
+    auto [pressedPrimary, pressedSecondary] = DropupButton(TRY(Localisation::get(context.settings.application.language, Localisation::Save)), &itemIndex, items, { 200_scaled, 35_scaled });
     ImGui::EndDisabled();
     ImGui::SetCursorPos(previousCursorPosition);
     if (pressedPrimary)
@@ -822,7 +818,7 @@ Result<void> render_main_window(bool isWindowVisible, Context& context)
     }
     else if (pressedSecondary)
     {
-        if (itemIndex.first == 0 && itemIndex.second == 0)
+        if (itemIndex.first == 0)
         {
             isProfileWindowOpen = true;
             itemIndex = { 1, std::distance(profileNames.begin(), std::ranges::find(profileNames, settings.profile()->second.name)) };
@@ -832,7 +828,6 @@ Result<void> render_main_window(bool isWindowVisible, Context& context)
             settings.profile(std::ranges::find_if(settings.profiles(), [&] (auto const& entry) {
                 return entry.first == profileNames.at(size_t(itemIndex.second));
             }));
-            context.hasChangedProfile = true;
         }
     }
 
@@ -860,11 +855,6 @@ Result<void> render_main_window(bool isWindowVisible, Context& context)
     {
         context.hasChangedDevice = false;
         context.hasChangedDisplay = false;
-    }
-
-    if (!isWindowVisible)
-    {
-        settings = context.settings.tablet;
     }
 
     return {};

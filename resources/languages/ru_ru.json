@@ -1,6 +1,5 @@
 {
     "save": "Сохранить",
-    "saveApply": "Сохранить и применить",
     "create": "Create (FIXME)",
     "newProfile": "New Profile (FIXME)",
 
@@ -15,6 +14,7 @@
         "deviceSettingsLoadSuccess": "Настройки устройства загружены",
         "deviceSettingsMissing": "Не найдены настройки устройства, будут загружены данные из xsetwacom",
         "deviceSettingsOutdatedSchema": "Формат настроек планшета устарел",
+        "deviceMappingsSaved": "Successfully saved device mappings (FIXME)",
         "devicesMissing": "Устройства не обнаружены",
         "profileCreateFailed": "Failed to create profile (FIXME)",
         "profileCreateSuccess": "Profile created successfully (FIXME)",
