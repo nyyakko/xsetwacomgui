@@ -867,9 +867,9 @@ Result<void> render_main_window(Context& context)
                 }));
             }
         }
-        else if (pressedSecondary == ImGuiMouseButton_Right && itemIndex.first != 0)
+        else
         {
-            isProfileEditWindowOpen = isProfileWindowOpen = true;
+            isProfileEditWindowOpen = isProfileWindowOpen = (itemIndex.first != 0);
         }
     }
 
@@ -896,6 +896,7 @@ Result<void> render_main_window(Context& context)
 
                 if (wasProfileDeleted || !isProfileWindowOpen)
                 {
+                    itemIndex = { 1, std::distance(profileNames.begin(), std::ranges::find(profileNames, settings.profile()->second.name)) };
                     isProfileWindowOpen = false;
                 }
 
