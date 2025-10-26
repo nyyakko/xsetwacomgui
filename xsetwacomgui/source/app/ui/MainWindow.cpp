@@ -555,20 +555,17 @@ Result<void> render_main_window(Context& context)
 
             if (!result.has_value())
             {
-                context.tablet.stylus = (context.devices
-                    | ranges::views::filter([] (auto kind) { return kind == Device::Kind::STYLUS; }, &Device::kind)
-                    | ranges::to_vector
-                ).back();
+                auto stylus = std::ranges::find(context.devices, Device::Kind::STYLUS, &Device::kind);
+                assert(stylus != context.devices.end());
+                context.tablet.stylus = *stylus;
 
-                context.tablet.pad = (context.devices
-                    | ranges::views::filter([] (auto kind) { return kind == Device::Kind::PAD; }, &Device::kind)
-                    | ranges::to_vector
-                ).back();
+                auto pad = std::ranges::find(context.devices, Device::Kind::PAD, &Device::kind);
+                assert(pad != context.devices.end());
+                context.tablet.pad = *pad;
 
-                context.display = (context.displays
-                    | ranges::views::filter(&Display::primary)
-                    | ranges::to_vector
-                ).back();
+                auto display = std::ranges::find(context.displays, true, &Display::primary);
+                assert(display != context.displays.end());
+                context.display = *display;
 
                 auto maybeCreated = co_await asio::co_spawn(context.mtExecutor, [] (auto tablet, auto display) -> asio::awaitable<Result<TabletProfile>> {
                     co_return make_tablet_profile("Default", tablet, display);
@@ -859,8 +856,7 @@ Result<void> render_main_window(Context& context)
         }
         else
         {
-            context.hasChangedDeviceSettings = true;
-            context.settings.tablet.profile(std::ranges::find_if(context.settings.tablet.profiles(), [&] (auto const& entry) {
+            settings.profile(std::ranges::find_if(settings.profiles(), [&] (auto const& entry) {
                 return entry.first == profileNames.at(size_t(itemIndex.second));
             }));
         }

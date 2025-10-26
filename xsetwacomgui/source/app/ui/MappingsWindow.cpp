@@ -93,14 +93,18 @@ Result<void> render_mappings_window(Context& context, TabletSettings& settings)
     {
         isSaveApplyButtonDisabled = true;
         asio::co_spawn(context.stExecutor, [] (Context& context, TabletSettings& settings) -> asio::awaitable<void> {
-            context.settings.tablet.profile()->second = settings.profile()->second;
+            auto profile = std::ranges::find_if(context.settings.tablet.profiles(), [&] (auto const& entry) {
+                return entry.first == settings.profile()->first;
+            });
+            assert(profile != context.settings.tablet.profiles().end());
+            profile->second = settings.profile()->second;
 
-            auto result = co_await asio::co_spawn(context.mtExecutor, [] (auto settings, auto tablet, auto display) -> asio::awaitable<Result<void>> {
-                co_return load_tablet_profile(settings.tablet.profile()->second, tablet, display);
-            }(context.settings, context.tablet, context.display));
+            auto maybeLoaded = co_await asio::co_spawn(context.mtExecutor, [] (auto settings, auto tablet, auto display) -> asio::awaitable<Result<void>> {
+                co_return load_tablet_profile(settings.profile()->second, tablet, display);
+            }(context.settings.tablet, context.tablet, context.display));
             isSaveApplyButtonDisabled = false;
 
-            if (!result)
+            if (!maybeLoaded)
             {
                 ImGui::PushToast(
                     MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Error)),
@@ -112,12 +116,13 @@ Result<void> render_mappings_window(Context& context, TabletSettings& settings)
             co_await asio::co_spawn(context.mtExecutor, [] (auto settings) -> asio::awaitable<void> {
                 save_tablet_settings(settings);
                 co_return;
-            }(settings));
+            }(context.settings.tablet));
 
             ImGui::PushToast(
                 MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),
                 MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Mappings_Saved))
             );
+
             co_return;
         }(context, settings), asio::detached);
         context.stExecutor.restart();

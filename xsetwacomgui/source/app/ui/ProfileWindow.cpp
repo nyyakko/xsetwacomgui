@@ -1,3 +1,5 @@
+#include <spdlog/spdlog.h>
+
 #include "app/ui/ProfileWindow.hpp"
 
 #include "app/core/Localisation.hpp"
@@ -10,7 +12,6 @@
 using namespace liberror;
 using namespace std::literals;
 
-// cppcheck-suppress [constParameterReference]
 Result<void> render_profile_window(Context& context, TabletSettings& settings)
 {
     ImGui::Text("%s", TRY(Localisation::get(context.settings.application.language, Localisation::Window_Profile_Tab_Name)));
@@ -49,17 +50,19 @@ Result<void> render_profile_window(Context& context, TabletSettings& settings)
                     co_return;
                 }
 
-                settings.profiles().insert({ maybeProfile->name, *maybeProfile });
+                context.settings.tablet.profiles().insert({ maybeProfile->name, *maybeProfile });
 
                 co_await asio::co_spawn(context.mtExecutor, [] (auto settings) -> asio::awaitable<void> {
                     save_tablet_settings(settings);
                     co_return;
-                }(settings));
+                }(context.settings.tablet));
 
                 ImGui::PushToast(
                     MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),
                     MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Profile_Create_Success))
                 );
+
+                settings.profiles(context.settings.tablet.profiles());
             }(context, settings), asio::detached);
             context.stExecutor.restart();
         }
