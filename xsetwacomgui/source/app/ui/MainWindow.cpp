@@ -822,12 +822,12 @@ Result<void> render_main_window(Context& context)
         asio::co_spawn(context.stExecutor, [] (Context& context) -> asio::awaitable<void> {
             context.settings.tablet = settings;
 
-            auto result = co_await asio::co_spawn(context.mtExecutor, [] (auto settings, auto tablet, auto display) -> asio::awaitable<Result<void>> {
+            auto maybeLoaded = co_await asio::co_spawn(context.mtExecutor, [] (auto settings, auto tablet, auto display) -> asio::awaitable<Result<void>> {
                 co_return load_tablet_profile(settings.tablet.profile()->second, tablet, display);
             }(context.settings, context.tablet, context.display));
             isDropupButtonDisabled = false;
 
-            if (!result)
+            if (!maybeLoaded)
             {
                 ImGui::PushToast(
                     MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Error)),
