@@ -852,9 +852,27 @@ Result<void> render_main_window(Context& context)
             }
             else
             {
-                settings.profile(std::ranges::find_if(settings.profiles(), [&] (auto const& entry) {
-                    return entry.first == profileNames.at(size_t(itemIndex.second));
-                }));
+                asio::co_spawn(context.stExecutor, [] (Context& context, std::vector<char const*> profileNames) -> asio::awaitable<void> {
+                    context.settings.tablet.profile(std::ranges::find_if(context.settings.tablet.profiles(), [&] (auto const& entry) {
+                        return entry.first == profileNames.at(size_t(itemIndex.second));
+                    }));
+
+                    context.hasChangedDeviceSettings = true;
+
+                    auto maybeLoaded = co_await asio::co_spawn(context.mtExecutor, [] (auto settings, auto tablet, auto display) -> asio::awaitable<Result<void>> {
+                        co_return load_tablet_profile(settings.tablet.profile()->second, tablet, display);
+                    }(context.settings, context.tablet, context.display));
+
+                    if (!maybeLoaded)
+                    {
+                        ImGui::PushToast(
+                            MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Error)),
+                            MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Profile_Load_Failed))
+                        );
+                        co_return;
+                    }
+                }(context, profileNames), asio::detached);
+                context.stExecutor.restart();
             }
         }
         else
@@ -882,9 +900,9 @@ Result<void> render_main_window(Context& context)
                     return entry.first == profileNames.at(size_t(itemIndex.second));
                 });
                 assert(profile != context.settings.tablet.profiles().end());
-                auto wasProfileDeleted = TRY(render_profile_window(isProfileWindowOpen, context, settings, profile->second));
+                auto isWindowClosed = TRY(render_profile_window(isProfileWindowOpen, context, settings, profile->second));
 
-                if (wasProfileDeleted || !isProfileWindowOpen)
+                if (isWindowClosed || !isProfileWindowOpen)
                 {
                     itemIndex = { 1, std::distance(profileNames.begin(), std::ranges::find(profileNames, settings.profile()->second.name)) };
                     isProfileWindowOpen = false;

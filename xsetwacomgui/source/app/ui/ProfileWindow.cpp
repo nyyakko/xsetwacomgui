@@ -73,6 +73,8 @@ Result<void> render_profile_window(Context& context, TabletSettings& settings)
 
 Result<bool> render_profile_window(bool isWindowVisible, Context& context, TabletSettings& settings, TabletProfile& profile)
 {
+    auto isWindowClosed = false;
+
     static TabletProfile* currentProfile = nullptr;
 
     ImGui::Text("%s", TRY(Localisation::get(context.settings.application.language, Localisation::Window_Profile_Tab_Name)));
@@ -103,13 +105,20 @@ Result<bool> render_profile_window(bool isWindowVisible, Context& context, Table
         }
         else
         {
+            isWindowClosed = true;
             asio::co_spawn(context.stExecutor, [] (Context& context, TabletSettings& settings, TabletProfile profile) -> asio::awaitable<void> {
+                auto previousNameOfTheProfileBeingEdited = profile.name;
+                auto previousNameOfTheCurrentProfile = context.settings.tablet.profile()->first;
+
                 std::erase_if(context.settings.tablet.profiles(), [&] (auto const& entry) { return entry.first == profile.name; });
 
                 profile.name = profileName.data();
-
                 auto [iterator, _] = context.settings.tablet.profiles().insert({ profile.name, profile });
-                context.settings.tablet.profile(iterator);
+
+                if (previousNameOfTheProfileBeingEdited == previousNameOfTheCurrentProfile)
+                {
+                    context.settings.tablet.profile(iterator);
+                }
 
                 context.hasChangedDeviceSettings = true;
 
@@ -130,11 +139,10 @@ Result<bool> render_profile_window(bool isWindowVisible, Context& context, Table
 
     ImGui::SameLine();
 
-    auto wasProfileDeleted = false;
-
     ImGui::BeginDisabled(settings.profiles().size() <= 2);
     if (ImGui::Button(MUST(Localisation::get(context.settings.application.language, Localisation::Delete)), { 150_scaled, 25_scaled }))
     {
+        isWindowClosed = true;
         asio::co_spawn(context.stExecutor, [] (Context& context, TabletSettings& settings, TabletProfile& profile) -> asio::awaitable<void> {
             std::erase_if(context.settings.tablet.profiles(), [&] (auto& entry) { return entry.first == profile.name; });
 
@@ -155,7 +163,6 @@ Result<bool> render_profile_window(bool isWindowVisible, Context& context, Table
             );
         }(context, settings, profile), asio::detached);
         context.stExecutor.restart();
-        wasProfileDeleted = true;
     }
     ImGui::EndDisabled();
 
@@ -167,5 +174,5 @@ Result<bool> render_profile_window(bool isWindowVisible, Context& context, Table
         std::ranges::copy(currentProfile->name, profileName.data());
     }
 
-    return wasProfileDeleted;
+    return isWindowClosed;
 }
