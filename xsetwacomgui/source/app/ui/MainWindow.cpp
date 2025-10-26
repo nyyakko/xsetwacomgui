@@ -187,7 +187,6 @@ static Result<void> render_tablet_tab(Context& context, TabletSettings& settings
             deviceDefaultArea = co_await asio::co_spawn(context.mtExecutor, [] (auto& context) -> asio::awaitable<Device::Area> {
                 co_return MUST(get_stylus_default_area(context.tablet.stylus));
             }(context));
-            co_return;
         }(context), asio::detached);
         context.stExecutor.restart();
     }
@@ -228,7 +227,6 @@ static Result<void> render_tablet_tab(Context& context, TabletSettings& settings
                 settings.profile()->second.stylus.forceFullArea = false;
                 settings.profile()->second.stylus.forceAspectRatio = false;
                 settings.profile()->second.stylus.handedness = Device::Handedness::RIGHT;
-                co_return;
             }(context, settings), asio::detached);
             context.stExecutor.restart();
         }
@@ -661,8 +659,6 @@ Result<void> render_main_window(Context& context)
                     );
                 }
             }
-
-            co_return;
         }(context), asio::detached);
         context.stExecutor.restart();
 
@@ -740,8 +736,6 @@ Result<void> render_main_window(Context& context)
                 }
 
                 context.hasChangedDeviceSettings = true;
-
-                co_return;
             }(context), asio::detached);
             context.stExecutor.restart();
         }
@@ -764,8 +758,6 @@ Result<void> render_main_window(Context& context)
                 }
 
                 context.hasChangedDeviceSettings = true;
-
-                co_return;
             }(context), asio::detached);
             context.stExecutor.restart();
         }
@@ -846,8 +838,6 @@ Result<void> render_main_window(Context& context)
                 MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),
                 MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Settings_Saved))
             );
-
-            co_return;
         }(context), asio::detached);
         context.stExecutor.restart();
     }

@@ -147,7 +147,6 @@ Result<void> render_settings_window(Context& context)
                 MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),
                 MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Application_Settings_Saved))
             );
-            co_return;
         }(context), asio::detached);
         context.stExecutor.restart();
     }

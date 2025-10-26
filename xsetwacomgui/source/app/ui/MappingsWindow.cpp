@@ -124,8 +124,6 @@ Result<void> render_mappings_window(bool isWindowVisible, Context& context, Tabl
                 MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),
                 MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Device_Mappings_Saved))
             );
-
-            co_return;
         }(context, settings), asio::detached);
         context.stExecutor.restart();
     }
