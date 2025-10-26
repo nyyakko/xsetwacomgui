@@ -66,19 +66,21 @@ static Result<void> render_pad_tab(Context& context, TabletSettings& settings)
     return {};
 }
 
-Result<void> render_mappings_window(Context& context, TabletSettings& settings)
+Result<void> render_mappings_window(bool isWindowVisible, Context& context, TabletSettings& settings)
 {
+    static TabletSettings currentSettings = settings;
+
     if (ImGui::BeginTabBar("##Tabs"))
     {
         if (ImGui::BeginTabItem(TRY(Localisation::get(context.settings.application.language, Localisation::Window_Mappings_Tabs_Stylus_Title))))
         {
-            TRY(render_stylus_tab(context, settings));
+            TRY(render_stylus_tab(context, currentSettings));
             ImGui::EndTabItem();
         }
 
         if (ImGui::BeginTabItem(TRY(Localisation::get(context.settings.application.language, Localisation::Window_Mappings_Tabs_Pad_Title))))
         {
-            TRY(render_pad_tab(context, settings));
+            TRY(render_pad_tab(context, currentSettings));
             ImGui::EndTabItem();
         }
 
@@ -91,6 +93,8 @@ Result<void> render_mappings_window(Context& context, TabletSettings& settings)
     ImGui::BeginDisabled(isSaveApplyButtonDisabled);
     if (ImGui::Button(TRY(Localisation::get(context.settings.application.language, Localisation::Save)), { 150_scaled, 25_scaled }))
     {
+        settings = currentSettings;
+
         isSaveApplyButtonDisabled = true;
         asio::co_spawn(context.stExecutor, [] (Context& context, TabletSettings& settings) -> asio::awaitable<void> {
             auto profile = std::ranges::find_if(context.settings.tablet.profiles(), [&] (auto const& entry) {
@@ -129,6 +133,11 @@ Result<void> render_mappings_window(Context& context, TabletSettings& settings)
     }
     ImGui::EndDisabled();
     ImGui::SetCursorPos(previousCursorPosition);
+
+    if (!isWindowVisible)
+    {
+        currentSettings = settings;
+    }
 
     return {};
 }

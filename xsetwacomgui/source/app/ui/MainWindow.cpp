@@ -316,7 +316,7 @@ static Result<void> render_tablet_tab(Context& context, TabletSettings& settings
                     ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
                 );
                 {
-                    TRY(render_mappings_window(context, settings));
+                    TRY(render_mappings_window(isMappingsSettingsOpen, context, settings));
                 }
                 ImGui::End();
             }
