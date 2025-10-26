@@ -3,13 +3,15 @@
 #include "platform/hid/X11/Device.hpp"
 #include "platform/hid/X11/Display.hpp"
 
+struct Tablet;
+
 struct TabletProfile
 {
     struct Stylus
     {
         std::string name = "INVALID";
         Device::Handedness handedness = Device::Handedness::RIGHT;
-        Device::Area area = { -1, -1, -1, -1 };
+        Area area = { -1, -1, -1, -1 };
         Device::Pressure pressure = { -1, -1, -1, -1 };
         bool forceFullArea = false;
         bool forceAspectRatio = false;
@@ -22,10 +24,10 @@ struct TabletProfile
         std::map<int, X11Action> mappings = {};
     };
 
-    struct Settings
+    struct Display
     {
         std::string name = "INVALID";
-        Display::Area area = { -1, -1, -1, -1 };
+        ::Area area = { -1, -1, -1, -1 };
         bool forceFullArea = false;
         bool forceAspectRatio = false;
     };
@@ -33,7 +35,7 @@ struct TabletProfile
     std::string name = "INVALID";
     Stylus stylus;
     Pad pad;
-    Settings display;
+    Display display;
 };
 
 liberror::Result<TabletProfile> make_tablet_profile(std::string_view name, Tablet const& tablet, Display const& display);

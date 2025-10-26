@@ -1,4 +1,4 @@
-#include "app/core/settings/TabletSettings.hpp"
+#include "app/settings/tablet/TabletSettings.hpp"
 
 #include "platform/hid/X11/Device.hpp"
 

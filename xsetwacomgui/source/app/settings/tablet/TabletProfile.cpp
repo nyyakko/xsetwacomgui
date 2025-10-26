@@ -1,4 +1,6 @@
-#include "app/core/settings/TabletProfile.hpp"
+#include "app/settings/tablet/TabletProfile.hpp"
+
+#include "app/devices/Tablet.hpp"
 
 #include <liberror/Try.hpp>
 

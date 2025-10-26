@@ -12,7 +12,7 @@ using namespace std::literals;
 
 Result<void> render_profile_window(Context& context)
 {
-    ImGui::Text("%s", TRY(Localisation::get(context.settings.application.language, Localisation::Window_Profile_Tab_Name)));
+    ImGui::Text("%s", TRY(Localisation::get(context.settings.language, Localisation::Window_Profile_Tab_Name)));
     static std::array<char, 256> profileName;
     ImGui::SetNextItemWidth(300_scaled + ImGui::GetStyle().WindowPadding.x);
     ImGui::InputText("##ProfileName", profileName.data(), profileName.size());
@@ -21,13 +21,13 @@ Result<void> render_profile_window(Context& context)
     ImGui::SetCursorPosY(ImGui::GetWindowHeight() - (25_scaled + ImGui::GetStyle().WindowPadding.x));
     static auto isCreateButtonDisabled = false;
     ImGui::BeginDisabled(isCreateButtonDisabled);
-    if (ImGui::Button(TRY(Localisation::get(context.settings.application.language, Localisation::Create)), { 150_scaled, 25_scaled }))
+    if (ImGui::Button(TRY(Localisation::get(context.settings.language, Localisation::Create)), { 150_scaled, 25_scaled }))
     {
         if (profileName.data() == ""sv)
         {
             ImGui::PushToast(
-                TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Error)),
-                TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Profile_Name_Empty))
+                TRY(Localisation::get(context.settings.language, Localisation::Toast_Error)),
+                TRY(Localisation::get(context.settings.language, Localisation::Toast_Profile_Name_Empty))
             );
         }
         else
@@ -42,22 +42,22 @@ Result<void> render_profile_window(Context& context)
                 if (!maybeProfile.has_value())
                 {
                     ImGui::PushToast(
-                        MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Error)),
-                        MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Profile_Create_Failed))
+                        MUST(Localisation::get(context.settings.language, Localisation::Toast_Error)),
+                        MUST(Localisation::get(context.settings.language, Localisation::Toast_Profile_Create_Failed))
                     );
                     co_return;
                 }
 
-                context.settings.tablet.profiles().insert({ maybeProfile->name, *maybeProfile });
+                context.tablet.settings.profiles().insert({ maybeProfile->name, *maybeProfile });
 
                 co_await asio::co_spawn(context.mtExecutor, [] (auto settings) -> asio::awaitable<void> {
                     save_tablet_settings(settings);
                     co_return;
-                }(context.settings.tablet));
+                }(context.tablet.settings));
 
                 ImGui::PushToast(
-                    MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),
-                    MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Profile_Create_Success))
+                    MUST(Localisation::get(context.settings.language, Localisation::Toast_Success)),
+                    MUST(Localisation::get(context.settings.language, Localisation::Toast_Profile_Create_Success))
                 );
             }(context), asio::detached);
             context.stExecutor.restart();
@@ -75,7 +75,7 @@ Result<bool> render_profile_window(bool isWindowVisible, Context& context, Table
 
     static TabletProfile* currentProfile = nullptr;
 
-    ImGui::Text("%s", TRY(Localisation::get(context.settings.application.language, Localisation::Window_Profile_Tab_Name)));
+    ImGui::Text("%s", TRY(Localisation::get(context.settings.language, Localisation::Window_Profile_Tab_Name)));
     static std::array<char, 256> profileName;
     ImGui::SetNextItemWidth(300_scaled + ImGui::GetStyle().WindowPadding.x);
     ImGui::InputText("##ProfileName", profileName.data(), profileName.size());
@@ -92,13 +92,13 @@ Result<bool> render_profile_window(bool isWindowVisible, Context& context, Table
 
     static auto isSaveButtonDisabled = false;
     ImGui::BeginDisabled(isSaveButtonDisabled);
-    if (ImGui::Button(TRY(Localisation::get(context.settings.application.language, Localisation::Save)), { 150_scaled, 25_scaled }))
+    if (ImGui::Button(TRY(Localisation::get(context.settings.language, Localisation::Save)), { 150_scaled, 25_scaled }))
     {
         if (profileName.data() == ""sv)
         {
             ImGui::PushToast(
-                TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Error)),
-                TRY(Localisation::get(context.settings.application.language, Localisation::Toast_Profile_Name_Empty))
+                TRY(Localisation::get(context.settings.language, Localisation::Toast_Error)),
+                TRY(Localisation::get(context.settings.language, Localisation::Toast_Profile_Name_Empty))
             );
         }
         else
@@ -106,26 +106,26 @@ Result<bool> render_profile_window(bool isWindowVisible, Context& context, Table
             isWindowClosed = true;
             asio::co_spawn(context.stExecutor, [] (Context& context, TabletProfile profile) -> asio::awaitable<void> {
                 auto previousNameOfTheProfileBeingEdited = profile.name;
-                auto previousNameOfTheCurrentProfile = context.settings.tablet.profile()->first;
+                auto previousNameOfTheCurrentProfile = context.tablet.settings.profile()->first;
 
-                std::erase_if(context.settings.tablet.profiles(), [&] (auto const& entry) { return entry.first == profile.name; });
+                std::erase_if(context.tablet.settings.profiles(), [&] (auto const& entry) { return entry.first == profile.name; });
 
                 profile.name = profileName.data();
-                auto [iterator, _] = context.settings.tablet.profiles().insert({ profile.name, profile });
+                auto [iterator, _] = context.tablet.settings.profiles().insert({ profile.name, profile });
 
                 if (previousNameOfTheProfileBeingEdited == previousNameOfTheCurrentProfile)
                 {
-                    context.settings.tablet.profile(iterator);
+                    context.tablet.settings.profile(iterator);
                 }
 
                 co_await asio::co_spawn(context.mtExecutor, [] (auto settings) -> asio::awaitable<void> {
                     save_tablet_settings(settings);
                     co_return;
-                }(context.settings.tablet));
+                }(context.tablet.settings));
 
                 ImGui::PushToast(
-                    MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),
-                    MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Profile_Update_Success))
+                    MUST(Localisation::get(context.settings.language, Localisation::Toast_Success)),
+                    MUST(Localisation::get(context.settings.language, Localisation::Toast_Profile_Update_Success))
                 );
             }(context, profile), asio::detached);
             context.stExecutor.restart();
@@ -135,27 +135,27 @@ Result<bool> render_profile_window(bool isWindowVisible, Context& context, Table
 
     ImGui::SameLine();
 
-    ImGui::BeginDisabled(context.settings.tablet.profiles().size() <= 2);
-    if (ImGui::Button(MUST(Localisation::get(context.settings.application.language, Localisation::Delete)), { 150_scaled, 25_scaled }))
+    ImGui::BeginDisabled(context.tablet.settings.profiles().size() <= 2);
+    if (ImGui::Button(MUST(Localisation::get(context.settings.language, Localisation::Delete)), { 150_scaled, 25_scaled }))
     {
         isWindowClosed = true;
         asio::co_spawn(context.stExecutor, [] (Context& context, TabletSettings& settings, TabletProfile& profile) -> asio::awaitable<void> {
-            std::erase_if(context.settings.tablet.profiles(), [&] (auto& entry) { return entry.first == profile.name; });
+            std::erase_if(context.tablet.settings.profiles(), [&] (auto& entry) { return entry.first == profile.name; });
 
-            context.settings.tablet.profile(std::ranges::find_if(context.settings.tablet.profiles(), [&] (auto const& entry) {
+            context.tablet.settings.profile(std::ranges::find_if(context.tablet.settings.profiles(), [&] (auto const& entry) {
                 return entry.first != "INVALID";
             }));
 
             co_await asio::co_spawn(context.mtExecutor, [] (auto settings) -> asio::awaitable<void> {
                 save_tablet_settings(settings);
                 co_return;
-            }(context.settings.tablet));
+            }(context.tablet.settings));
 
             ImGui::PushToast(
-                MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Success)),
-                MUST(Localisation::get(context.settings.application.language, Localisation::Toast_Profile_Delete_Success))
+                MUST(Localisation::get(context.settings.language, Localisation::Toast_Success)),
+                MUST(Localisation::get(context.settings.language, Localisation::Toast_Profile_Delete_Success))
             );
-        }(context, context.settings.tablet, profile), asio::detached);
+        }(context, context.tablet.settings, profile), asio::detached);
         context.stExecutor.restart();
     }
     ImGui::EndDisabled();

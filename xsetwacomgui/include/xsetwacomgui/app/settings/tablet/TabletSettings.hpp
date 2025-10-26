@@ -1,7 +1,7 @@
 #pragma once
 
+#include "app/settings/SettingsError.hpp"
 #include "platform/Environment.hpp"
-#include "SettingsError.hpp"
 #include "TabletProfile.hpp"
 
 #include <imgui/imgui_internal.hpp>

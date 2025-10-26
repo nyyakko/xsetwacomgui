@@ -114,7 +114,7 @@ Result<void> set_stylus_cursor_proximity(Device stylus, int proximity)
     return {};
 }
 
-Result<Device::Area> get_stylus_default_area(Device stylus)
+Result<Area> get_stylus_default_area(Device stylus)
 {
     auto previousArea = TRY(get_stylus_area(stylus));
     TRY(reset_stylus_area(stylus));
@@ -123,9 +123,9 @@ Result<Device::Area> get_stylus_default_area(Device stylus)
     return defaultArea;
 }
 
-Result<Device::Area> get_stylus_area(Device stylus)
+Result<Area> get_stylus_area(Device stylus)
 {
-    Device::Area area {};
+    Area area {};
     auto command = fmt::format("--get {} Area", stylus.id);
     auto output = TRY(execute(command));
     std::stringstream sstream(output);
@@ -134,7 +134,7 @@ Result<Device::Area> get_stylus_area(Device stylus)
     return area;
 }
 
-Result<void> set_stylus_area(Device stylus, Device::Area area)
+Result<void> set_stylus_area(Device stylus, Area area)
 {
     auto command = fmt::format("--set {} Area {} {} {} {}",
         stylus.id,
@@ -161,7 +161,7 @@ Result<void> set_stylus_output_from_display_name(Device stylus, std::string_view
     return {};
 }
 
-Result<void> set_stylus_output_from_display_area(Device stylus, Display::Area area)
+Result<void> set_stylus_output_from_display_area(Device stylus, Area area)
 {
     auto command = fmt::format("--set {} MapToOutput {}x{}+{}+{}",
         stylus.id,

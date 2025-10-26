@@ -1,13 +1,14 @@
 #pragma once
 
-#include "core/settings/Settings.hpp"
+#include "devices/Tablet.hpp"
+#include "settings/ApplicationSettings.hpp"
 
 #include <asio.hpp>
 #include <liberror/Result.hpp>
 
 struct Context
 {
-    Settings settings {};
+    ApplicationSettings settings {};
 
     std::vector<Device> devices;
     std::vector<Display> displays;

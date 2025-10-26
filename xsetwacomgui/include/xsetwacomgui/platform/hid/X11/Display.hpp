@@ -1,5 +1,7 @@
 #pragma once
 
+#include "platform/hid/X11/Area.hpp"
+
 #include <string>
 #include <vector>
 
@@ -7,12 +9,6 @@
 
 struct Display
 {
-    struct Area
-    {
-        float offsetX, offsetY;
-        float width, height;
-    };
-
     int id;
     bool primary;
     Area area;

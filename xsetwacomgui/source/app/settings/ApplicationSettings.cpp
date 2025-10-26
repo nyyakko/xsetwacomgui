@@ -1,4 +1,4 @@
-#include "app/core/settings/ApplicationSettings.hpp"
+#include "app/settings/ApplicationSettings.hpp"
 
 #include <fmt/format.h>
 #include <liberror/Result.hpp>

@@ -1,5 +1,4 @@
 add_subdirectory(ipc)
-add_subdirectory(settings)
 
 set(DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
