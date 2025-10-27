@@ -717,6 +717,8 @@ Result<void> render_main_window(Context& context)
 
                 context.display = *std::ranges::find(context.displays, context.tablet.settings.profile()->second.display.name, &Display::name);
 
+                context.hasChangedDeviceSettings = true;
+
                 auto maybeLoaded = co_await asio::co_spawn(context.mtExecutor, [] (auto settings, auto tablet, auto display) -> asio::awaitable<Result<void>> {
                     co_return load_tablet_profile(settings.profile()->second, tablet, display);
                 }(context.tablet.settings, context.tablet, context.display));
@@ -728,8 +730,6 @@ Result<void> render_main_window(Context& context)
                         MUST(Localisation::get(context.settings.language, Localisation::Toast_Profile_Load_Failed))
                     );
                 }
-
-                context.hasChangedDeviceSettings = true;
             }(context), asio::detached);
             context.stExecutor.restart();
         }
