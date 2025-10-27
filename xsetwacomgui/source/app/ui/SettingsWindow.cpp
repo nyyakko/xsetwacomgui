@@ -148,7 +148,6 @@ Result<void> render_settings_window(Context& context)
                 MUST(Localisation::get(context.settings.language, Localisation::Toast_Application_Settings_Saved))
             );
         }(context), asio::detached);
-        context.stExecutor.restart();
     }
     ImGui::EndDisabled();
     ImGui::SetCursorPos(previousCursorPosition);

@@ -60,7 +60,6 @@ Result<void> render_profile_window(Context& context)
                     MUST(Localisation::get(context.settings.language, Localisation::Toast_Profile_Create_Success))
                 );
             }(context), asio::detached);
-            context.stExecutor.restart();
         }
     }
     ImGui::EndDisabled();
@@ -128,7 +127,6 @@ Result<bool> render_profile_window(bool isWindowVisible, Context& context, Table
                     MUST(Localisation::get(context.settings.language, Localisation::Toast_Profile_Update_Success))
                 );
             }(context, profile), asio::detached);
-            context.stExecutor.restart();
         }
     }
     ImGui::EndDisabled();
@@ -156,7 +154,6 @@ Result<bool> render_profile_window(bool isWindowVisible, Context& context, Table
                 MUST(Localisation::get(context.settings.language, Localisation::Toast_Profile_Delete_Success))
             );
         }(context, profile), asio::detached);
-        context.stExecutor.restart();
     }
     ImGui::EndDisabled();
 

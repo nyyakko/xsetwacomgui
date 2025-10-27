@@ -124,7 +124,6 @@ Result<void> render_mappings_window(bool isWindowVisible, Context& context)
                 MUST(Localisation::get(context.settings.language, Localisation::Toast_Device_Mappings_Saved))
             );
         }(context), asio::detached);
-        context.stExecutor.restart();
     }
     ImGui::EndDisabled();
     ImGui::SetCursorPos(previousCursorPosition);

@@ -99,6 +99,8 @@ static Result<void> run_gui(Context& context)
         font = io.Fonts->AddFontFromFileTTF(context.settings.font.path.string().data(), 20_scaled, nullptr, glyphRanges.Data);
     }
 
+    auto executorGuard = asio::make_work_guard(context.stExecutor);
+
     while (!glfwWindowShouldClose(window))
     {
         glClear(GL_COLOR_BUFFER_BIT);

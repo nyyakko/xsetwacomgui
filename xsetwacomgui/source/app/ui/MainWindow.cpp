@@ -112,7 +112,6 @@ static Result<void> render_area_mappers(Context& context)
                 co_return MUST(get_stylus_default_area(stylus));
             }(context.tablet.stylus));
         }(context), asio::detached);
-        context.stExecutor.restart();
     }
 
     if (!(context.devices.empty() || context.tablet.settings.profile()->second.stylus.name == "INVALID" || deviceDefaultArea == Area {}))
@@ -193,7 +192,6 @@ static Result<void> render_tablet_tab(Context& context)
                 co_return MUST(get_stylus_default_area(stylus));
             }(context.tablet.stylus));
         }(context), asio::detached);
-        context.stExecutor.restart();
     }
 
     ImGui::BeginGroup();
@@ -233,7 +231,6 @@ static Result<void> render_tablet_tab(Context& context)
                 context.tablet.settings.profile()->second.stylus.forceAspectRatio = false;
                 context.tablet.settings.profile()->second.stylus.handedness = Device::Handedness::RIGHT;
             }(context), asio::detached);
-            context.stExecutor.restart();
         }
 
         ImGui::BeginDisabled(context.tablet.settings.profile()->second.stylus.forceFullArea);
@@ -513,7 +510,6 @@ static Result<void> render_migration_popup(Context& context)
                 MUST(Localisation::get(context.settings.language, Localisation::Toast_Device_Settings_Overwritten))
             );
         }(context), asio::detached);
-        context.stExecutor.restart();
     }
 
     ImGui::SameLine();
@@ -534,7 +530,6 @@ static Result<void> render_migration_popup(Context& context)
                 co_return;
             }
         }(context), asio::detached);
-        context.stExecutor.restart();
     }
 
     return {};
@@ -689,7 +684,6 @@ Result<void> render_main_window(Context& context)
                 }
             }
         }(context), asio::detached);
-        context.stExecutor.restart();
 
         hasTriedToInitializeDeviceSettings = true;
     }
@@ -762,7 +756,6 @@ Result<void> render_main_window(Context& context)
                     );
                 }
             }(context), asio::detached);
-            context.stExecutor.restart();
         }
 
         if (*action == UDevDevice::Action::UNBIND && std::ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) <= 1)
@@ -784,7 +777,6 @@ Result<void> render_main_window(Context& context)
 
                 context.hasChangedDeviceSettings = true;
             }(context), asio::detached);
-            context.stExecutor.restart();
         }
     }
 
@@ -862,7 +854,6 @@ Result<void> render_main_window(Context& context)
                 MUST(Localisation::get(context.settings.language, Localisation::Toast_Device_Settings_Saved))
             );
         }(context), asio::detached);
-        context.stExecutor.restart();
     }
     else if (pressedSecondary != -1)
     {
@@ -895,7 +886,6 @@ Result<void> render_main_window(Context& context)
                         co_return;
                     }
                 }(context, profileNames), asio::detached);
-                context.stExecutor.restart();
             }
         }
         else
