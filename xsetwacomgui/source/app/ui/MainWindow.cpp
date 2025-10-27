@@ -108,9 +108,9 @@ static Result<void> render_area_mappers(Context& context)
     if ((context.hasChangedDeviceSettings && context.tablet.stylus.name != "INVALID") || (context.hasChangedDevice && context.tablet.settings.profile()->second.stylus.name != "INVALID"))
     {
         asio::co_spawn(context.stExecutor, [] (Context& context) -> asio::awaitable<void> {
-            deviceDefaultArea = co_await asio::co_spawn(context.mtExecutor, [] (auto const& context) -> asio::awaitable<Area> {
-                co_return MUST(get_stylus_default_area(context.tablet.stylus));
-            }(context));
+            deviceDefaultArea = co_await asio::co_spawn(context.mtExecutor, [] (auto stylus) -> asio::awaitable<Area> {
+                co_return MUST(get_stylus_default_area(stylus));
+            }(context.tablet.stylus));
         }(context), asio::detached);
         context.stExecutor.restart();
     }
@@ -189,9 +189,9 @@ static Result<void> render_tablet_tab(Context& context)
     if ((context.hasChangedDeviceSettings && context.tablet.stylus.name != "INVALID") || (context.hasChangedDevice && context.tablet.settings.profile()->second.stylus.name != "INVALID"))
     {
         asio::co_spawn(context.stExecutor, [] (Context& context) -> asio::awaitable<void> {
-            deviceDefaultArea = co_await asio::co_spawn(context.mtExecutor, [] (auto const& context) -> asio::awaitable<Area> {
-                co_return MUST(get_stylus_default_area(context.tablet.stylus));
-            }(context));
+            deviceDefaultArea = co_await asio::co_spawn(context.mtExecutor, [] (auto stylus) -> asio::awaitable<Area> {
+                co_return MUST(get_stylus_default_area(stylus));
+            }(context.tablet.stylus));
         }(context), asio::detached);
         context.stExecutor.restart();
     }
@@ -224,9 +224,9 @@ static Result<void> render_tablet_tab(Context& context)
         {
             asio::co_spawn(context.stExecutor, [] (Context& context) -> asio::awaitable<void> {
                 context.tablet.stylus = context.devices.at(size_t(deviceIndex));
-                context.tablet.settings.profile()->second.stylus.area = co_await asio::co_spawn(context.mtExecutor, [] (auto const& context) -> asio::awaitable<Area> {
-                    co_return MUST(get_stylus_default_area(context.tablet.stylus));
-                }(context));
+                context.tablet.settings.profile()->second.stylus.area = co_await asio::co_spawn(context.mtExecutor, [] (auto stylus) -> asio::awaitable<Area> {
+                    co_return MUST(get_stylus_default_area(stylus));
+                }(context.tablet.stylus));
                 context.tablet.settings.profile()->second.stylus.name = context.tablet.stylus.name;
                 context.tablet.settings.profile()->second.stylus.pressure = { 0, 0, 1, 1 };
                 context.tablet.settings.profile()->second.stylus.forceFullArea = false;
@@ -504,7 +504,7 @@ static Result<void> render_migration_popup(Context& context)
     {
         context.handleOutdatedDeviceSettings = false;
         asio::co_spawn(context.stExecutor, [] (Context& context) -> asio::awaitable<void> {
-            co_await asio::co_spawn(context.mtExecutor, [] (auto const& settings) -> asio::awaitable<void> {
+            co_await asio::co_spawn(context.mtExecutor, [] (auto settings) -> asio::awaitable<void> {
                 save_tablet_settings(settings);
                 co_return;
             }(context.tablet.settings));
@@ -522,7 +522,7 @@ static Result<void> render_migration_popup(Context& context)
     {
         context.handleOutdatedDeviceSettings = false;
         asio::co_spawn(context.stExecutor, [] (Context& context) -> asio::awaitable<void> {
-            auto maybeMigrated = co_await asio::co_spawn(context.mtExecutor, [] (auto const& settings) -> asio::awaitable<Result<void>> {
+            auto maybeMigrated = co_await asio::co_spawn(context.mtExecutor, [] (auto settings) -> asio::awaitable<Result<void>> {
                 co_return migrate_tablet_settings(settings);
             }(context.tablet.settings));
             if (!maybeMigrated.has_value())
