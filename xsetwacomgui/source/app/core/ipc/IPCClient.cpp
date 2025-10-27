@@ -34,7 +34,7 @@ Result<void> IPCClient::configure(Mode mode)
     return {};
 }
 
-Result<void> IPCClient::connect()
+Result<void> IPCClient::connect() const
 {
     using namespace std::literals;
 
@@ -71,7 +71,7 @@ Result<void> IPCClient::connect()
     return {};
 }
 
-Result<std::vector<char>> IPCClient::receive_message_async()
+Result<std::vector<char>> IPCClient::receive_message_async() const
 {
     auto received = mqueue_.receive();
 
@@ -88,7 +88,7 @@ Result<std::vector<char>> IPCClient::receive_message_async()
     }
 }
 
-Result<std::vector<char>> IPCClient::receive_message()
+Result<std::vector<char>> IPCClient::receive_message() const
 {
     return TRY(mqueue_.receive());
 }

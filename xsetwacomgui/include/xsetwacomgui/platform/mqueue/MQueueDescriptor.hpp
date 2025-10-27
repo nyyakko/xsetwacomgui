@@ -36,7 +36,7 @@ public:
     static liberror::Result<MQueueDescriptor> create(std::string_view name, int flag, int mode);
     static liberror::Result<MQueueDescriptor> create(std::string_view name, int flag);
 
-    auto value(this auto& self) { return self.value_; }
+    auto value() const { return value_; }
 
     liberror::Result<std::vector<char>> receive() const;
 

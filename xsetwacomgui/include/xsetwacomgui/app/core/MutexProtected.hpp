@@ -6,21 +6,21 @@ template <class T>
 class MutexProtected
 {
 public:
-    MutexProtected(T&& data)
+    explicit MutexProtected(T&& data)
         : data_(std::move(data))
-        , mutex_ {}
+        , mutex_{}
     {}
 
     MutexProtected()
-        : data_ {}
-        , mutex_ {}
+        : data_{}
+        , mutex_{}
     {}
 
     MutexProtected(MutexProtected const&) = delete;
     MutexProtected& operator=(MutexProtected const&) = delete;
 
     MutexProtected(MutexProtected&& that)
-        : data_(std::move(that.data_))
+        : data_{std::move(that.data_)}
         , mutex_{}
     {}
 

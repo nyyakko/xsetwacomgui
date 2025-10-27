@@ -184,7 +184,7 @@ static Result<void> render_tablet_tab(Context& context)
     if ((context.hasChangedDeviceSettings && context.tablet.stylus.name != "INVALID") || (context.hasChangedDevice && context.tablet.settings.profile()->second.stylus.name != "INVALID"))
     {
         asio::co_spawn(context.stExecutor, [] (Context& context) -> asio::awaitable<void> {
-            deviceDefaultArea = co_await asio::co_spawn(context.mtExecutor, [] (auto& context) -> asio::awaitable<Area> {
+            deviceDefaultArea = co_await asio::co_spawn(context.mtExecutor, [] (auto const& context) -> asio::awaitable<Area> {
                 co_return MUST(get_stylus_default_area(context.tablet.stylus));
             }(context));
         }(context), asio::detached);
@@ -219,7 +219,7 @@ static Result<void> render_tablet_tab(Context& context)
         {
             asio::co_spawn(context.stExecutor, [] (Context& context) -> asio::awaitable<void> {
                 context.tablet.stylus = context.devices.at(size_t(deviceIndex));
-                context.tablet.settings.profile()->second.stylus.area = co_await asio::co_spawn(context.mtExecutor, [] (auto& context) -> asio::awaitable<Area> {
+                context.tablet.settings.profile()->second.stylus.area = co_await asio::co_spawn(context.mtExecutor, [] (auto const& context) -> asio::awaitable<Area> {
                     co_return MUST(get_stylus_default_area(context.tablet.stylus));
                 }(context));
                 context.tablet.settings.profile()->second.stylus.name = context.tablet.stylus.name;

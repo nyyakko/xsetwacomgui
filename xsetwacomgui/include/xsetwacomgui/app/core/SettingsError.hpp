@@ -1,7 +1,5 @@
 #pragma once
 
-#include <utility>
-
 class [[nodiscard]] SettingsError
 {
 public:
@@ -17,26 +15,30 @@ public:
 public:
     using message_t = Type;
 
-    constexpr explicit SettingsError(Type reason) : reason_ { reason } {}
+    constexpr explicit SettingsError(Type reason)
+        : reason_{reason}
+    {}
 
-    constexpr  SettingsError() noexcept = default;
+    constexpr SettingsError()
+        : reason_{}
+    {}
+
+    constexpr SettingsError(SettingsError&& that) = delete;
+    constexpr SettingsError& operator=(SettingsError&& that) = delete;
+
+    constexpr SettingsError(SettingsError const& that)
+        : reason_{that.reason_}
+    {}
+
+    constexpr SettingsError& operator=(SettingsError const& that)
+    {
+        this->reason_ = that.reason_;
+        return *this;
+    }
+
     constexpr ~SettingsError() noexcept = default;
 
-    constexpr SettingsError(SettingsError const& error) : reason_ { error.reason_ } {}
-    constexpr SettingsError(SettingsError&& error) noexcept : reason_ { std::move(error.reason_) } {}
-
-    constexpr SettingsError& operator=(SettingsError&& error) noexcept
-    {
-        reason_ = std::move(error.reason_);
-        return *this;
-    }
-
-    constexpr SettingsError& operator=(SettingsError const& error)
-    {
-        reason_ = error.reason_;
-        return *this;
-    }
-
+public:
     [[nodiscard]] constexpr auto const& message() const noexcept { return reason_; }
 
 private:

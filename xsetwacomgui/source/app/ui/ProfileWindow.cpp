@@ -139,8 +139,8 @@ Result<bool> render_profile_window(bool isWindowVisible, Context& context, Table
     if (ImGui::Button(MUST(Localisation::get(context.settings.language, Localisation::Delete)), { 150_scaled, 25_scaled }))
     {
         isWindowClosed = true;
-        asio::co_spawn(context.stExecutor, [] (Context& context, TabletSettings& settings, TabletProfile& profile) -> asio::awaitable<void> {
-            std::erase_if(context.tablet.settings.profiles(), [&] (auto& entry) { return entry.first == profile.name; });
+        asio::co_spawn(context.stExecutor, [] (Context& context, TabletProfile& profile) -> asio::awaitable<void> {
+            std::erase_if(context.tablet.settings.profiles(), [&] (auto const& entry) { return entry.first == profile.name; });
 
             context.tablet.settings.profile(std::ranges::find_if(context.tablet.settings.profiles(), [&] (auto const& entry) {
                 return entry.first != "INVALID";
@@ -155,7 +155,7 @@ Result<bool> render_profile_window(bool isWindowVisible, Context& context, Table
                 MUST(Localisation::get(context.settings.language, Localisation::Toast_Success)),
                 MUST(Localisation::get(context.settings.language, Localisation::Toast_Profile_Delete_Success))
             );
-        }(context, context.tablet.settings, profile), asio::detached);
+        }(context, profile), asio::detached);
         context.stExecutor.restart();
     }
     ImGui::EndDisabled();

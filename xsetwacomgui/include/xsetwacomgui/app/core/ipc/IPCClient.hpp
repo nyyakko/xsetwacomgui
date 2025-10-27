@@ -41,16 +41,15 @@ public:
 
     liberror::Result<void> configure(Mode mode);
 
-    liberror::Result<void> connect();
+    liberror::Result<void> connect() const;
 
-    liberror::Result<std::vector<char>> receive_message_async();
-    liberror::Result<std::vector<char>> receive_message();
+    liberror::Result<std::vector<char>> receive_message_async() const;
+    liberror::Result<std::vector<char>> receive_message() const;
 
 private:
     static liberror::Result<IPCClient> create();
 
     MQueue mqueue_;
-
     std::string name_;
     mqd_t client_;
 };

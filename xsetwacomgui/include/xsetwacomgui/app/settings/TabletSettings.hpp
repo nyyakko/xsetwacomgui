@@ -61,20 +61,19 @@ public:
     }
 
 public:
+    // cppcheck-suppress [functionStatic, constParameterReference]
     inline constexpr auto& profiles(this auto& self) { return self.profiles_; }
 
+    // cppcheck-suppress [functionStatic, constParameterReference]
     inline constexpr auto& profile(this auto& self)
     {
         assert(self.profile_ != self.profiles_.end());
         return self.profile_;
     }
 
-    inline constexpr auto profile(TabletProfile const& profile) { profile_->second = profile; }
+    inline constexpr void profile(TabletProfile const& profile) { profile_->second = profile; }
 
-    inline constexpr void profile(std::map<std::string, TabletProfile>::iterator iterator)
-    {
-        profile_ = iterator;
-    }
+    inline constexpr void profile(std::map<std::string, TabletProfile>::iterator iterator) { profile_ = iterator; }
 
 private:
     std::map<std::string, TabletProfile> profiles_;
