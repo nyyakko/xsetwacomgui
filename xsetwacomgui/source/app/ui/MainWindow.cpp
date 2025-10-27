@@ -520,7 +520,6 @@ static Result<void> render_migration_popup(Context& context)
             auto maybeMigrated = co_await asio::co_spawn(context.mtExecutor, [] (auto const& settings) -> asio::awaitable<Result<void>> {
                 co_return migrate_tablet_settings(settings);
             }(context.tablet.settings));
-
             if (!maybeMigrated.has_value())
             {
                 ImGui::PushToast(
@@ -529,7 +528,6 @@ static Result<void> render_migration_popup(Context& context)
                 );
                 co_return;
             }
-
         }(context), asio::detached);
         context.stExecutor.restart();
     }
