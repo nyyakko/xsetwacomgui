@@ -11,25 +11,25 @@ struct TabletProfile
     {
         std::string name = "INVALID";
         Device::Handedness handedness = Device::Handedness::RIGHT;
-        Area area = { -1, -1, -1, -1 };
-        Device::Pressure pressure = { -1, -1, -1, -1 };
-        bool forceFullArea = false;
-        bool forceAspectRatio = false;
-        std::map<int, X11Action> mappings = {};
+        Area area;
+        Device::Pressure pressure;
+        bool forceFullArea;
+        bool forceAspectRatio;
+        std::map<int, X11Action> mappings;
     };
 
     struct Pad
     {
         std::string name = "INVALID";
-        std::map<int, X11Action> mappings = {};
+        std::map<int, X11Action> mappings;
     };
 
     struct Display
     {
         std::string name = "INVALID";
-        ::Area area = { -1, -1, -1, -1 };
-        bool forceFullArea = false;
-        bool forceAspectRatio = false;
+        Area area;
+        bool forceFullArea;
+        bool forceAspectRatio;
     };
 
     std::string name = "INVALID";
