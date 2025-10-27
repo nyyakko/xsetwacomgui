@@ -71,8 +71,6 @@ Result<void> render_profile_window(Context& context)
 
 Result<bool> render_profile_window(bool isWindowVisible, Context& context, TabletProfile& profile)
 {
-    auto isWindowClosed = false;
-
     static TabletProfile* currentProfile = nullptr;
 
     ImGui::Text("%s", TRY(Localisation::get(context.settings.language, Localisation::Window_Profile_Tab_Name)));
@@ -89,6 +87,8 @@ Result<bool> render_profile_window(bool isWindowVisible, Context& context, Table
 
     auto previousCursorPosition = ImGui::GetCursorPos();
     ImGui::SetCursorPosY(ImGui::GetWindowHeight() - (25_scaled + ImGui::GetStyle().WindowPadding.x));
+
+    auto isWindowClosed = false;
 
     static auto isSaveButtonDisabled = false;
     ImGui::BeginDisabled(isSaveButtonDisabled);
