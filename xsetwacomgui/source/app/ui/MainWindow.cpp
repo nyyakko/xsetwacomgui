@@ -34,7 +34,7 @@ static Result<void> render_area_mappers(Context& context)
     auto previousCursorPosition = ImGui::GetCursorPos();
 
     static ImVec2 displayAreaAnchors[4] { { -1, -1 }, { -1, -1 }, { -1, -1 }, { -1, -1 } };
-    static auto displayDefaultArea = context.displays.empty() || context.display.name == "INVALID" ? Area {} : Area { 0, 0, context.display.area.width, context.display.area.height };
+    static Area displayDefaultArea {};
 
     if (context.hasChangedDisplayArea && context.tablet.settings.profile()->second.display.forceFullArea && context.tablet.settings.profile()->second.display.name != "INVALID")
     {
@@ -43,10 +43,10 @@ static Result<void> render_area_mappers(Context& context)
 
     if ((context.hasChangedDeviceSettings && context.display.name != "INVALID") || (context.hasChangedDisplay && context.tablet.settings.profile()->second.display.name != "INVALID"))
     {
-        displayDefaultArea = Area { 0, 0, context.display.area.width, context.display.area.height };
+        displayDefaultArea = { 0, 0, context.display.area.width, context.display.area.height };
     }
 
-    if (!(context.displays.empty() || context.tablet.settings.profile()->second.display.name == "INVALID"))
+    if (!(context.displays.empty() || context.tablet.settings.profile()->second.display.name == "INVALID" || displayDefaultArea == Area {}))
     {
         displayAreaAnchors[0] = {
             context.tablet.settings.profile()->second.display.area.offsetX / displayDefaultArea.width,
@@ -92,13 +92,13 @@ static Result<void> render_area_mappers(Context& context)
         context.tablet.settings.profile()->second.display.area = {
             .offsetX = displayAreaAnchors[0].x * displayDefaultArea.width,
             .offsetY = displayAreaAnchors[0].y * displayDefaultArea.height,
-            .width   = (displayAreaAnchors[2].x - displayAreaAnchors[0].x) * displayDefaultArea.width,
-            .height  = (displayAreaAnchors[3].y - displayAreaAnchors[2].y) * displayDefaultArea.height
+            .width = (displayAreaAnchors[2].x - displayAreaAnchors[0].x) * displayDefaultArea.width,
+            .height = (displayAreaAnchors[3].y - displayAreaAnchors[2].y) * displayDefaultArea.height
         };
     }
 
     static ImVec2 deviceAreaAnchors[4] { { -1, -1 }, { -1, -1 }, { -1, -1 }, { -1, -1 } };
-    static auto deviceDefaultArea = context.devices.empty() || context.tablet.stylus.name == "INVALID" ? Area {} : TRY(get_stylus_default_area(context.tablet.stylus));
+    static Area deviceDefaultArea {};
 
     if (context.hasChangedDeviceArea && context.tablet.settings.profile()->second.stylus.forceFullArea && context.tablet.settings.profile()->second.stylus.name != "INVALID")
     {
@@ -107,10 +107,15 @@ static Result<void> render_area_mappers(Context& context)
 
     if ((context.hasChangedDeviceSettings && context.tablet.stylus.name != "INVALID") || (context.hasChangedDevice && context.tablet.settings.profile()->second.stylus.name != "INVALID"))
     {
-        deviceDefaultArea = TRY(get_stylus_default_area(context.tablet.stylus));
+        asio::co_spawn(context.stExecutor, [] (Context& context) -> asio::awaitable<void> {
+            deviceDefaultArea = co_await asio::co_spawn(context.mtExecutor, [] (auto const& context) -> asio::awaitable<Area> {
+                co_return MUST(get_stylus_default_area(context.tablet.stylus));
+            }(context));
+        }(context), asio::detached);
+        context.stExecutor.restart();
     }
 
-    if (!(context.devices.empty() || context.tablet.settings.profile()->second.stylus.name == "INVALID"))
+    if (!(context.devices.empty() || context.tablet.settings.profile()->second.stylus.name == "INVALID" || deviceDefaultArea == Area {}))
     {
         deviceAreaAnchors[0] = {
             context.tablet.settings.profile()->second.stylus.area.offsetX / deviceDefaultArea.width,
@@ -156,8 +161,8 @@ static Result<void> render_area_mappers(Context& context)
         context.tablet.settings.profile()->second.stylus.area = {
             .offsetX = deviceAreaAnchors[0].x * deviceDefaultArea.width,
             .offsetY = deviceAreaAnchors[0].y * deviceDefaultArea.height,
-            .width   = (deviceAreaAnchors[2].x - deviceAreaAnchors[0].x) * deviceDefaultArea.width,
-            .height  = (deviceAreaAnchors[3].y - deviceAreaAnchors[2].y) * deviceDefaultArea.height
+            .width = (deviceAreaAnchors[2].x - deviceAreaAnchors[0].x) * deviceDefaultArea.width,
+            .height = (deviceAreaAnchors[3].y - deviceAreaAnchors[2].y) * deviceDefaultArea.height
         };
     }
 
@@ -179,7 +184,7 @@ static Result<void> render_tablet_tab(Context& context)
 {
     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - (250_scaled + 300_scaled + ImGui::GetStyle().WindowPadding.x))/2);
 
-    static auto deviceDefaultArea = context.tablet.stylus.name == "INVALID" || context.devices.empty() ? Area {} : TRY(get_stylus_default_area(context.tablet.stylus));
+    static Area deviceDefaultArea {};
 
     if ((context.hasChangedDeviceSettings && context.tablet.stylus.name != "INVALID") || (context.hasChangedDevice && context.tablet.settings.profile()->second.stylus.name != "INVALID"))
     {
@@ -359,13 +364,13 @@ static Result<void> render_tablet_tab(Context& context)
     }
     ImGui::EndGroup();
 
-    if (context.hasChangedDeviceArea && context.tablet.settings.profile()->second.stylus.name != "INVALID")
+    if (context.hasChangedDeviceArea && context.tablet.settings.profile()->second.stylus.name != "INVALID" && deviceDefaultArea != Area {})
     {
         context.tablet.settings.profile()->second.stylus.area = {
             .offsetX = std::clamp(context.tablet.settings.profile()->second.stylus.area.offsetX, 0.f, deviceDefaultArea.width),
             .offsetY = std::clamp(context.tablet.settings.profile()->second.stylus.area.offsetY, 0.f, deviceDefaultArea.height),
-            .width   = std::clamp(context.tablet.settings.profile()->second.stylus.area.width, 0.f, deviceDefaultArea.width),
-            .height  = std::clamp(context.tablet.settings.profile()->second.stylus.area.height, 0.f, deviceDefaultArea.height)
+            .width = std::clamp(context.tablet.settings.profile()->second.stylus.area.width, 0.f, deviceDefaultArea.width),
+            .height = std::clamp(context.tablet.settings.profile()->second.stylus.area.height, 0.f, deviceDefaultArea.height)
         };
     }
 
@@ -376,11 +381,11 @@ static Result<void> render_display_tab(Context& context)
 {
     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - (300_scaled + ImGui::GetStyle().WindowPadding.x))/2);
 
-    static auto displayDefaultArea = context.displays.empty() || context.display.name == "INVALID" ? Area {} : Area { 0, 0, context.display.area.width, context.display.area.height };
+    static Area displayDefaultArea {};
 
     if ((context.hasChangedDeviceSettings && context.display.name != "INVALID") || (context.hasChangedDisplay && context.tablet.settings.profile()->second.display.name != "INVALID"))
     {
-        displayDefaultArea = Area { 0, 0, context.display.area.width, context.display.area.height };
+        displayDefaultArea = { 0, 0, context.display.area.width, context.display.area.height };
     }
 
     ImGui::BeginGroup();
@@ -407,7 +412,7 @@ static Result<void> render_display_tab(Context& context)
         {
             context.display = context.displays.at(size_t(displayIndex));
             context.tablet.settings.profile()->second.display.name = context.display.name;
-            context.tablet.settings.profile()->second.display.area = Area { 0, 0, context.display.area.width, context.display.area.height };
+            context.tablet.settings.profile()->second.display.area = { 0, 0, context.display.area.width, context.display.area.height };
             context.tablet.settings.profile()->second.display.forceFullArea = false;
             context.tablet.settings.profile()->second.display.forceAspectRatio = false;
         }
@@ -464,13 +469,13 @@ static Result<void> render_display_tab(Context& context)
     }
     ImGui::EndGroup();
 
-    if (context.hasChangedDisplayArea && context.tablet.settings.profile()->second.display.name != "INVALID")
+    if (context.hasChangedDisplayArea && context.tablet.settings.profile()->second.display.name != "INVALID" && displayDefaultArea != Area {})
     {
         context.tablet.settings.profile()->second.display.area = {
             .offsetX = std::clamp(context.tablet.settings.profile()->second.display.area.offsetX, 0.f, displayDefaultArea.width),
             .offsetY = std::clamp(context.tablet.settings.profile()->second.display.area.offsetY, 0.f, displayDefaultArea.height),
-            .width   = std::clamp(context.tablet.settings.profile()->second.display.area.width, 0.f, displayDefaultArea.width),
-            .height  = std::clamp(context.tablet.settings.profile()->second.display.area.height, 0.f, displayDefaultArea.height)
+            .width = std::clamp(context.tablet.settings.profile()->second.display.area.width, 0.f, displayDefaultArea.width),
+            .height = std::clamp(context.tablet.settings.profile()->second.display.area.height, 0.f, displayDefaultArea.height)
         };
     }
 
