@@ -477,6 +477,66 @@ static Result<void> render_display_tab(Context& context)
     return {};
 }
 
+static Result<void> render_migration_popup(Context& context)
+{
+    auto [width, height] = ImGui::GetWindowSize();
+
+    ImGui::BeginGroup();
+    {
+        for (auto messageLine :
+            ImGui::SplitToWidth(
+                TRY(Localisation::get(context.settings.language, Localisation::Popup_Outdated_Device_Settings_Text)),
+                int(width)
+            ))
+        {
+            ImGui::Text("%s", messageLine.data());
+        }
+    }
+    ImGui::EndGroup();
+
+    ImGui::SetCursorPosY(height - (25_scaled + ImGui::GetStyle().WindowPadding.y));
+    if (ImGui::Button(TRY(Localisation::get(context.settings.language, Localisation::Popup_Outdated_Device_Settings_Overwrite)), { 0, 25_scaled }))
+    {
+        context.handleOutdatedDeviceSettings = false;
+        asio::co_spawn(context.stExecutor, [] (Context& context) -> asio::awaitable<void> {
+            co_await asio::co_spawn(context.mtExecutor, [] (auto const& settings) -> asio::awaitable<void> {
+                save_tablet_settings(settings);
+                co_return;
+            }(context.tablet.settings));
+            ImGui::PushToast(
+                MUST(Localisation::get(context.settings.language, Localisation::Toast_Success)),
+                MUST(Localisation::get(context.settings.language, Localisation::Toast_Device_Settings_Overwritten))
+            );
+        }(context), asio::detached);
+        context.stExecutor.restart();
+    }
+
+    ImGui::SameLine();
+
+    if (ImGui::Button(TRY(Localisation::get(context.settings.language, Localisation::Popup_Outdated_Device_Settings_Migrate)), { 0, 25_scaled }))
+    {
+        context.handleOutdatedDeviceSettings = false;
+        asio::co_spawn(context.stExecutor, [] (Context& context) -> asio::awaitable<void> {
+            auto maybeMigrated = co_await asio::co_spawn(context.mtExecutor, [] (auto const& settings) -> asio::awaitable<Result<void>> {
+                co_return migrate_tablet_settings(settings);
+            }(context.tablet.settings));
+
+            if (!maybeMigrated.has_value())
+            {
+                ImGui::PushToast(
+                    MUST(Localisation::get(context.settings.language, Localisation::Toast_Error)),
+                    MUST(Localisation::get(context.settings.language, Localisation::Toast_Device_Settings_Migration_Failed))
+                );
+                co_return;
+            }
+
+        }(context), asio::detached);
+        context.stExecutor.restart();
+    }
+
+    return {};
+}
+
 Result<void> render_main_window(Context& context)
 {
     static auto hasTriedToInitializeDeviceSettings = false;
@@ -494,39 +554,7 @@ Result<void> render_main_window(Context& context)
             ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
         );
         {
-            auto [popupWidth, popupHeight] = ImGui::GetWindowSize();
-
-            ImGui::BeginGroup();
-            {
-                for (auto messageLine :
-                    ImGui::SplitToWidth(
-                        TRY(Localisation::get(context.settings.language, Localisation::Popup_Outdated_Device_Settings_Text)),
-                        int(popupWidth)
-                    ))
-                {
-                    ImGui::Text("%s", messageLine.data());
-                }
-            }
-            ImGui::EndGroup();
-
-            ImGui::SetCursorPosY(popupHeight - (25_scaled + ImGui::GetStyle().WindowPadding.y));
-            if (ImGui::Button(TRY(Localisation::get(context.settings.language, Localisation::Popup_Outdated_Device_Settings_Overwrite)), { 0, 25_scaled }))
-            {
-                ImGui::PushToast(
-                    TRY(Localisation::get(context.settings.language, Localisation::Toast_Success)),
-                    TRY(Localisation::get(context.settings.language, Localisation::Toast_Device_Settings_Overwritten))
-                );
-
-                save_tablet_settings(context.tablet.settings);
-                context.handleOutdatedDeviceSettings = false;
-            }
-
-            ImGui::SameLine();
-
-            if (ImGui::Button(TRY(Localisation::get(context.settings.language, Localisation::Popup_Outdated_Device_Settings_Migrate)), { 0, 25_scaled }))
-            {
-                TRY(migrate_tablet_settings(context.tablet.settings));
-            }
+            TRY(render_migration_popup(context));
         }
         ImGui::End();
     }
