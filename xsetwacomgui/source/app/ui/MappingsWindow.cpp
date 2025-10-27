@@ -66,24 +66,24 @@ static Result<void> render_pad_tab(Context& context, TabletProfile& profile)
 
 Result<void> render_mappings_window(bool isWindowVisible, Context& context)
 {
-    static TabletProfile profile = context.tablet.settings.profile()->second;
+    static TabletProfile currentProfile = context.tablet.settings.profile()->second;
 
-    if (profile.name != context.tablet.settings.profile()->second.name)
+    if (currentProfile.name != context.tablet.settings.profile()->second.name)
     {
-        profile = context.tablet.settings.profile()->second;
+        currentProfile = context.tablet.settings.profile()->second;
     }
 
     if (ImGui::BeginTabBar("##Tabs"))
     {
         if (ImGui::BeginTabItem(TRY(Localisation::get(context.settings.language, Localisation::Window_Mappings_Tabs_Stylus_Title))))
         {
-            TRY(render_stylus_tab(context, profile));
+            TRY(render_stylus_tab(context, currentProfile));
             ImGui::EndTabItem();
         }
 
         if (ImGui::BeginTabItem(TRY(Localisation::get(context.settings.language, Localisation::Window_Mappings_Tabs_Pad_Title))))
         {
-            TRY(render_pad_tab(context, profile));
+            TRY(render_pad_tab(context, currentProfile));
             ImGui::EndTabItem();
         }
 
@@ -98,7 +98,7 @@ Result<void> render_mappings_window(bool isWindowVisible, Context& context)
     {
         isSaveApplyButtonDisabled = true;
         asio::co_spawn(context.stExecutor, [] (Context& context) -> asio::awaitable<void> {
-            context.tablet.settings.profile(profile);
+            context.tablet.settings.profile(currentProfile);
 
             auto maybeLoaded = co_await asio::co_spawn(context.mtExecutor, [] (auto settings, auto tablet, auto display) -> asio::awaitable<Result<void>> {
                 co_return load_tablet_profile(settings.profile()->second, tablet, display);
@@ -131,7 +131,7 @@ Result<void> render_mappings_window(bool isWindowVisible, Context& context)
 
     if (!isWindowVisible)
     {
-        profile = context.tablet.settings.profile()->second;
+        currentProfile = context.tablet.settings.profile()->second;
     }
 
     return {};
