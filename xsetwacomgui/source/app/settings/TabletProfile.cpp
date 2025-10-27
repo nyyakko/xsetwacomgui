@@ -1,4 +1,4 @@
-#include "app/settings/tablet/TabletProfile.hpp"
+#include "app/settings/TabletProfile.hpp"
 
 #include "app/devices/Tablet.hpp"
 
