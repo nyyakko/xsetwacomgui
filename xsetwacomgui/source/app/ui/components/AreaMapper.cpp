@@ -9,7 +9,7 @@ static auto constexpr MAPPER_GRAB_RADIUS = 6;
 #define MAPPER_GRAB_COLOR               ImColor(ImGui::GetStyle().Colors[ImGuiCol_SliderGrab])
 #define MAPPER_GRAB_ACTIVE_COLOR        ImColor(ImGui::GetStyle().Colors[ImGuiCol_SliderGrabActive])
 
-bool AreaMapper(char const* label, ImVec2 anchors[4], ImVec2 size, ImRect* outPosition, bool forceFullArea, bool)
+bool AreaMapper(char const* label, std::array<ImVec2, 4>& anchors, ImVec2 size, ImRect* position, bool forceFullArea, bool)
 {
     auto window = ImGui::GetCurrentWindow();
 
@@ -29,9 +29,9 @@ bool AreaMapper(char const* label, ImVec2 anchors[4], ImVec2 size, ImRect* outPo
     frameExtended.Max += ImVec2(MAPPER_GRAB_RADIUS, MAPPER_GRAB_RADIUS) / 2;
     ImGui::ItemSize(frameExtended);
 
-    if (outPosition)
+    if (position)
     {
-        *outPosition = frame;
+        *position = frame;
     }
 
     if (ImGui::ItemAdd(frameExtended, 0))

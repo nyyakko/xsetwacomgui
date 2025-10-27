@@ -33,7 +33,7 @@ static Result<void> render_area_mappers(Context& context)
 
     auto previousCursorPosition = ImGui::GetCursorPos();
 
-    static ImVec2 displayAreaAnchors[4] { { -1, -1 }, { -1, -1 }, { -1, -1 }, { -1, -1 } };
+    static std::array<ImVec2, 4> displayAreaAnchors {{ { -1, -1 }, { -1, -1 }, { -1, -1 }, { -1, -1 } }};
     static Area displayDefaultArea {};
 
     if (context.hasChangedDisplayArea && context.tablet.settings.profile()->second.display.forceFullArea && context.tablet.settings.profile()->second.display.name != "INVALID")
@@ -97,7 +97,7 @@ static Result<void> render_area_mappers(Context& context)
         };
     }
 
-    static ImVec2 deviceAreaAnchors[4] { { -1, -1 }, { -1, -1 }, { -1, -1 }, { -1, -1 } };
+    static std::array<ImVec2, 4> deviceAreaAnchors {{ { -1, -1 }, { -1, -1 }, { -1, -1 }, { -1, -1 } }};
     static Area deviceDefaultArea {};
 
     if (context.hasChangedDeviceArea && context.tablet.settings.profile()->second.stylus.forceFullArea && context.tablet.settings.profile()->second.stylus.name != "INVALID")
@@ -168,7 +168,7 @@ static Result<void> render_area_mappers(Context& context)
 
     auto* drawList = ImGui::GetWindowDrawList();
 
-    for (auto [displayAnchor, deviceAnchor] : ranges::views::zip(std::span<ImVec2>(displayAreaAnchors, 4), std::span<ImVec2>(deviceAreaAnchors, 4)))
+    for (auto [displayAnchor, deviceAnchor] : ranges::views::zip(std::span<ImVec2>(displayAreaAnchors), std::span<ImVec2>(deviceAreaAnchors)))
     {
         auto p1 = displayAnchor * (displayMapperPosition.Max - displayMapperPosition.Min) + displayMapperPosition.Min;
         auto p2 = deviceAnchor * (deviceMapperPosition.Max - deviceMapperPosition.Min) + deviceMapperPosition.Min;

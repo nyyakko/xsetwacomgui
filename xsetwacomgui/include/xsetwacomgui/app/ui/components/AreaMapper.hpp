@@ -2,5 +2,7 @@
 
 #include <imgui/imgui_internal.hpp>
 
-bool AreaMapper(char const* label, ImVec2 anchors[4], ImVec2 size, ImRect* outPosition = nullptr, bool forceFullArea = false, bool forceAspectRatio = false);
+#include <array>
+
+bool AreaMapper(char const* label, std::array<ImVec2, 4>& anchors, ImVec2 size, ImRect* position = nullptr, bool forceFullArea = false, bool forceAspectRatio = false);
 
