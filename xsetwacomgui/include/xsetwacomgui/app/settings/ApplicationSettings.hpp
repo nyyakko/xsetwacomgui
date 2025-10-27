@@ -1,8 +1,8 @@
 #pragma once
 
 #include "app/core/FreeType.hpp"
+#include "app/core/SettingsError.hpp"
 #include "platform/Environment.hpp"
-#include "SettingsError.hpp"
 
 #include <imgui/imgui_internal.hpp>
 #include <liberror/Result.hpp>

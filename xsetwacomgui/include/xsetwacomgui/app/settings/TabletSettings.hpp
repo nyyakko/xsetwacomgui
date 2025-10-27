@@ -1,6 +1,6 @@
 #pragma once
 
-#include "app/settings/SettingsError.hpp"
+#include "app/core/SettingsError.hpp"
 #include "platform/Environment.hpp"
 #include "TabletProfile.hpp"
 
