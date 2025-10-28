@@ -8,6 +8,7 @@
 #include <libexec/Execute.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <nlohmann/json.hpp>
+#include <range/v3/algorithm.hpp>
 
 #include <cstdlib>
 #include <filesystem>
@@ -91,7 +92,7 @@ Result<TabletSettings, SettingsError> load_tablet_settings()
             return make_error<SettingsError>(SettingsError::Type::PROFILE_NOT_FOUND);
         }
 
-        settings.profile(std::ranges::find_if(settings.profiles(), [&] (auto const& entry) {
+        settings.profile(ranges::find_if(settings.profiles(), [&] (auto const& entry) {
             return entry.first == json["profile"].get<std::string>();
         }));
     }

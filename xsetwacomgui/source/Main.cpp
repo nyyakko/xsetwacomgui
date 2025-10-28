@@ -23,6 +23,7 @@
 #include <liberror/Try.hpp>
 #include <libexec/Execute.hpp>
 #include <magic_enum/magic_enum.hpp>
+#include <range/v3/algorithm.hpp>
 #include <range/v3/view.hpp>
 
 #include <sys/poll.h>
@@ -255,15 +256,15 @@ static Result<void> run_no_gui(Context& context)
 
         context.tablet.settings = *result;
 
-        auto stylus = std::ranges::find(context.devices, context.tablet.settings.profile()->second.stylus.name, &Device::name);
+        auto stylus = ranges::find(context.devices, context.tablet.settings.profile()->second.stylus.name, &Device::name);
         assert(stylus != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
         context.tablet.stylus = *stylus;
 
-        auto pad = std::ranges::find(context.devices, context.tablet.settings.profile()->second.pad.name, &Device::name);
+        auto pad = ranges::find(context.devices, context.tablet.settings.profile()->second.pad.name, &Device::name);
         assert(pad != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
         context.tablet.pad = *pad;
 
-        context.display = *std::ranges::find(context.displays, context.tablet.settings.profile()->second.display.name, &Display::name);
+        context.display = *ranges::find(context.displays, context.tablet.settings.profile()->second.display.name, &Display::name);
 
         TRY(load_tablet_profile(context.tablet.settings.profile()->second, context.tablet, context.display));
 
@@ -280,7 +281,7 @@ static Result<void> run_no_gui(Context& context)
         switch (*action)
         {
         case UDevDevice::Action::BIND: {
-            if (std::ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) >= 1) break;
+            if (ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) >= 1) break;
 
             while (context.devices = TRY(get_available_devices()), context.devices.empty())
             {
@@ -304,15 +305,15 @@ static Result<void> run_no_gui(Context& context)
 
             context.tablet.settings = *result;
 
-            auto stylus = std::ranges::find(context.devices, context.tablet.settings.profile()->second.stylus.name, &Device::name);
+            auto stylus = ranges::find(context.devices, context.tablet.settings.profile()->second.stylus.name, &Device::name);
             assert(stylus != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
             context.tablet.stylus = *stylus;
 
-            auto pad = std::ranges::find(context.devices, context.tablet.settings.profile()->second.pad.name, &Device::name);
+            auto pad = ranges::find(context.devices, context.tablet.settings.profile()->second.pad.name, &Device::name);
             assert(pad != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
             context.tablet.pad = *pad;
 
-            context.display = *std::ranges::find(context.displays, context.tablet.settings.profile()->second.display.name, &Display::name);
+            context.display = *ranges::find(context.displays, context.tablet.settings.profile()->second.display.name, &Display::name);
 
             TRY(load_tablet_profile(context.tablet.settings.profile()->second, context.tablet, context.display));
 
@@ -321,11 +322,11 @@ static Result<void> run_no_gui(Context& context)
             break;
         }
         case UDevDevice::Action::UNBIND: {
-            if (std::ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) > 1) break;
+            if (ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) > 1) break;
 
             context.devices = TRY(get_available_devices());
 
-            auto maybeDevice = std::ranges::find(context.devices, context.tablet.settings.profile()->second.stylus.name, &Device::name);
+            auto maybeDevice = ranges::find(context.devices, context.tablet.settings.profile()->second.stylus.name, &Device::name);
 
             if (maybeDevice == context.devices.end())
             {
@@ -365,15 +366,15 @@ Result<void> safe_main(std::span<char const*> const& arguments)
         fmt::println("  --load {:>39}", "loads the saved tablet configuration");
     };
 
-    if (auto posHelp = std::ranges::find(arguments, "--help"sv); posHelp != arguments.end())
+    if (auto posHelp = ranges::find(arguments, "--help"sv); posHelp != arguments.end())
     {
         if (std::distance(arguments.begin(), posHelp) == 1) mainHelp();
 
-        if (auto posConfig = std::ranges::find(arguments, "config"sv); posConfig != arguments.end())
+        if (auto posConfig = ranges::find(arguments, "config"sv); posConfig != arguments.end())
         {
             auto commandArguments = arguments.subspan(size_t(std::distance(arguments.begin(), posConfig)));
 
-            if (posHelp = std::ranges::find(commandArguments, "--help"sv); posHelp != arguments.end())
+            if (posHelp = ranges::find(commandArguments, "--help"sv); posHelp != arguments.end())
             {
                 configHelp();
             }
@@ -392,11 +393,11 @@ Result<void> safe_main(std::span<char const*> const& arguments)
         .displays = TRY(get_available_displays()),
     };
 
-    if (auto posConfig = std::ranges::find(arguments, "config"sv); posConfig != arguments.end())
+    if (auto posConfig = ranges::find(arguments, "config"sv); posConfig != arguments.end())
     {
         auto commandArguments = arguments.subspan(size_t(std::distance(arguments.begin(), posConfig)));
 
-        if (auto posLoad = std::ranges::find(commandArguments, "--load"sv); posLoad != arguments.end())
+        if (auto posLoad = ranges::find(commandArguments, "--load"sv); posLoad != arguments.end())
         {
             auto result = load_tablet_settings();
 
@@ -405,15 +406,15 @@ Result<void> safe_main(std::span<char const*> const& arguments)
 
             context.tablet.settings = *result;
 
-            auto stylus = std::ranges::find(context.devices, context.tablet.settings.profile()->second.stylus.name, &Device::name);
+            auto stylus = ranges::find(context.devices, context.tablet.settings.profile()->second.stylus.name, &Device::name);
             assert(stylus != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
             context.tablet.stylus = *stylus;
 
-            auto pad = std::ranges::find(context.devices, context.tablet.settings.profile()->second.pad.name, &Device::name);
+            auto pad = ranges::find(context.devices, context.tablet.settings.profile()->second.pad.name, &Device::name);
             assert(pad != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
             context.tablet.pad = *pad;
 
-            context.display = *std::ranges::find(context.displays, context.tablet.settings.profile()->second.display.name, &Display::name);
+            context.display = *ranges::find(context.displays, context.tablet.settings.profile()->second.display.name, &Display::name);
 
             TRY(load_tablet_profile(context.tablet.settings.profile()->second, context.tablet, context.display));
 
@@ -479,7 +480,7 @@ Result<void> safe_main(std::span<char const*> const& arguments)
     }
     else
     {
-        if (std::ranges::find(arguments, "--no-gui"sv) != arguments.end())
+        if (ranges::find(arguments, "--no-gui"sv) != arguments.end())
         {
             TRY(run_no_gui(context));
         }

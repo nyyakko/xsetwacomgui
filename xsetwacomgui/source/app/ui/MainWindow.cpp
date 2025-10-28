@@ -1,3 +1,4 @@
+#include <range/v3/algorithm/find_if_not.hpp>
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "app/ui/MainWindow.hpp"
 
@@ -15,6 +16,7 @@
 #include <imgui/extensions/imgui_toast.hpp>
 #include <imgui/imgui.hpp>
 #include <liberror/Try.hpp>
+#include <range/v3/algorithm.hpp>
 #include <range/v3/view.hpp>
 
 #include <sys/poll.h>
@@ -203,13 +205,13 @@ static Result<void> render_tablet_tab(Context& context)
                 | ranges::to_vector;
 
         static auto deviceIndex = context.tablet.settings.profile()->second.stylus.name == "INVALID" ? 0 : int(
-            std::distance(deviceNames.begin(), std::ranges::find(deviceNames, context.tablet.settings.profile()->second.stylus.name))
+            std::distance(deviceNames.begin(), ranges::find(deviceNames, context.tablet.settings.profile()->second.stylus.name))
         );
 
         if (context.hasChangedDevice)
         {
             deviceIndex = context.tablet.settings.profile()->second.stylus.name == "INVALID" ? 0 : int(
-                std::distance(deviceNames.begin(), std::ranges::find(deviceNames, context.tablet.settings.profile()->second.stylus.name))
+                std::distance(deviceNames.begin(), ranges::find(deviceNames, context.tablet.settings.profile()->second.stylus.name))
             );
         }
 
@@ -390,13 +392,13 @@ static Result<void> render_display_tab(Context& context)
         auto displayNames = context.displays | ranges::views::transform([] (auto const& display) { return display.name.data(); }) | ranges::to_vector;
 
         static auto displayIndex = context.tablet.settings.profile()->second.display.name == "INVALID" ? 0 : int(
-            std::distance(context.displays.begin(), std::ranges::find(context.displays, context.tablet.settings.profile()->second.display.name, &Display::name))
+            std::distance(context.displays.begin(), ranges::find(context.displays, context.tablet.settings.profile()->second.display.name, &Display::name))
         );
 
         if (context.hasChangedDisplay)
         {
             displayIndex = context.tablet.settings.profile()->second.display.name == "INVALID" ? 0 : int(
-                std::distance(context.displays.begin(), std::ranges::find(context.displays, context.tablet.settings.profile()->second.display.name, &Display::name))
+                std::distance(context.displays.begin(), ranges::find(context.displays, context.tablet.settings.profile()->second.display.name, &Display::name))
             );
         }
 
@@ -575,15 +577,15 @@ Result<void> render_main_window(Context& context)
 
             if (!result.has_value())
             {
-                auto stylus = std::ranges::find(context.devices, Device::Kind::STYLUS, &Device::kind);
+                auto stylus = ranges::find(context.devices, Device::Kind::STYLUS, &Device::kind);
                 assert(stylus != context.devices.end());
                 context.tablet.stylus = *stylus;
 
-                auto pad = std::ranges::find(context.devices, Device::Kind::PAD, &Device::kind);
+                auto pad = ranges::find(context.devices, Device::Kind::PAD, &Device::kind);
                 assert(pad != context.devices.end());
                 context.tablet.pad = *pad;
 
-                auto display = std::ranges::find(context.displays, true, &Display::primary);
+                auto display = ranges::find(context.displays, true, &Display::primary);
                 assert(display != context.displays.end());
                 context.display = *display;
 
@@ -659,15 +661,15 @@ Result<void> render_main_window(Context& context)
             {
                 context.tablet.settings = std::move(*result);
 
-                auto stylus = std::ranges::find(context.devices, context.tablet.settings.profile()->second.stylus.name, &Device::name);
+                auto stylus = ranges::find(context.devices, context.tablet.settings.profile()->second.stylus.name, &Device::name);
                 assert(stylus != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
                 context.tablet.stylus = *stylus;
 
-                auto pad = std::ranges::find(context.devices, context.tablet.settings.profile()->second.pad.name, &Device::name);
+                auto pad = ranges::find(context.devices, context.tablet.settings.profile()->second.pad.name, &Device::name);
                 assert(pad != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
                 context.tablet.pad = *pad;
 
-                context.display = *std::ranges::find(context.displays, context.tablet.settings.profile()->second.display.name, &Display::name);
+                context.display = *ranges::find(context.displays, context.tablet.settings.profile()->second.display.name, &Display::name);
 
                 context.hasChangedDeviceSettings = true;
 
@@ -708,7 +710,7 @@ Result<void> render_main_window(Context& context)
             co_return maybeDevices;
         };
 
-        if (*action == UDevDevice::Action::BIND && std::ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) < 1)
+        if (*action == UDevDevice::Action::BIND && ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) < 1)
         {
             asio::co_spawn(context.stExecutor, [] (Context& context) -> asio::awaitable<void> {
                 auto maybeDevices = co_await asio::co_spawn(context.mtExecutor, fnGetAvailableDevices(true));
@@ -732,15 +734,15 @@ Result<void> render_main_window(Context& context)
 
                 context.tablet.settings = *maybeSettings;
 
-                auto stylus = std::ranges::find(context.devices, context.tablet.settings.profile()->second.stylus.name, &Device::name);
+                auto stylus = ranges::find(context.devices, context.tablet.settings.profile()->second.stylus.name, &Device::name);
                 assert(stylus != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
                 context.tablet.stylus = *stylus;
 
-                auto pad = std::ranges::find(context.devices, context.tablet.settings.profile()->second.pad.name, &Device::name);
+                auto pad = ranges::find(context.devices, context.tablet.settings.profile()->second.pad.name, &Device::name);
                 assert(pad != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
                 context.tablet.pad = *pad;
 
-                context.display = *std::ranges::find(context.displays, context.tablet.settings.profile()->second.display.name, &Display::name);
+                context.display = *ranges::find(context.displays, context.tablet.settings.profile()->second.display.name, &Display::name);
 
                 context.hasChangedDeviceSettings = true;
 
@@ -758,7 +760,7 @@ Result<void> render_main_window(Context& context)
             }(context), asio::detached);
         }
 
-        if (*action == UDevDevice::Action::UNBIND && std::ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) <= 1)
+        if (*action == UDevDevice::Action::UNBIND && ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) <= 1)
         {
             asio::co_spawn(context.stExecutor, [] (Context& context) -> asio::awaitable<void> {
                 auto maybeDevices = co_await asio::co_spawn(context.mtExecutor, fnGetAvailableDevices(false));
@@ -766,7 +768,7 @@ Result<void> render_main_window(Context& context)
 
                 context.devices = *maybeDevices;
 
-                if (std::ranges::find(context.devices, context.tablet.settings.profile()->second.stylus.name, &Device::name) != context.devices.end())
+                if (ranges::find(context.devices, context.tablet.settings.profile()->second.stylus.name, &Device::name) != context.devices.end())
                 {
                     co_return;
                 }
@@ -813,7 +815,7 @@ Result<void> render_main_window(Context& context)
 
     if (context.hasChangedDeviceSettings && context.tablet.settings.profile()->second.name != "INVALID")
     {
-        itemIndex = { 1, std::distance(profileNames.begin(), std::ranges::find(profileNames, context.tablet.settings.profile()->second.name)) };
+        itemIndex = { 1, std::distance(profileNames.begin(), ranges::find(profileNames, context.tablet.settings.profile()->second.name)) };
     }
 
     static auto isProfileWindowOpen = false;
@@ -862,12 +864,12 @@ Result<void> render_main_window(Context& context)
             if (itemIndex.first == 0)
             {
                 isProfileWindowOpen = true;
-                itemIndex = { 1, std::distance(profileNames.begin(), std::ranges::find(profileNames, context.tablet.settings.profile()->second.name)) };
+                itemIndex = { 1, std::distance(profileNames.begin(), ranges::find(profileNames, context.tablet.settings.profile()->second.name)) };
             }
             else
             {
                 asio::co_spawn(context.stExecutor, [] (Context& context, std::vector<char const*> profileNames) -> asio::awaitable<void> {
-                    context.tablet.settings.profile(std::ranges::find_if(context.tablet.settings.profiles(), [&] (auto const& entry) {
+                    context.tablet.settings.profile(ranges::find_if(context.tablet.settings.profiles(), [&] (auto const& entry) {
                         return entry.first == profileNames.at(size_t(itemIndex.second));
                     }));
 
@@ -909,7 +911,7 @@ Result<void> render_main_window(Context& context)
         {
             if (isProfileEditWindowOpen)
             {
-                auto profile = std::ranges::find_if(context.tablet.settings.profiles(), [&] (auto const& entry) {
+                auto profile = ranges::find_if(context.tablet.settings.profiles(), [&] (auto const& entry) {
                     return entry.first == profileNames.at(size_t(itemIndex.second));
                 });
                 assert(profile != context.tablet.settings.profiles().end());
@@ -917,7 +919,7 @@ Result<void> render_main_window(Context& context)
 
                 if (isWindowClosed || !isProfileWindowOpen)
                 {
-                    itemIndex = { 1, std::distance(profileNames.begin(), std::ranges::find(profileNames, context.tablet.settings.profile()->second.name)) };
+                    itemIndex = { 1, std::distance(profileNames.begin(), ranges::find(profileNames, context.tablet.settings.profile()->second.name)) };
                     isProfileWindowOpen = false;
                 }
 

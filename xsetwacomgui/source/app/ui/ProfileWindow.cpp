@@ -6,6 +6,7 @@
 #include <imgui/extensions/imgui_toast.hpp>
 #include <imgui/imgui.hpp>
 #include <liberror/Try.hpp>
+#include <range/v3/algorithm.hpp>
 
 using namespace liberror;
 using namespace std::literals;
@@ -80,8 +81,8 @@ Result<bool> render_profile_window(bool isWindowVisible, Context& context, Table
     if (currentProfile != &profile)
     {
         currentProfile = &profile;
-        std::ranges::fill_n(profileName.data(), profileName.size(), 0);
-        std::ranges::copy(currentProfile->name, profileName.data());
+        ranges::fill_n(profileName.data(), profileName.size(), 0);
+        ranges::copy(currentProfile->name, profileName.data());
     }
 
     auto previousCursorPosition = ImGui::GetCursorPos();
@@ -142,7 +143,7 @@ Result<bool> render_profile_window(bool isWindowVisible, Context& context, Table
         asio::co_spawn(context.stExecutor, [] (Context& context, TabletProfile& profile) -> asio::awaitable<void> {
             std::erase_if(context.tablet.settings.profiles(), [&] (auto const& entry) { return entry.first == profile.name; });
 
-            context.tablet.settings.profile(std::ranges::find_if(context.tablet.settings.profiles(), [&] (auto const& entry) {
+            context.tablet.settings.profile(ranges::find_if(context.tablet.settings.profiles(), [&] (auto const& entry) {
                 return entry.first != "INVALID";
             }));
 
@@ -165,7 +166,7 @@ Result<bool> render_profile_window(bool isWindowVisible, Context& context, Table
 
     if (!isWindowVisible)
     {
-        std::ranges::fill_n(profileName.data(), profileName.size(), 0);
+        ranges::fill_n(profileName.data(), profileName.size(), 0);
         std::ranges::copy(currentProfile->name, profileName.data());
     }
 

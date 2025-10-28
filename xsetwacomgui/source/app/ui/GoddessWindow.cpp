@@ -10,8 +10,8 @@
 #include <imgui/imgui.hpp>
 #include <imgui/imgui_impl_glfw.hpp>
 #include <imgui/imgui_impl_opengl3.hpp>
+#include <range/v3/algorithm.hpp>
 
-#include <algorithm>
 #include <limits>
 #include <random>
 
@@ -21,7 +21,7 @@ static std::filesystem::path get_random_jahy()
 {
     auto count = 0;
 
-    std::ranges::for_each(std::filesystem::directory_iterator(get_application_data_path() / "images"), [&] (auto) {
+    ranges::for_each(std::filesystem::directory_iterator(get_application_data_path() / "images"), [&] (auto) {
         count += 1;
     });
 

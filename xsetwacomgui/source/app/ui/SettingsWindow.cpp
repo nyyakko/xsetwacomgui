@@ -6,6 +6,7 @@
 #include <imgui/extensions/imgui_toast.hpp>
 #include <imgui/imgui.hpp>
 #include <liberror/Try.hpp>
+#include <range/v3/algorithm.hpp>
 #include <range/v3/view.hpp>
 
 #include <algorithm>
@@ -35,7 +36,7 @@ static Result<void> render_appearance_tab(Context& context)
     static auto fontFamilyIndex = int(std::distance(fonts.begin(), fonts.find(context.settings.font().family)));
 
     static auto fontStyles = fontsInfo.at(size_t(fontFamilyIndex)) | ranges::views::transform([] (auto const& fontInfo) { return fontInfo.style.data(); }) | ranges::to_vector;
-    static auto fontStyleIndex = int(std::distance(fontStyles.begin(), std::ranges::find(fontStyles, context.settings.font().style)));
+    static auto fontStyleIndex = int(std::distance(fontStyles.begin(), ranges::find(fontStyles, context.settings.font().style)));
 
     ImGui::BeginGroup();
     {
@@ -92,7 +93,7 @@ static Result<void> render_languages_tab(Context& context)
     static auto languagesData = languages | ranges::views::transform([] (auto const& language) { return language.data(); }) | ranges::to_vector;
 
     static int languageIndex = int(
-        std::distance(languages.begin(), std::ranges::find(languages, context.settings.language()))
+        std::distance(languages.begin(), ranges::find(languages, context.settings.language()))
     );
 
     context.hasChangedLanguage = ImGui::Combo("##Language", &languageIndex, languagesData.data(), int(languages.size()));
