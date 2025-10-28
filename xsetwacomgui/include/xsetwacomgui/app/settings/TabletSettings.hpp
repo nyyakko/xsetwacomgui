@@ -1,10 +1,8 @@
 #pragma once
 
-#include "app/core/SettingsError.hpp"
 #include "platform/Environment.hpp"
+#include "SettingsError.hpp"
 #include "TabletProfile.hpp"
-
-#include <imgui/imgui_internal.hpp>
 
 #include <algorithm>
 #include <map>

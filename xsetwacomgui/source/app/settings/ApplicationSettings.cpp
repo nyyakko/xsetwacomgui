@@ -36,12 +36,14 @@ Result<ApplicationSettings, SettingsError> load_application_settings()
             return make_error<SettingsError>(SettingsError::Type::OUTDATED_SCHEMA);
         }
 
-        settings.theme       = *magic_enum::enum_cast<ApplicationSettings::Theme>(json["appearance"]["theme"].get<std::string>());
-        settings.font.path   = json["appearance"]["font"]["path"].get<std::string>();
-        settings.font.family = json["appearance"]["font"]["family"].get<std::string>();
-        settings.font.style  = json["appearance"]["font"]["style"].get<std::string>();
-        settings.scale       = json["display"]["scale"].get<float>();
-        settings.language    = json["language"]["language"].get<std::string>();
+        settings.theme(*magic_enum::enum_cast<ApplicationSettings::Theme>(json["appearance"]["theme"].get<std::string>()));
+        settings.font({
+            .family = json["appearance"]["font"]["family"].get<std::string>(),
+            .style = json["appearance"]["font"]["style"].get<std::string>(),
+            .path = json["appearance"]["font"]["path"].get<std::string>(),
+        });
+        settings.scale(json["display"]["scale"].get<float>());
+        settings.language(json["language"]["language"].get<std::string>());
     }
     catch (std::exception const& error)
     {
@@ -49,6 +51,39 @@ Result<ApplicationSettings, SettingsError> load_application_settings()
     }
 
     return settings;
+}
+
+Result<void> save_application_settings(ApplicationSettings const& settings)
+{
+    nlohmann::ordered_json json {
+        { "version", ApplicationSettings::SCHEMA_VERSION },
+        {
+            "appearance", {
+                { "theme", magic_enum::enum_name<ApplicationSettings::Theme>(settings.theme()) },
+                { "font", {
+                        { "path", settings.font().path },
+                        { "family", settings.font().family },
+                        { "style", settings.font().style },
+                    }
+                },
+            }
+        },
+        {
+            "display", {
+                { "scale", settings.scale() },
+            }
+        },
+        {
+            "language", {
+                { "language", settings.language() },
+            }
+        }
+    };
+
+    std::ofstream stream(APPLICATION_SETTINGS_FILE);
+    stream << std::setw(4) << json;
+
+    return {};
 }
 
 Result<void> migrate_application_settings(ApplicationSettings const& settings)
@@ -69,35 +104,4 @@ Result<void> migrate_application_settings(ApplicationSettings const& settings)
     stream << execResult.first;
 
     return {};
-}
-
-void save_application_settings(ApplicationSettings const& settings)
-{
-    nlohmann::ordered_json json {
-        { "version", ApplicationSettings::SCHEMA_VERSION },
-        {
-            "appearance", {
-                { "theme", magic_enum::enum_name<ApplicationSettings::Theme>(settings.theme) },
-                { "font", {
-                        { "path", settings.font.path },
-                        { "family", settings.font.family },
-                        { "style", settings.font.style },
-                    }
-                },
-            }
-        },
-        {
-            "display", {
-                { "scale", settings.scale },
-            }
-        },
-        {
-            "language", {
-                { "language", settings.language },
-            }
-        }
-    };
-
-    std::ofstream stream(APPLICATION_SETTINGS_FILE);
-    stream << std::setw(4) << json;
 }

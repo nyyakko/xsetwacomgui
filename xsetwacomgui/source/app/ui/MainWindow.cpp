@@ -78,7 +78,7 @@ static Result<void> render_area_mappers(Context& context)
     static ImRect displayMapperPosition {};
     context.hasChangedDisplayArea =
         AreaMapper(
-            TRY(Localisation::get(context.settings.language, Localisation::Window_Main_Tabs_Display_Display)),
+            TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_Tabs_Display_Display)),
             displayAreaAnchors,
             displayMapperSize,
             &displayMapperPosition,
@@ -146,7 +146,7 @@ static Result<void> render_area_mappers(Context& context)
     static ImRect deviceMapperPosition {};
     context.hasChangedDeviceArea =
         AreaMapper(
-            TRY(Localisation::get(context.settings.language, Localisation::Window_Main_Tabs_Tablet_Device)),
+            TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_Tabs_Tablet_Device)),
             deviceAreaAnchors,
             deviceMapperSize,
             &deviceMapperPosition,
@@ -214,7 +214,7 @@ static Result<void> render_tablet_tab(Context& context)
         }
 
         ImGui::AlignTextToFramePadding();
-        ImGui::Text("%s", TRY(Localisation::get(context.settings.language, Localisation::Window_Main_Tabs_Tablet_Device)));
+        ImGui::Text("%s", TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_Tabs_Tablet_Device)));
         ImGui::SetNextItemWidth(300_scaled + ImGui::GetStyle().WindowPadding.x);
         context.hasChangedDevice = ImGui::Combo("##Device", &deviceIndex, deviceNames.data(), int(deviceNames.size()));
 
@@ -238,7 +238,7 @@ static Result<void> render_tablet_tab(Context& context)
             ImGui::BeginGroup();
             {
                 ImGui::AlignTextToFramePadding();
-                ImGui::Text("%s", TRY(Localisation::get(context.settings.language, Localisation::Window_Main_Tabs_Tablet_Width)));
+                ImGui::Text("%s", TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_Tabs_Tablet_Width)));
                 ImGui::SetNextItemWidth(150_scaled);
                 context.hasChangedDeviceArea |= ImGui::InputFloat("##TabletWidth", &context.tablet.settings.profile()->second.stylus.area.width, 0.f, 0.f, "%.0f");
             }
@@ -247,7 +247,7 @@ static Result<void> render_tablet_tab(Context& context)
             ImGui::BeginGroup();
             {
                 ImGui::AlignTextToFramePadding();
-                ImGui::Text("%s", TRY(Localisation::get(context.settings.language, Localisation::Window_Main_Tabs_Tablet_Height)));
+                ImGui::Text("%s", TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_Tabs_Tablet_Height)));
                 ImGui::SetNextItemWidth(150_scaled);
                 context.hasChangedDeviceArea |= ImGui::InputFloat("##TabletHeight", &context.tablet.settings.profile()->second.stylus.area.height, 0.f, 0.f, "%.0f");
             }
@@ -257,7 +257,7 @@ static Result<void> render_tablet_tab(Context& context)
             ImGui::BeginGroup();
             {
                 ImGui::AlignTextToFramePadding();
-                ImGui::Text("%s", TRY(Localisation::get(context.settings.language, Localisation::Window_Main_Tabs_Tablet_OffsetX)));
+                ImGui::Text("%s", TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_Tabs_Tablet_OffsetX)));
                 ImGui::SetNextItemWidth(150_scaled);
                 context.hasChangedDeviceArea |= ImGui::InputFloat("##TabletOffsetX", &context.tablet.settings.profile()->second.stylus.area.offsetX, 0.f, 0.f, "%.0f");
             }
@@ -266,7 +266,7 @@ static Result<void> render_tablet_tab(Context& context)
             ImGui::BeginGroup();
             {
                 ImGui::AlignTextToFramePadding();
-                ImGui::Text("%s", TRY(Localisation::get(context.settings.language, Localisation::Window_Main_Tabs_Tablet_OffsetY)));
+                ImGui::Text("%s", TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_Tabs_Tablet_OffsetY)));
                 ImGui::SetNextItemWidth(150_scaled);
                 context.hasChangedDeviceArea |= ImGui::InputFloat("##TabletOffsetY", &context.tablet.settings.profile()->second.stylus.area.offsetY, 0.f, 0.f, "%.0f");
             }
@@ -277,10 +277,10 @@ static Result<void> render_tablet_tab(Context& context)
         ImGui::BeginGroup();
         {
             ImGui::AlignTextToFramePadding();
-            ImGui::Text("%s", TRY(Localisation::get(context.settings.language, Localisation::Window_Main_Tabs_Tablet_Orientation)));
+            ImGui::Text("%s", TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_Tabs_Tablet_Orientation)));
             char const* orientations[] = {
-                TRY(Localisation::get(context.settings.language, Localisation::Window_Main_Tabs_Tablet_Orientation_Left)),
-                TRY(Localisation::get(context.settings.language, Localisation::Window_Main_Tabs_Tablet_Orientation_Right)),
+                TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_Tabs_Tablet_Orientation_Left)),
+                TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_Tabs_Tablet_Orientation_Right)),
             };
             ImGui::SetNextItemWidth(150_scaled);
             static auto orientationIndex = int(context.tablet.settings.profile()->second.stylus.handedness);
@@ -300,7 +300,7 @@ static Result<void> render_tablet_tab(Context& context)
             ImGui::SameLine();
 
             static auto isMappingsSettingsOpen = false;
-            isMappingsSettingsOpen |= ImGui::Button(TRY(Localisation::get(context.settings.language, Localisation::Window_Mappings_Title)), { 150_scaled, 0 });
+            isMappingsSettingsOpen |= ImGui::Button(TRY(Localisation::get(context.settings.language(), Localisation::Window_Mappings_Title)), { 150_scaled, 0 });
             if (isMappingsSettingsOpen)
             {
                 auto [windowWidth, windowHeight] = ImGui::GetWindowSize();
@@ -309,7 +309,7 @@ static Result<void> render_tablet_tab(Context& context)
                 ImGui::SetNextWindowSize({ mappingsWindowWidth, mappingsWindowHeight });
                 ImGui::SetNextWindowPos({ (float(windowWidth) - mappingsWindowWidth)/2, (float(windowHeight) - mappingsWindowHeight)/2 });
                 ImGui::Begin(
-                    TRY(Localisation::get(context.settings.language, Localisation::Window_Mappings_Title)),
+                    TRY(Localisation::get(context.settings.language(), Localisation::Window_Mappings_Title)),
                     &isMappingsSettingsOpen,
                     ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
                 );
@@ -323,9 +323,9 @@ static Result<void> render_tablet_tab(Context& context)
 
         ImGui::BeginGroup();
         {
-            context.hasChangedDeviceArea |= ImGui::Checkbox(TRY(Localisation::get(context.settings.language, Localisation::Window_Main_Tabs_Tablet_FullArea)), &context.tablet.settings.profile()->second.stylus.forceFullArea);
+            context.hasChangedDeviceArea |= ImGui::Checkbox(TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_Tabs_Tablet_FullArea)), &context.tablet.settings.profile()->second.stylus.forceFullArea);
             ImGui::BeginDisabled();
-            ImGui::Checkbox(TRY(Localisation::get(context.settings.language, Localisation::Window_Main_Tabs_Tablet_ForceProportions)), &context.tablet.settings.profile()->second.stylus.forceAspectRatio);
+            ImGui::Checkbox(TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_Tabs_Tablet_ForceProportions)), &context.tablet.settings.profile()->second.stylus.forceAspectRatio);
             ImGui::EndDisabled();
         }
         ImGui::EndGroup();
@@ -352,7 +352,7 @@ static Result<void> render_tablet_tab(Context& context)
         }
 
         ImGui::AlignTextToFramePadding();
-        context.hasChangedDevicePressure = ImGui::BezierEditor(TRY(Localisation::get(context.settings.language, Localisation::Window_Main_Tabs_Tablet_PressureCurve)), pressureAnchors, { 250_scaled, 250_scaled });
+        context.hasChangedDevicePressure = ImGui::BezierEditor(TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_Tabs_Tablet_PressureCurve)), pressureAnchors, { 250_scaled, 250_scaled });
 
         if (context.hasChangedDevicePressure)
         {
@@ -401,7 +401,7 @@ static Result<void> render_display_tab(Context& context)
         }
 
         ImGui::AlignTextToFramePadding();
-        ImGui::Text("%s", TRY(Localisation::get(context.settings.language, Localisation::Window_Main_Tabs_Display_Display)));
+        ImGui::Text("%s", TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_Tabs_Display_Display)));
         ImGui::SetNextItemWidth(300_scaled + ImGui::GetStyle().WindowPadding.x);
         context.hasChangedDisplay = ImGui::Combo("##Displays", &displayIndex, displayNames.data(), int(displayNames.size()));
 
@@ -419,7 +419,7 @@ static Result<void> render_display_tab(Context& context)
             ImGui::BeginGroup();
             {
                 ImGui::AlignTextToFramePadding();
-                ImGui::Text("%s", TRY(Localisation::get(context.settings.language, Localisation::Window_Main_Tabs_Display_Width)));
+                ImGui::Text("%s", TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_Tabs_Display_Width)));
                 ImGui::SetNextItemWidth(150_scaled);
                 context.hasChangedDisplayArea |= ImGui::InputFloat("##DisplayWidth", &context.tablet.settings.profile()->second.display.area.width, 0.f, 0.f, "%.0f");
             }
@@ -428,7 +428,7 @@ static Result<void> render_display_tab(Context& context)
             ImGui::BeginGroup();
             {
                 ImGui::AlignTextToFramePadding();
-                ImGui::Text("%s", TRY(Localisation::get(context.settings.language, Localisation::Window_Main_Tabs_Display_Height)));
+                ImGui::Text("%s", TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_Tabs_Display_Height)));
                 ImGui::SetNextItemWidth(150_scaled);
                 context.hasChangedDisplayArea |= ImGui::InputFloat("##DisplayHeight", &context.tablet.settings.profile()->second.display.area.height, 0.f, 0.f, "%.0f");
             }
@@ -438,7 +438,7 @@ static Result<void> render_display_tab(Context& context)
             ImGui::BeginGroup();
             {
                 ImGui::AlignTextToFramePadding();
-                ImGui::Text("%s", TRY(Localisation::get(context.settings.language, Localisation::Window_Main_Tabs_Display_OffsetX)));
+                ImGui::Text("%s", TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_Tabs_Display_OffsetX)));
                 ImGui::SetNextItemWidth(150_scaled);
                 context.hasChangedDisplayArea |= ImGui::InputFloat("##DisplayOffsetX", &context.tablet.settings.profile()->second.display.area.offsetX, 0.f, 0.f, "%.0f");
             }
@@ -447,7 +447,7 @@ static Result<void> render_display_tab(Context& context)
             ImGui::BeginGroup();
             {
                 ImGui::AlignTextToFramePadding();
-                ImGui::Text("%s", TRY(Localisation::get(context.settings.language, Localisation::Window_Main_Tabs_Display_OffsetY)));
+                ImGui::Text("%s", TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_Tabs_Display_OffsetY)));
                 ImGui::SetNextItemWidth(150_scaled);
                 context.hasChangedDisplayArea |= ImGui::InputFloat("##DisplayOffsetY", &context.tablet.settings.profile()->second.display.area.offsetY, 0.f, 0.f, "%.0f");
             }
@@ -457,9 +457,9 @@ static Result<void> render_display_tab(Context& context)
 
         ImGui::BeginGroup();
         {
-            context.hasChangedDisplayArea |= ImGui::Checkbox(TRY(Localisation::get(context.settings.language, Localisation::Window_Main_Tabs_Display_FullArea)), &context.tablet.settings.profile()->second.display.forceFullArea);
+            context.hasChangedDisplayArea |= ImGui::Checkbox(TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_Tabs_Display_FullArea)), &context.tablet.settings.profile()->second.display.forceFullArea);
             ImGui::BeginDisabled();
-            ImGui::Checkbox(TRY(Localisation::get(context.settings.language, Localisation::Window_Main_Tabs_Display_ForceProportions)), &context.tablet.settings.profile()->second.display.forceAspectRatio);
+            ImGui::Checkbox(TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_Tabs_Display_ForceProportions)), &context.tablet.settings.profile()->second.display.forceAspectRatio);
             ImGui::EndDisabled();
         }
         ImGui::EndGroup();
@@ -487,7 +487,7 @@ static Result<void> render_migration_popup(Context& context)
     {
         for (auto messageLine :
             ImGui::SplitToWidth(
-                TRY(Localisation::get(context.settings.language, Localisation::Popup_Outdated_Device_Settings_Text)),
+                TRY(Localisation::get(context.settings.language(), Localisation::Popup_Outdated_Device_Settings_Text)),
                 int(width)
             ))
         {
@@ -497,7 +497,7 @@ static Result<void> render_migration_popup(Context& context)
     ImGui::EndGroup();
 
     ImGui::SetCursorPosY(height - (25_scaled + ImGui::GetStyle().WindowPadding.y));
-    if (ImGui::Button(TRY(Localisation::get(context.settings.language, Localisation::Popup_Outdated_Device_Settings_Overwrite)), { 0, 25_scaled }))
+    if (ImGui::Button(TRY(Localisation::get(context.settings.language(), Localisation::Popup_Outdated_Device_Settings_Overwrite)), { 0, 25_scaled }))
     {
         context.handleOutdatedDeviceSettings = false;
         asio::co_spawn(context.stExecutor, [] (Context& context) -> asio::awaitable<void> {
@@ -506,15 +506,15 @@ static Result<void> render_migration_popup(Context& context)
                 co_return;
             }(context.tablet.settings));
             ImGui::PushToast(
-                MUST(Localisation::get(context.settings.language, Localisation::Toast_Success)),
-                MUST(Localisation::get(context.settings.language, Localisation::Toast_Device_Settings_Overwritten))
+                MUST(Localisation::get(context.settings.language(), Localisation::Toast_Success)),
+                MUST(Localisation::get(context.settings.language(), Localisation::Toast_Device_Settings_Overwritten))
             );
         }(context), asio::detached);
     }
 
     ImGui::SameLine();
 
-    if (ImGui::Button(TRY(Localisation::get(context.settings.language, Localisation::Popup_Outdated_Device_Settings_Migrate)), { 0, 25_scaled }))
+    if (ImGui::Button(TRY(Localisation::get(context.settings.language(), Localisation::Popup_Outdated_Device_Settings_Migrate)), { 0, 25_scaled }))
     {
         context.handleOutdatedDeviceSettings = false;
         asio::co_spawn(context.stExecutor, [] (Context& context) -> asio::awaitable<void> {
@@ -524,8 +524,8 @@ static Result<void> render_migration_popup(Context& context)
             if (!maybeMigrated.has_value())
             {
                 ImGui::PushToast(
-                    MUST(Localisation::get(context.settings.language, Localisation::Toast_Error)),
-                    MUST(Localisation::get(context.settings.language, Localisation::Toast_Device_Settings_Migration_Failed))
+                    MUST(Localisation::get(context.settings.language(), Localisation::Toast_Error)),
+                    MUST(Localisation::get(context.settings.language(), Localisation::Toast_Device_Settings_Migration_Failed))
                 );
                 co_return;
             }
@@ -547,7 +547,7 @@ Result<void> render_main_window(Context& context)
         ImGui::SetNextWindowSize({ migrationPopupWidth, migrationPopupHeight });
         ImGui::SetNextWindowPos({ (float(windowWidth) - migrationPopupWidth)/2, (float(windowHeight) - migrationPopupHeight)/2 });
         ImGui::Begin(
-            TRY(Localisation::get(context.settings.language, Localisation::Popup_Outdated_Device_Settings_Title)),
+            TRY(Localisation::get(context.settings.language(), Localisation::Popup_Outdated_Device_Settings_Title)),
             nullptr,
             ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
         );
@@ -560,8 +560,8 @@ Result<void> render_main_window(Context& context)
     if (context.devices.empty() && !hasTriedToInitializeDeviceSettings)
     {
         ImGui::PushToast(
-            TRY(Localisation::get(context.settings.language, Localisation::Toast_Warning)),
-            TRY(Localisation::get(context.settings.language, Localisation::Toast_Devices_Missing))
+            TRY(Localisation::get(context.settings.language(), Localisation::Toast_Warning)),
+            TRY(Localisation::get(context.settings.language(), Localisation::Toast_Devices_Missing))
         );
         hasTriedToInitializeDeviceSettings = true;
     }
@@ -594,8 +594,8 @@ Result<void> render_main_window(Context& context)
                 if (!maybeCreated.has_value())
                 {
                     ImGui::PushToast(
-                        MUST(Localisation::get(context.settings.language, Localisation::Toast_Error)),
-                        MUST(Localisation::get(context.settings.language, Localisation::Toast_Profile_Create_Failed))
+                        MUST(Localisation::get(context.settings.language(), Localisation::Toast_Error)),
+                        MUST(Localisation::get(context.settings.language(), Localisation::Toast_Profile_Create_Failed))
                     );
                     co_return;
                 }
@@ -620,8 +620,8 @@ Result<void> render_main_window(Context& context)
                 if (!maybeLoaded.has_value())
                 {
                     ImGui::PushToast(
-                        MUST(Localisation::get(context.settings.language, Localisation::Toast_Error)),
-                        MUST(Localisation::get(context.settings.language, Localisation::Toast_Profile_Load_Failed))
+                        MUST(Localisation::get(context.settings.language(), Localisation::Toast_Error)),
+                        MUST(Localisation::get(context.settings.language(), Localisation::Toast_Profile_Load_Failed))
                     );
                 }
 
@@ -630,22 +630,22 @@ Result<void> render_main_window(Context& context)
                 case SettingsError::Type::WRITE_FAILURE: break;
                 case SettingsError::Type::FILE_NOT_FOUND: {
                     ImGui::PushToast(
-                        MUST(Localisation::get(context.settings.language, Localisation::Toast_Warning)),
-                        MUST(Localisation::get(context.settings.language, Localisation::Toast_Device_Settings_Missing))
+                        MUST(Localisation::get(context.settings.language(), Localisation::Toast_Warning)),
+                        MUST(Localisation::get(context.settings.language(), Localisation::Toast_Device_Settings_Missing))
                     );
                     break;
                 }
                 case SettingsError::Type::PROFILE_NOT_FOUND: {
                     ImGui::PushToast(
-                        MUST(Localisation::get(context.settings.language, Localisation::Toast_Error)),
-                        MUST(Localisation::get(context.settings.language, Localisation::Toast_Profile_Missing))
+                        MUST(Localisation::get(context.settings.language(), Localisation::Toast_Error)),
+                        MUST(Localisation::get(context.settings.language(), Localisation::Toast_Profile_Missing))
                     );
                     break;
                 }
                 case SettingsError::Type::READ_FAILURE: {
                     ImGui::PushToast(
-                        MUST(Localisation::get(context.settings.language, Localisation::Toast_Warning)),
-                        MUST(Localisation::get(context.settings.language, Localisation::Toast_Device_Settings_Load_Failed))
+                        MUST(Localisation::get(context.settings.language(), Localisation::Toast_Warning)),
+                        MUST(Localisation::get(context.settings.language(), Localisation::Toast_Device_Settings_Load_Failed))
                     );
                     break;
                 }
@@ -678,8 +678,8 @@ Result<void> render_main_window(Context& context)
                 if (!maybeLoaded.has_value())
                 {
                     ImGui::PushToast(
-                        MUST(Localisation::get(context.settings.language, Localisation::Toast_Error)),
-                        MUST(Localisation::get(context.settings.language, Localisation::Toast_Profile_Load_Failed))
+                        MUST(Localisation::get(context.settings.language(), Localisation::Toast_Error)),
+                        MUST(Localisation::get(context.settings.language(), Localisation::Toast_Profile_Load_Failed))
                     );
                 }
             }
@@ -717,8 +717,8 @@ Result<void> render_main_window(Context& context)
                 if (maybeDevices->empty())
                 {
                     ImGui::PushToast(
-                        MUST(Localisation::get(context.settings.language, Localisation::Toast_Error)),
-                        MUST(Localisation::get(context.settings.language, Localisation::Toast_Devices_Missing))
+                        MUST(Localisation::get(context.settings.language(), Localisation::Toast_Error)),
+                        MUST(Localisation::get(context.settings.language(), Localisation::Toast_Devices_Missing))
                     );
                     co_return;
                 }
@@ -751,8 +751,8 @@ Result<void> render_main_window(Context& context)
                 if (!maybeLoaded.has_value())
                 {
                     ImGui::PushToast(
-                        MUST(Localisation::get(context.settings.language, Localisation::Toast_Error)),
-                        MUST(Localisation::get(context.settings.language, Localisation::Toast_Profile_Load_Failed))
+                        MUST(Localisation::get(context.settings.language(), Localisation::Toast_Error)),
+                        MUST(Localisation::get(context.settings.language(), Localisation::Toast_Profile_Load_Failed))
                     );
                 }
             }(context), asio::detached);
@@ -786,13 +786,13 @@ Result<void> render_main_window(Context& context)
 
     if (ImGui::BeginTabBar("##Tabs"))
     {
-        if (ImGui::BeginTabItem(TRY(Localisation::get(context.settings.language, Localisation::Window_Main_Tabs_Tablet_Title))))
+        if (ImGui::BeginTabItem(TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_Tabs_Tablet_Title))))
         {
             TRY(render_tablet_tab(context));
             ImGui::EndTabItem();
         }
 
-        if (ImGui::BeginTabItem(TRY(Localisation::get(context.settings.language, Localisation::Window_Main_Tabs_Display_Title))))
+        if (ImGui::BeginTabItem(TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_Tabs_Display_Title))))
         {
             TRY(render_display_tab(context));
             ImGui::EndTabItem();
@@ -808,7 +808,7 @@ Result<void> render_main_window(Context& context)
             | ranges::views::transform([] (auto const& profile) { return profile.c_str(); })
             | ranges::to_vector;
 
-    std::vector<std::vector<char const*>> items { { TRY(Localisation::get(context.settings.language, Localisation::New_Profile)) }, profileNames };
+    std::vector<std::vector<char const*>> items { { TRY(Localisation::get(context.settings.language(), Localisation::New_Profile)) }, profileNames };
     static std::pair<int, int> itemIndex { 1, context.tablet.settings.profile()->second.name == "INVALID" ? 0 : std::distance(profileNames.begin(), std::ranges::find(profileNames, context.tablet.settings.profile()->second.name)) };
 
     if (context.hasChangedDeviceSettings && context.tablet.settings.profile()->second.name != "INVALID")
@@ -823,7 +823,7 @@ Result<void> render_main_window(Context& context)
     ImGui::SetCursorPosY(ImGui::GetWindowHeight() - (35_scaled + ImGui::GetStyle().WindowPadding.x));
     static auto isDropupButtonDisabled = false;
     ImGui::BeginDisabled(isDropupButtonDisabled);
-    auto [pressedPrimary, pressedSecondary] = DropupButton(TRY(Localisation::get(context.settings.language, Localisation::Save)), &itemIndex, items, { 200_scaled, 35_scaled });
+    auto [pressedPrimary, pressedSecondary] = DropupButton(TRY(Localisation::get(context.settings.language(), Localisation::Save)), &itemIndex, items, { 200_scaled, 35_scaled });
     ImGui::EndDisabled();
     ImGui::SetCursorPos(previousCursorPosition);
     if (pressedPrimary)
@@ -838,8 +838,8 @@ Result<void> render_main_window(Context& context)
             if (!maybeLoaded)
             {
                 ImGui::PushToast(
-                    MUST(Localisation::get(context.settings.language, Localisation::Toast_Error)),
-                    MUST(Localisation::get(context.settings.language, Localisation::Toast_Profile_Load_Failed))
+                    MUST(Localisation::get(context.settings.language(), Localisation::Toast_Error)),
+                    MUST(Localisation::get(context.settings.language(), Localisation::Toast_Profile_Load_Failed))
                 );
                 co_return;
             }
@@ -850,8 +850,8 @@ Result<void> render_main_window(Context& context)
             }(context.tablet.settings));
 
             ImGui::PushToast(
-                MUST(Localisation::get(context.settings.language, Localisation::Toast_Success)),
-                MUST(Localisation::get(context.settings.language, Localisation::Toast_Device_Settings_Saved))
+                MUST(Localisation::get(context.settings.language(), Localisation::Toast_Success)),
+                MUST(Localisation::get(context.settings.language(), Localisation::Toast_Device_Settings_Saved))
             );
         }(context), asio::detached);
     }
@@ -880,8 +880,8 @@ Result<void> render_main_window(Context& context)
                     if (!maybeLoaded)
                     {
                         ImGui::PushToast(
-                            MUST(Localisation::get(context.settings.language, Localisation::Toast_Error)),
-                            MUST(Localisation::get(context.settings.language, Localisation::Toast_Profile_Load_Failed))
+                            MUST(Localisation::get(context.settings.language(), Localisation::Toast_Error)),
+                            MUST(Localisation::get(context.settings.language(), Localisation::Toast_Profile_Load_Failed))
                         );
                         co_return;
                     }
@@ -902,7 +902,7 @@ Result<void> render_main_window(Context& context)
         ImGui::SetNextWindowSize({ profileWindowWidth, profileWindowHeight });
         ImGui::SetNextWindowPos({ (float(windowWidth) - profileWindowWidth)/2, (float(windowHeight) - profileWindowHeight)/2 });
         ImGui::Begin(
-            TRY(Localisation::get(context.settings.language, Localisation::Window_Profile_Title)),
+            TRY(Localisation::get(context.settings.language(), Localisation::Window_Profile_Title)),
             &isProfileWindowOpen,
             ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
         );
