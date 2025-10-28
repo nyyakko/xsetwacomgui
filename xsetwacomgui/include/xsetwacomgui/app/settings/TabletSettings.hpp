@@ -11,12 +11,8 @@ inline std::filesystem::path TABLET_SETTINGS_FILE = get_application_config_path(
 
 class TabletSettings
 {
-private:
     // Should be updated every time a change is made
     static constexpr auto SCHEMA_VERSION = "1.4";
-
-    friend liberror::Result<TabletSettings, SettingsError> load_tablet_settings();
-    friend void save_tablet_settings(TabletSettings const& settings);
 
 public:
     TabletSettings()
@@ -59,6 +55,9 @@ public:
     }
 
 public:
+    friend liberror::Result<TabletSettings, SettingsError> load_tablet_settings();
+    friend liberror::Result<void> save_tablet_settings(TabletSettings const& settings);
+
     // cppcheck-suppress [functionStatic, constParameterReference]
     inline constexpr auto& profiles(this auto& self) { return self.profiles_; }
 
@@ -79,5 +78,5 @@ private:
 };
 
 liberror::Result<TabletSettings, SettingsError> load_tablet_settings();
+liberror::Result<void> save_tablet_settings(TabletSettings const& settings);
 liberror::Result<void> migrate_tablet_settings(TabletSettings const& settings);
-void save_tablet_settings(TabletSettings const& settings);

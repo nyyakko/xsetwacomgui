@@ -103,27 +103,7 @@ Result<TabletSettings, SettingsError> load_tablet_settings()
     return settings;
 }
 
-Result<void> migrate_tablet_settings(TabletSettings const& settings)
-{
-    static auto newSettingsSchema = get_application_config_path() / "tablet_settings.json";
-    static auto oldSettingsSchema = get_application_config_path() / "tablet_settings.old.json";
-
-    std::filesystem::rename(TABLET_SETTINGS_FILE, oldSettingsSchema);
-
-    save_tablet_settings(settings);
-
-    auto execResult = TRY(libexec::execute("xdg-open", { get_application_config_path() }, libexec::Mode::DETACHED));
-    if (!execResult.second.empty()) return make_error(execResult.second);
-
-    execResult = TRY(libexec::execute("git", { "diff", oldSettingsSchema, newSettingsSchema }));
-    if (!execResult.second.empty()) return make_error(execResult.second);
-    std::ofstream stream(get_application_config_path() / "conflict.diff");
-    stream << execResult.first;
-
-    return {};
-}
-
-void save_tablet_settings(TabletSettings const& settings)
+Result<void> save_tablet_settings(TabletSettings const& settings)
 {
     nlohmann::ordered_json json {
         { "version", TabletSettings::SCHEMA_VERSION },
@@ -207,4 +187,26 @@ void save_tablet_settings(TabletSettings const& settings)
 
     std::ofstream stream(TABLET_SETTINGS_FILE);
     stream << std::setw(4) << json;
+
+    return {};
+}
+
+Result<void> migrate_tablet_settings(TabletSettings const& settings)
+{
+    static auto newSettingsSchema = get_application_config_path() / "tablet_settings.json";
+    static auto oldSettingsSchema = get_application_config_path() / "tablet_settings.old.json";
+
+    std::filesystem::rename(TABLET_SETTINGS_FILE, oldSettingsSchema);
+
+    save_tablet_settings(settings);
+
+    auto execResult = TRY(libexec::execute("xdg-open", { get_application_config_path() }, libexec::Mode::DETACHED));
+    if (!execResult.second.empty()) return make_error(execResult.second);
+
+    execResult = TRY(libexec::execute("git", { "diff", oldSettingsSchema, newSettingsSchema }));
+    if (!execResult.second.empty()) return make_error(execResult.second);
+    std::ofstream stream(get_application_config_path() / "conflict.diff");
+    stream << execResult.first;
+
+    return {};
 }
