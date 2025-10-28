@@ -809,7 +809,7 @@ Result<void> render_main_window(Context& context)
             | ranges::to_vector;
 
     std::vector<std::vector<char const*>> items { { TRY(Localisation::get(context.settings.language(), Localisation::New_Profile)) }, profileNames };
-    static std::pair<int, int> itemIndex { 1, context.tablet.settings.profile()->second.name == "INVALID" ? 0 : std::distance(profileNames.begin(), std::ranges::find(profileNames, context.tablet.settings.profile()->second.name)) };
+    static std::pair<int, int> itemIndex { 1, 0 };
 
     if (context.hasChangedDeviceSettings && context.tablet.settings.profile()->second.name != "INVALID")
     {

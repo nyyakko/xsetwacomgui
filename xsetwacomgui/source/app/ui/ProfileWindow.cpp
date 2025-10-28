@@ -117,6 +117,8 @@ Result<bool> render_profile_window(bool isWindowVisible, Context& context, Table
                     context.tablet.settings.profile(iterator);
                 }
 
+                context.hasChangedDeviceSettings = true;
+
                 co_await asio::co_spawn(context.mtExecutor, [] (auto settings) -> asio::awaitable<void> {
                     save_tablet_settings(settings);
                     co_return;
@@ -143,6 +145,8 @@ Result<bool> render_profile_window(bool isWindowVisible, Context& context, Table
             context.tablet.settings.profile(std::ranges::find_if(context.tablet.settings.profiles(), [&] (auto const& entry) {
                 return entry.first != "INVALID";
             }));
+
+            context.hasChangedDeviceSettings = true;
 
             co_await asio::co_spawn(context.mtExecutor, [] (auto settings) -> asio::awaitable<void> {
                 save_tablet_settings(settings);
