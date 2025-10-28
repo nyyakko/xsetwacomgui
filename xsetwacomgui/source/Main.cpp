@@ -278,11 +278,8 @@ static Result<void> run_no_gui(Context& context)
         auto action = magic_enum::enum_cast<UDevDevice::Action>(message.data());
         assert(action && "INVALID ACTION");
 
-        switch (*action)
+        if (*action == UDevDevice::Action::BIND && ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) < 1)
         {
-        case UDevDevice::Action::BIND: {
-            if (ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) >= 1) break;
-
             while (context.devices = TRY(get_available_devices()), context.devices.empty())
             {
                 if (static auto retry = 0; retry++ == 3) break;
@@ -297,7 +294,7 @@ static Result<void> run_no_gui(Context& context)
                     "XSetWacomGUI", TRY(Localisation::get(context.settings.language(), Localisation::Toast_Devices_Missing)), "--icon", icon.string()
                 }));
                 if (!err.empty()) return make_error(err);
-                break;
+                continue;
             }
 
             auto result = load_tablet_settings();
@@ -318,12 +315,10 @@ static Result<void> run_no_gui(Context& context)
             TRY(load_tablet_profile(context.tablet.settings.profile()->second, context.tablet, context.display));
 
             spdlog::info("Device settings (profile: {}) loaded successfully", context.tablet.settings.profile()->second.name);
-
-            break;
         }
-        case UDevDevice::Action::UNBIND: {
-            if (ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) > 1) break;
 
+        if (*action == UDevDevice::Action::UNBIND && ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) <= 1)
+        {
             context.devices = TRY(get_available_devices());
 
             auto maybeDevice = ranges::find(context.devices, context.tablet.settings.profile()->second.stylus.name, &Device::name);
@@ -334,12 +329,6 @@ static Result<void> run_no_gui(Context& context)
                 context.tablet = {};
                 context.tablet.settings = {};
             }
-
-            break;
-        }
-        case UDevDevice::Action::REMOVE: break;
-        case UDevDevice::Action::ADD: break;
-        case UDevDevice::Action::NONE: break;
         }
     }
 

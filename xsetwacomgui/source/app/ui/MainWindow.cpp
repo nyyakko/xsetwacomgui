@@ -714,7 +714,15 @@ Result<void> render_main_window(Context& context)
         {
             asio::co_spawn(context.stExecutor, [] (Context& context) -> asio::awaitable<void> {
                 auto maybeDevices = co_await asio::co_spawn(context.mtExecutor, fnGetAvailableDevices(true));
-                if (!maybeDevices.has_value()) make_error(maybeDevices.error());
+
+                if (!maybeDevices.has_value())
+                {
+                    ImGui::PushToast(
+                        MUST(Localisation::get(context.settings.language(), Localisation::Toast_Error)),
+                        MUST(Localisation::get(context.settings.language(), Localisation::Toast_Devices_Missing))
+                    );
+                    co_return;
+                }
 
                 if (maybeDevices->empty())
                 {
@@ -764,7 +772,7 @@ Result<void> render_main_window(Context& context)
         {
             asio::co_spawn(context.stExecutor, [] (Context& context) -> asio::awaitable<void> {
                 auto maybeDevices = co_await asio::co_spawn(context.mtExecutor, fnGetAvailableDevices(false));
-                if (!maybeDevices.has_value()) make_error(maybeDevices.error());
+                if (!maybeDevices.has_value()) co_return;
 
                 context.devices = *maybeDevices;
 
