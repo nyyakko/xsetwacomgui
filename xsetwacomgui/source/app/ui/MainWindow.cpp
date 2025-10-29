@@ -1,4 +1,3 @@
-#include <range/v3/algorithm/find_if_not.hpp>
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "app/ui/MainWindow.hpp"
 
