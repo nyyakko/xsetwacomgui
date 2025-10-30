@@ -1,7 +1,7 @@
 {
-    "create": "Create (FIXME)",
-    "delete": "Delete (FIXME)",
-    "newProfile": "New Profile (FIXME)",
+    "create": "Создать",
+    "delete": "Удалить",
+    "newProfile": "Новый профиль",
     "save": "Сохранить",
 
     "toast": {
@@ -12,22 +12,22 @@
         },
         "content": {
             "applicationSettingsSaved": "Настройки приложения сохранены",
-            "deviceMappingsSaved": "Successfully saved device mappings (FIXME)",
+            "deviceMappingsSaved": "Привязки устройства сохранены",
             "deviceSettingsLoadFailed": "Не удалось загрузить настройки устройства",
             "deviceSettingsLoadSuccess": "Настройки устройства загружены",
-            "deviceSettingsMigrationFailed": "Failed to migrate device settings (FIXME)",
+            "deviceSettingsMigrationFailed": "Не удалось перенести настройки устройства",
             "deviceSettingsMissing": "Не найдены настройки устройства, будут загружены данные из xsetwacom",
             "deviceSettingsOutdatedSchema": "Формат настроек планшета устарел",
             "deviceSettingsOverwritten": "Настройки устройства перезаписаны",
             "deviceSettingsSaved": "Настройки устройства сохранены",
             "devicesMissing": "Устройства не обнаружены",
-            "profileCreateFailed": "Failed to create profile (FIXME)",
-            "profileCreateSuccess": "Profile created successfully (FIXME)",
-            "profileDeleteSuccess": "Profile deleted successfully (FIXME)",
-            "profileLoadFailed": "Failed to load profile (FIXME)",
-            "profileMissing": "Profile could not be found (FIXME)",
-            "profileNameEmpty": "Profile name cannot be empty (FIXME)",
-            "profileUpdateSuccess": "Profile updated successfully (FIXME)"
+            "profileCreateFailed": "Не удалось создать профиль",
+            "profileCreateSuccess": "Профиль успешно создан",
+            "profileDeleteSuccess": "Профиль успешно удалён",
+            "profileLoadFailed": "Не удалось загрузить профиль",
+            "profileMissing": "Профиль не найден",
+            "profileNameEmpty": "Название профиля не может быть пустым",
+            "profileUpdateSuccess": "Профиль успешно обновлён"
         }
     },
 
@@ -55,8 +55,8 @@
                     "title": "Настройки планшета",
                     "device": "Устройство",
                     "orientation": "Ориентация",
-                    "orientationLeft": "Леворукая",
-                    "orientationRight": "Праворукая",
+                    "orientationLeft": "Левая",
+                    "orientationRight": "Правая",
                     "pressureCurve": "Кривая давления",
                     "width": "Ширина",
                     "height": "Высота",
@@ -115,9 +115,9 @@
             "title": "Богиня"
         },
         "profile": {
-            "title": "Profile (FIXME)",
+            "title": "Профиль",
             "tab": {
-                "name": "Name (FIXME)"
+                "name": "Название"
             }
         }
     }
