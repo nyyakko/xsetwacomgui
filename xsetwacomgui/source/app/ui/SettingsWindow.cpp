@@ -138,15 +138,15 @@ Result<void> render_settings_window(Context& context)
     if (ImGui::Button(TRY(Localisation::get(context.settings.language(), Localisation::Save)), { 150_scaled, 25_scaled }))
     {
         isSaveButtonDisabled = true;
-        asio::co_spawn(context.stExecutor, [] (Context& context) -> asio::awaitable<void> {
-            co_await asio::co_spawn(context.mtExecutor, [] (auto settings) -> asio::awaitable<void> {
-                save_application_settings(settings);
+        asio::co_spawn(context.stExecutor, [] (Context& context_) -> asio::awaitable<void> {
+            co_await asio::co_spawn(context_.mtExecutor, [] (auto settings_) -> asio::awaitable<void> {
+                save_application_settings(settings_);
                 co_return;
-            }(context.settings));
+            }(context_.settings));
             isSaveButtonDisabled = false;
             ImGui::PushToast(
-                MUST(Localisation::get(context.settings.language(), Localisation::Toast_Success)),
-                MUST(Localisation::get(context.settings.language(), Localisation::Toast_Application_Settings_Saved))
+                MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Success)),
+                MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Application_Settings_Saved))
             );
         }(context), asio::detached);
     }

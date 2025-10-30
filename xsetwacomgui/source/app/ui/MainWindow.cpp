@@ -108,10 +108,10 @@ static Result<void> render_area_mappers(Context& context)
 
     if ((context.hasChangedDeviceSettings && context.tablet.stylus.name != "INVALID") || (context.hasChangedDevice && context.tablet.settings.profile()->second.stylus.name != "INVALID"))
     {
-        asio::co_spawn(context.stExecutor, [] (Context& context) -> asio::awaitable<void> {
-            deviceDefaultArea = co_await asio::co_spawn(context.mtExecutor, [] (auto stylus) -> asio::awaitable<Area> {
-                co_return MUST(get_stylus_default_area(stylus));
-            }(context.tablet.stylus));
+        asio::co_spawn(context.stExecutor, [] (Context& context_) -> asio::awaitable<void> {
+            deviceDefaultArea = co_await asio::co_spawn(context_.mtExecutor, [] (auto stylus_) -> asio::awaitable<Area> {
+                co_return MUST(get_stylus_default_area(stylus_));
+            }(context_.tablet.stylus));
         }(context), asio::detached);
     }
 
@@ -188,10 +188,10 @@ static Result<void> render_tablet_tab(Context& context)
 
     if ((context.hasChangedDeviceSettings && context.tablet.stylus.name != "INVALID") || (context.hasChangedDevice && context.tablet.settings.profile()->second.stylus.name != "INVALID"))
     {
-        asio::co_spawn(context.stExecutor, [] (Context& context) -> asio::awaitable<void> {
-            deviceDefaultArea = co_await asio::co_spawn(context.mtExecutor, [] (auto stylus) -> asio::awaitable<Area> {
-                co_return MUST(get_stylus_default_area(stylus));
-            }(context.tablet.stylus));
+        asio::co_spawn(context.stExecutor, [] (Context& context_) -> asio::awaitable<void> {
+            deviceDefaultArea = co_await asio::co_spawn(context_.mtExecutor, [] (auto stylus_) -> asio::awaitable<Area> {
+                co_return MUST(get_stylus_default_area(stylus_));
+            }(context_.tablet.stylus));
         }(context), asio::detached);
     }
 
@@ -221,16 +221,16 @@ static Result<void> render_tablet_tab(Context& context)
 
         if (context.hasChangedDevice)
         {
-            asio::co_spawn(context.stExecutor, [] (Context& context) -> asio::awaitable<void> {
-                context.tablet.stylus = context.devices.at(size_t(deviceIndex));
-                context.tablet.settings.profile()->second.stylus.area = co_await asio::co_spawn(context.mtExecutor, [] (auto stylus) -> asio::awaitable<Area> {
-                    co_return MUST(get_stylus_default_area(stylus));
-                }(context.tablet.stylus));
-                context.tablet.settings.profile()->second.stylus.name = context.tablet.stylus.name;
-                context.tablet.settings.profile()->second.stylus.pressure = { 0, 0, 1, 1 };
-                context.tablet.settings.profile()->second.stylus.forceFullArea = false;
-                context.tablet.settings.profile()->second.stylus.forceAspectRatio = false;
-                context.tablet.settings.profile()->second.stylus.handedness = Device::Handedness::RIGHT;
+            asio::co_spawn(context.stExecutor, [] (Context& context_) -> asio::awaitable<void> {
+                context_.tablet.stylus = context_.devices.at(size_t(deviceIndex));
+                context_.tablet.settings.profile()->second.stylus.area = co_await asio::co_spawn(context_.mtExecutor, [] (auto stylus_) -> asio::awaitable<Area> {
+                    co_return MUST(get_stylus_default_area(stylus_));
+                }(context_.tablet.stylus));
+                context_.tablet.settings.profile()->second.stylus.name = context_.tablet.stylus.name;
+                context_.tablet.settings.profile()->second.stylus.pressure = { 0, 0, 1, 1 };
+                context_.tablet.settings.profile()->second.stylus.forceFullArea = false;
+                context_.tablet.settings.profile()->second.stylus.forceAspectRatio = false;
+                context_.tablet.settings.profile()->second.stylus.handedness = Device::Handedness::RIGHT;
             }(context), asio::detached);
         }
 
@@ -501,14 +501,14 @@ static Result<void> render_migration_popup(Context& context)
     if (ImGui::Button(TRY(Localisation::get(context.settings.language(), Localisation::Popup_Outdated_Device_Settings_Overwrite)), { 0, 25_scaled }))
     {
         context.handleOutdatedDeviceSettings = false;
-        asio::co_spawn(context.stExecutor, [] (Context& context) -> asio::awaitable<void> {
-            co_await asio::co_spawn(context.mtExecutor, [] (auto settings) -> asio::awaitable<void> {
-                save_tablet_settings(settings);
+        asio::co_spawn(context.stExecutor, [] (Context& context_) -> asio::awaitable<void> {
+            co_await asio::co_spawn(context_.mtExecutor, [] (auto settings_) -> asio::awaitable<void> {
+                save_tablet_settings(settings_);
                 co_return;
-            }(context.tablet.settings));
+            }(context_.tablet.settings));
             ImGui::PushToast(
-                MUST(Localisation::get(context.settings.language(), Localisation::Toast_Success)),
-                MUST(Localisation::get(context.settings.language(), Localisation::Toast_Device_Settings_Overwritten))
+                MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Success)),
+                MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Device_Settings_Overwritten))
             );
         }(context), asio::detached);
     }
@@ -518,15 +518,15 @@ static Result<void> render_migration_popup(Context& context)
     if (ImGui::Button(TRY(Localisation::get(context.settings.language(), Localisation::Popup_Outdated_Device_Settings_Migrate)), { 0, 25_scaled }))
     {
         context.handleOutdatedDeviceSettings = false;
-        asio::co_spawn(context.stExecutor, [] (Context& context) -> asio::awaitable<void> {
-            auto maybeMigrated = co_await asio::co_spawn(context.mtExecutor, [] (auto settings) -> asio::awaitable<Result<void>> {
-                co_return migrate_tablet_settings(settings);
-            }(context.tablet.settings));
+        asio::co_spawn(context.stExecutor, [] (Context& context_) -> asio::awaitable<void> {
+            auto maybeMigrated = co_await asio::co_spawn(context_.mtExecutor, [] (auto settings_) -> asio::awaitable<Result<void>> {
+                co_return migrate_tablet_settings(settings_);
+            }(context_.tablet.settings));
             if (!maybeMigrated.has_value())
             {
                 ImGui::PushToast(
-                    MUST(Localisation::get(context.settings.language(), Localisation::Toast_Error)),
-                    MUST(Localisation::get(context.settings.language(), Localisation::Toast_Device_Settings_Migration_Failed))
+                    MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Error)),
+                    MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Device_Settings_Migration_Failed))
                 );
                 co_return;
             }
@@ -569,60 +569,60 @@ Result<void> render_main_window(Context& context)
 
     if (!(context.devices.empty() || hasTriedToInitializeDeviceSettings))
     {
-        asio::co_spawn(context.stExecutor, [] (Context& context) -> asio::awaitable<void> {
-            auto result = co_await asio::co_spawn(context.mtExecutor, [] () -> asio::awaitable<Result<TabletSettings, SettingsError>> {
+        asio::co_spawn(context.stExecutor, [] (Context& context_) -> asio::awaitable<void> {
+            auto result = co_await asio::co_spawn(context_.mtExecutor, [] () -> asio::awaitable<Result<TabletSettings, SettingsError>> {
                 co_return load_tablet_settings();
             }());
 
             if (!result.has_value())
             {
-                auto stylus = ranges::find(context.devices, Device::Kind::STYLUS, &Device::kind);
-                assert(stylus != context.devices.end());
-                context.tablet.stylus = *stylus;
+                auto stylus = ranges::find(context_.devices, Device::Kind::STYLUS, &Device::kind);
+                assert(stylus != context_.devices.end());
+                context_.tablet.stylus = *stylus;
 
-                auto pad = ranges::find(context.devices, Device::Kind::PAD, &Device::kind);
-                assert(pad != context.devices.end());
-                context.tablet.pad = *pad;
+                auto pad = ranges::find(context_.devices, Device::Kind::PAD, &Device::kind);
+                assert(pad != context_.devices.end());
+                context_.tablet.pad = *pad;
 
-                auto display = ranges::find(context.displays, true, &Display::primary);
-                assert(display != context.displays.end());
-                context.display = *display;
+                auto display = ranges::find(context_.displays, true, &Display::primary);
+                assert(display != context_.displays.end());
+                context_.display = *display;
 
-                auto maybeCreated = co_await asio::co_spawn(context.mtExecutor, [] (auto tablet, auto display) -> asio::awaitable<Result<TabletProfile>> {
-                    co_return make_tablet_profile("Default", tablet, display);
-                }(context.tablet, context.display));
+                auto maybeCreated = co_await asio::co_spawn(context_.mtExecutor, [] (auto tablet_, auto display_) -> asio::awaitable<Result<TabletProfile>> {
+                    co_return make_tablet_profile("Default", tablet_, display_);
+                }(context_.tablet, context_.display));
 
                 if (!maybeCreated.has_value())
                 {
                     ImGui::PushToast(
-                        MUST(Localisation::get(context.settings.language(), Localisation::Toast_Error)),
-                        MUST(Localisation::get(context.settings.language(), Localisation::Toast_Profile_Create_Failed))
+                        MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Error)),
+                        MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Profile_Create_Failed))
                     );
                     co_return;
                 }
 
-                auto [iterator, _] = context.tablet.settings.profiles().insert({ maybeCreated->name, *maybeCreated });
-                context.tablet.settings.profile(iterator);
+                auto [iterator, _] = context_.tablet.settings.profiles().insert({ maybeCreated->name, *maybeCreated });
+                context_.tablet.settings.profile(iterator);
 
-                context.hasChangedDeviceSettings = true;
+                context_.hasChangedDeviceSettings = true;
 
                 if (result.error().message() == SettingsError::Type::FILE_NOT_FOUND)
                 {
-                    co_await asio::co_spawn(context.mtExecutor, [] (auto settings) -> asio::awaitable<void> {
-                        save_tablet_settings(settings);
+                    co_await asio::co_spawn(context_.mtExecutor, [] (auto settings_) -> asio::awaitable<void> {
+                        save_tablet_settings(settings_);
                         co_return;
-                    }(context.tablet.settings));
+                    }(context_.tablet.settings));
                 }
 
-                auto maybeLoaded = co_await asio::co_spawn(context.mtExecutor, [] (auto settings, auto tablet, auto display) -> asio::awaitable<Result<void>> {
-                    co_return load_tablet_profile(settings.profile()->second, tablet, display);
-                }(context.tablet.settings, context.tablet, context.display));
+                auto maybeLoaded = co_await asio::co_spawn(context_.mtExecutor, [] (auto settings_, auto tablet_, auto display_) -> asio::awaitable<Result<void>> {
+                    co_return load_tablet_profile(settings_.profile()->second, tablet_, display_);
+                }(context_.tablet.settings, context_.tablet, context_.display));
 
                 if (!maybeLoaded.has_value())
                 {
                     ImGui::PushToast(
-                        MUST(Localisation::get(context.settings.language(), Localisation::Toast_Error)),
-                        MUST(Localisation::get(context.settings.language(), Localisation::Toast_Profile_Load_Failed))
+                        MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Error)),
+                        MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Profile_Load_Failed))
                     );
                 }
 
@@ -631,56 +631,56 @@ Result<void> render_main_window(Context& context)
                 case SettingsError::Type::WRITE_FAILURE: break;
                 case SettingsError::Type::FILE_NOT_FOUND: {
                     ImGui::PushToast(
-                        MUST(Localisation::get(context.settings.language(), Localisation::Toast_Warning)),
-                        MUST(Localisation::get(context.settings.language(), Localisation::Toast_Device_Settings_Missing))
+                        MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Warning)),
+                        MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Device_Settings_Missing))
                     );
                     break;
                 }
                 case SettingsError::Type::PROFILE_NOT_FOUND: {
                     ImGui::PushToast(
-                        MUST(Localisation::get(context.settings.language(), Localisation::Toast_Error)),
-                        MUST(Localisation::get(context.settings.language(), Localisation::Toast_Profile_Missing))
+                        MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Error)),
+                        MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Profile_Missing))
                     );
                     break;
                 }
                 case SettingsError::Type::READ_FAILURE: {
                     ImGui::PushToast(
-                        MUST(Localisation::get(context.settings.language(), Localisation::Toast_Warning)),
-                        MUST(Localisation::get(context.settings.language(), Localisation::Toast_Device_Settings_Load_Failed))
+                        MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Warning)),
+                        MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Device_Settings_Load_Failed))
                     );
                     break;
                 }
                 case SettingsError::Type::OUTDATED_SCHEMA: {
-                    context.handleOutdatedDeviceSettings = true;
+                    context_.handleOutdatedDeviceSettings = true;
                     break;
                 }
                 }
             }
             else
             {
-                context.tablet.settings = std::move(*result);
+                context_.tablet.settings = std::move(*result);
 
-                auto stylus = ranges::find(context.devices, context.tablet.settings.profile()->second.stylus.name, &Device::name);
-                assert(stylus != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
-                context.tablet.stylus = *stylus;
+                auto stylus = ranges::find(context_.devices, context_.tablet.settings.profile()->second.stylus.name, &Device::name);
+                assert(stylus != context_.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
+                context_.tablet.stylus = *stylus;
 
-                auto pad = ranges::find(context.devices, context.tablet.settings.profile()->second.pad.name, &Device::name);
-                assert(pad != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
-                context.tablet.pad = *pad;
+                auto pad = ranges::find(context_.devices, context_.tablet.settings.profile()->second.pad.name, &Device::name);
+                assert(pad != context_.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
+                context_.tablet.pad = *pad;
 
-                context.display = *ranges::find(context.displays, context.tablet.settings.profile()->second.display.name, &Display::name);
+                context_.display = *ranges::find(context_.displays, context_.tablet.settings.profile()->second.display.name, &Display::name);
 
-                context.hasChangedDeviceSettings = true;
+                context_.hasChangedDeviceSettings = true;
 
-                auto maybeLoaded = co_await asio::co_spawn(context.mtExecutor, [] (auto settings, auto tablet, auto display) -> asio::awaitable<Result<void>> {
-                    co_return load_tablet_profile(settings.profile()->second, tablet, display);
-                }(context.tablet.settings, context.tablet, context.display));
+                auto maybeLoaded = co_await asio::co_spawn(context_.mtExecutor, [] (auto settings_, auto tablet_, auto display_) -> asio::awaitable<Result<void>> {
+                    co_return load_tablet_profile(settings_.profile()->second, tablet_, display_);
+                }(context_.tablet.settings, context_.tablet, context_.display));
 
                 if (!maybeLoaded.has_value())
                 {
                     ImGui::PushToast(
-                        MUST(Localisation::get(context.settings.language(), Localisation::Toast_Error)),
-                        MUST(Localisation::get(context.settings.language(), Localisation::Toast_Profile_Load_Failed))
+                        MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Error)),
+                        MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Profile_Load_Failed))
                     );
                 }
             }
@@ -711,14 +711,14 @@ Result<void> render_main_window(Context& context)
 
         if (*action == UDevDevice::Action::BIND && ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) < 1)
         {
-            asio::co_spawn(context.stExecutor, [] (Context& context) -> asio::awaitable<void> {
-                auto maybeDevices = co_await asio::co_spawn(context.mtExecutor, fnGetAvailableDevices(true));
+            asio::co_spawn(context.stExecutor, [] (Context& context_) -> asio::awaitable<void> {
+                auto maybeDevices = co_await asio::co_spawn(context_.mtExecutor, fnGetAvailableDevices(true));
 
                 if (!maybeDevices.has_value())
                 {
                     ImGui::PushToast(
-                        MUST(Localisation::get(context.settings.language(), Localisation::Toast_Error)),
-                        MUST(Localisation::get(context.settings.language(), Localisation::Toast_Devices_Missing))
+                        MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Error)),
+                        MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Devices_Missing))
                     );
                     co_return;
                 }
@@ -726,42 +726,42 @@ Result<void> render_main_window(Context& context)
                 if (maybeDevices->empty())
                 {
                     ImGui::PushToast(
-                        MUST(Localisation::get(context.settings.language(), Localisation::Toast_Error)),
-                        MUST(Localisation::get(context.settings.language(), Localisation::Toast_Devices_Missing))
+                        MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Error)),
+                        MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Devices_Missing))
                     );
                     co_return;
                 }
 
-                context.devices = *maybeDevices;
+                context_.devices = *maybeDevices;
 
-                auto maybeSettings = co_await asio::co_spawn(context.mtExecutor, [] -> asio::awaitable<Result<TabletSettings, SettingsError>> {
+                auto maybeSettings = co_await asio::co_spawn(context_.mtExecutor, [] -> asio::awaitable<Result<TabletSettings, SettingsError>> {
                     co_return load_tablet_settings();
                 });
                 assert(maybeSettings.has_value() && "how did you even manage to make this happen?");
 
-                context.tablet.settings = *maybeSettings;
+                context_.tablet.settings = *maybeSettings;
 
-                auto stylus = ranges::find(context.devices, context.tablet.settings.profile()->second.stylus.name, &Device::name);
-                assert(stylus != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
-                context.tablet.stylus = *stylus;
+                auto stylus = ranges::find(context_.devices, context_.tablet.settings.profile()->second.stylus.name, &Device::name);
+                assert(stylus != context_.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
+                context_.tablet.stylus = *stylus;
 
-                auto pad = ranges::find(context.devices, context.tablet.settings.profile()->second.pad.name, &Device::name);
-                assert(pad != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
-                context.tablet.pad = *pad;
+                auto pad = ranges::find(context_.devices, context_.tablet.settings.profile()->second.pad.name, &Device::name);
+                assert(pad != context_.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
+                context_.tablet.pad = *pad;
 
-                context.display = *ranges::find(context.displays, context.tablet.settings.profile()->second.display.name, &Display::name);
+                context_.display = *ranges::find(context_.displays, context_.tablet.settings.profile()->second.display.name, &Display::name);
 
-                context.hasChangedDeviceSettings = true;
+                context_.hasChangedDeviceSettings = true;
 
-                auto maybeLoaded = co_await asio::co_spawn(context.mtExecutor, [] (auto settings, auto tablet, auto display) -> asio::awaitable<Result<void>> {
-                    co_return load_tablet_profile(settings.profile()->second, tablet, display);
-                }(context.tablet.settings, context.tablet, context.display));
+                auto maybeLoaded = co_await asio::co_spawn(context_.mtExecutor, [] (auto settings_, auto tablet_, auto display_) -> asio::awaitable<Result<void>> {
+                    co_return load_tablet_profile(settings_.profile()->second, tablet_, display_);
+                }(context_.tablet.settings, context_.tablet, context_.display));
 
                 if (!maybeLoaded.has_value())
                 {
                     ImGui::PushToast(
-                        MUST(Localisation::get(context.settings.language(), Localisation::Toast_Error)),
-                        MUST(Localisation::get(context.settings.language(), Localisation::Toast_Profile_Load_Failed))
+                        MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Error)),
+                        MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Profile_Load_Failed))
                     );
                 }
             }(context), asio::detached);
@@ -769,22 +769,22 @@ Result<void> render_main_window(Context& context)
 
         if (*action == UDevDevice::Action::UNBIND && ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) <= 1)
         {
-            asio::co_spawn(context.stExecutor, [] (Context& context) -> asio::awaitable<void> {
-                auto maybeDevices = co_await asio::co_spawn(context.mtExecutor, fnGetAvailableDevices(false));
+            asio::co_spawn(context.stExecutor, [] (Context& context_) -> asio::awaitable<void> {
+                auto maybeDevices = co_await asio::co_spawn(context_.mtExecutor, fnGetAvailableDevices(false));
                 if (!maybeDevices.has_value()) co_return;
 
-                context.devices = *maybeDevices;
+                context_.devices = *maybeDevices;
 
-                if (ranges::find(context.devices, context.tablet.settings.profile()->second.stylus.name, &Device::name) != context.devices.end())
+                if (ranges::find(context_.devices, context_.tablet.settings.profile()->second.stylus.name, &Device::name) != context_.devices.end())
                 {
                     co_return;
                 }
 
-                context.display = {};
-                context.tablet = {};
-                context.tablet.settings = {};
+                context_.display = {};
+                context_.tablet = {};
+                context_.tablet.settings = {};
 
-                context.hasChangedDeviceSettings = true;
+                context_.hasChangedDeviceSettings = true;
             }(context), asio::detached);
         }
     }
@@ -810,19 +810,19 @@ Result<void> render_main_window(Context& context)
         ImGui::EndTabBar();
     }
 
-    auto profileNames =
+    auto profiles =
         context.tablet.settings.profiles()
             | ranges::views::keys
             | ranges::views::filter([] (auto const& profile) { return profile != "INVALID"; })
             | ranges::views::transform([] (auto const& profile) { return profile.c_str(); })
             | ranges::to_vector;
 
-    std::vector<std::vector<char const*>> items { { TRY(Localisation::get(context.settings.language(), Localisation::New_Profile)) }, profileNames };
+    std::vector<std::vector<char const*>> items { { TRY(Localisation::get(context.settings.language(), Localisation::New_Profile)) }, profiles };
     static std::pair<int, int> itemIndex { 1, 0 };
 
     if (context.hasChangedDeviceSettings && context.tablet.settings.profile()->second.name != "INVALID")
     {
-        itemIndex = { 1, std::distance(profileNames.begin(), ranges::find(profileNames, context.tablet.settings.profile()->second.name)) };
+        itemIndex = { 1, std::distance(profiles.begin(), ranges::find(profiles, context.tablet.settings.profile()->second.name)) };
     }
 
     static auto isProfileWindowOpen = false;
@@ -838,29 +838,29 @@ Result<void> render_main_window(Context& context)
     if (pressedPrimary)
     {
         isDropupButtonDisabled = true;
-        asio::co_spawn(context.stExecutor, [] (Context& context) -> asio::awaitable<void> {
-            auto maybeLoaded = co_await asio::co_spawn(context.mtExecutor, [] (auto tablet, auto display) -> asio::awaitable<Result<void>> {
-                co_return load_tablet_profile(tablet.settings.profile()->second, tablet, display);
-            }(context.tablet, context.display));
+        asio::co_spawn(context.stExecutor, [] (Context& context_) -> asio::awaitable<void> {
+            auto maybeLoaded = co_await asio::co_spawn(context_.mtExecutor, [] (auto tablet_, auto display_) -> asio::awaitable<Result<void>> {
+                co_return load_tablet_profile(tablet_.settings.profile()->second, tablet_, display_);
+            }(context_.tablet, context_.display));
             isDropupButtonDisabled = false;
 
             if (!maybeLoaded)
             {
                 ImGui::PushToast(
-                    MUST(Localisation::get(context.settings.language(), Localisation::Toast_Error)),
-                    MUST(Localisation::get(context.settings.language(), Localisation::Toast_Profile_Load_Failed))
+                    MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Error)),
+                    MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Profile_Load_Failed))
                 );
                 co_return;
             }
 
-            co_await asio::co_spawn(context.mtExecutor, [] (auto settings) -> asio::awaitable<void> {
-                save_tablet_settings(settings);
+            co_await asio::co_spawn(context_.mtExecutor, [] (auto settings_) -> asio::awaitable<void> {
+                save_tablet_settings(settings_);
                 co_return;
-            }(context.tablet.settings));
+            }(context_.tablet.settings));
 
             ImGui::PushToast(
-                MUST(Localisation::get(context.settings.language(), Localisation::Toast_Success)),
-                MUST(Localisation::get(context.settings.language(), Localisation::Toast_Device_Settings_Saved))
+                MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Success)),
+                MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Device_Settings_Saved))
             );
         }(context), asio::detached);
     }
@@ -871,30 +871,30 @@ Result<void> render_main_window(Context& context)
             if (itemIndex.first == 0)
             {
                 isProfileWindowOpen = true;
-                itemIndex = { 1, std::distance(profileNames.begin(), ranges::find(profileNames, context.tablet.settings.profile()->second.name)) };
+                itemIndex = { 1, std::distance(profiles.begin(), ranges::find(profiles, context.tablet.settings.profile()->second.name)) };
             }
             else
             {
-                asio::co_spawn(context.stExecutor, [] (Context& context, std::vector<char const*> profileNames) -> asio::awaitable<void> {
-                    context.tablet.settings.profile(ranges::find_if(context.tablet.settings.profiles(), [&] (auto const& entry) {
-                        return entry.first == profileNames.at(size_t(itemIndex.second));
+                asio::co_spawn(context.stExecutor, [] (Context& context_, std::vector<char const*> profiles_) -> asio::awaitable<void> {
+                    context_.tablet.settings.profile(ranges::find_if(context_.tablet.settings.profiles(), [&] (auto const& entry) {
+                        return entry.first == profiles_.at(size_t(itemIndex.second));
                     }));
 
-                    context.hasChangedDeviceSettings = true;
+                    context_.hasChangedDeviceSettings = true;
 
-                    auto maybeLoaded = co_await asio::co_spawn(context.mtExecutor, [] (auto tablet, auto display) -> asio::awaitable<Result<void>> {
-                        co_return load_tablet_profile(tablet.settings.profile()->second, tablet, display);
-                    }(context.tablet, context.display));
+                    auto maybeLoaded = co_await asio::co_spawn(context_.mtExecutor, [] (auto tablet_, auto display_) -> asio::awaitable<Result<void>> {
+                        co_return load_tablet_profile(tablet_.settings.profile()->second, tablet_, display_);
+                    }(context_.tablet, context_.display));
 
                     if (!maybeLoaded)
                     {
                         ImGui::PushToast(
-                            MUST(Localisation::get(context.settings.language(), Localisation::Toast_Error)),
-                            MUST(Localisation::get(context.settings.language(), Localisation::Toast_Profile_Load_Failed))
+                            MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Error)),
+                            MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Profile_Load_Failed))
                         );
                         co_return;
                     }
-                }(context, profileNames), asio::detached);
+                }(context, profiles), asio::detached);
             }
         }
         else
@@ -919,14 +919,14 @@ Result<void> render_main_window(Context& context)
             if (isProfileEditWindowOpen)
             {
                 auto profile = ranges::find_if(context.tablet.settings.profiles(), [&] (auto const& entry) {
-                    return entry.first == profileNames.at(size_t(itemIndex.second));
+                    return entry.first == profiles.at(size_t(itemIndex.second));
                 });
                 assert(profile != context.tablet.settings.profiles().end());
                 auto isWindowClosed = TRY(render_profile_window(isProfileWindowOpen, context, profile->second));
 
                 if (isWindowClosed || !isProfileWindowOpen)
                 {
-                    itemIndex = { 1, std::distance(profileNames.begin(), ranges::find(profileNames, context.tablet.settings.profile()->second.name)) };
+                    itemIndex = { 1, std::distance(profiles.begin(), ranges::find(profiles, context.tablet.settings.profile()->second.name)) };
                     isProfileWindowOpen = false;
                 }
 

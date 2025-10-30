@@ -97,31 +97,31 @@ Result<void> render_mappings_window(bool isWindowVisible, Context& context)
     if (ImGui::Button(TRY(Localisation::get(context.settings.language(), Localisation::Save)), { 150_scaled, 25_scaled }))
     {
         isSaveApplyButtonDisabled = true;
-        asio::co_spawn(context.stExecutor, [] (Context& context) -> asio::awaitable<void> {
-            context.tablet.settings.profile(currentProfile);
+        asio::co_spawn(context.stExecutor, [] (Context& context_) -> asio::awaitable<void> {
+            context_.tablet.settings.profile(currentProfile);
 
-            auto maybeLoaded = co_await asio::co_spawn(context.mtExecutor, [] (auto settings, auto tablet, auto display) -> asio::awaitable<Result<void>> {
-                co_return load_tablet_profile(settings.profile()->second, tablet, display);
-            }(context.tablet.settings, context.tablet, context.display));
+            auto maybeLoaded = co_await asio::co_spawn(context_.mtExecutor, [] (auto settings_, auto tablet_, auto display_) -> asio::awaitable<Result<void>> {
+                co_return load_tablet_profile(settings_.profile()->second, tablet_, display_);
+            }(context_.tablet.settings, context_.tablet, context_.display));
             isSaveApplyButtonDisabled = false;
 
             if (!maybeLoaded)
             {
                 ImGui::PushToast(
-                    MUST(Localisation::get(context.settings.language(), Localisation::Toast_Error)),
-                    MUST(Localisation::get(context.settings.language(), Localisation::Toast_Profile_Load_Failed))
+                    MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Error)),
+                    MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Profile_Load_Failed))
                 );
                 co_return;
             }
 
-            co_await asio::co_spawn(context.mtExecutor, [] (auto settings) -> asio::awaitable<void> {
-                save_tablet_settings(settings);
+            co_await asio::co_spawn(context_.mtExecutor, [] (auto settings_) -> asio::awaitable<void> {
+                save_tablet_settings(settings_);
                 co_return;
-            }(context.tablet.settings));
+            }(context_.tablet.settings));
 
             ImGui::PushToast(
-                MUST(Localisation::get(context.settings.language(), Localisation::Toast_Success)),
-                MUST(Localisation::get(context.settings.language(), Localisation::Toast_Device_Mappings_Saved))
+                MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Success)),
+                MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Device_Mappings_Saved))
             );
         }(context), asio::detached);
     }
