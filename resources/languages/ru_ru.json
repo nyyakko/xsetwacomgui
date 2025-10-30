@@ -5,34 +5,29 @@
     "save": "Сохранить",
 
     "toast": {
-        "success": "Успех",
-        "warning": "Внимание",
-        "error": "Ошибка",
-        "applicationSettingsSaved": "Настройки приложения сохранены",
-        "deviceMappingsSaved": "Successfully saved device mappings (FIXME)",
-        "deviceSettingsLoadFailed": "Не удалось загрузить настройки устройства",
-        "deviceSettingsLoadSuccess": "Настройки устройства загружены",
-        "deviceSettingsMigrationFailed": "Failed to migrate device settings (FIXME)",
-        "deviceSettingsMissing": "Не найдены настройки устройства, будут загружены данные из xsetwacom",
-        "deviceSettingsOutdatedSchema": "Формат настроек планшета устарел",
-        "deviceSettingsOverwritten": "Настройки устройства перезаписаны",
-        "deviceSettingsSaved": "Настройки устройства сохранены",
-        "devicesMissing": "Устройства не обнаружены",
-        "profileCreateFailed": "Failed to create profile (FIXME)",
-        "profileCreateSuccess": "Profile created successfully (FIXME)",
-        "profileDeleteSuccess": "Profile deleted successfully (FIXME)",
-        "profileLoadFailed": "Failed to load profile (FIXME)",
-        "profileMissing": "Profile could not be found (FIXME)",
-        "profileNameEmpty": "Profile name cannot be empty (FIXME)",
-        "profileUpdateSuccess": "Profile updated successfully (FIXME)"
-    },
-
-    "menubar": {
-        "settings": {
-            "title": "Настройки"
+        "title": {
+            "success": "Успех",
+            "warning": "Внимание",
+            "error": "Ошибка"
         },
-        "other": {
-            "title": "Другое"
+        "content": {
+            "applicationSettingsSaved": "Настройки приложения сохранены",
+            "deviceMappingsSaved": "Successfully saved device mappings (FIXME)",
+            "deviceSettingsLoadFailed": "Не удалось загрузить настройки устройства",
+            "deviceSettingsLoadSuccess": "Настройки устройства загружены",
+            "deviceSettingsMigrationFailed": "Failed to migrate device settings (FIXME)",
+            "deviceSettingsMissing": "Не найдены настройки устройства, будут загружены данные из xsetwacom",
+            "deviceSettingsOutdatedSchema": "Формат настроек планшета устарел",
+            "deviceSettingsOverwritten": "Настройки устройства перезаписаны",
+            "deviceSettingsSaved": "Настройки устройства сохранены",
+            "devicesMissing": "Устройства не обнаружены",
+            "profileCreateFailed": "Failed to create profile (FIXME)",
+            "profileCreateSuccess": "Profile created successfully (FIXME)",
+            "profileDeleteSuccess": "Profile deleted successfully (FIXME)",
+            "profileLoadFailed": "Failed to load profile (FIXME)",
+            "profileMissing": "Profile could not be found (FIXME)",
+            "profileNameEmpty": "Profile name cannot be empty (FIXME)",
+            "profileUpdateSuccess": "Profile updated successfully (FIXME)"
         }
     },
 
@@ -47,6 +42,14 @@
 
     "window": {
         "main": {
+            "menubar": {
+                "settings": {
+                    "title": "Настройки"
+                },
+                "other": {
+                    "title": "Другое"
+                }
+            },
             "tabs": {
                 "tablet": {
                     "title": "Настройки планшета",

@@ -5,34 +5,29 @@
     "save": "Salvar",
 
     "toast": {
-        "success": "Successo",
-        "warning": "Aviso",
-        "error": "Erro",
-        "applicationSettingsSaved": "As configurações da aplicação foram salvas com sucesso",
-        "deviceMappingsSaved": "As configurações de mapeamento foram salvas com sucesso",
-        "deviceSettingsLoadFailed": "Não foi possível carregar as configurações do tablet",
-        "deviceSettingsLoadSuccess": "As configurações do tablet foram carregadas com sucesso",
-        "deviceSettingsMigrationFailed": "Não foi possível migrar as configurações do tablet",
-        "deviceSettingsMissing": "Não foi possível encontrar configurações salvas para o tablet, carregando diretamente do xsetwacom",
-        "deviceSettingsOutdatedSchema": "O schema do arquivo de configuração do tablet presente está desatualizado",
-        "deviceSettingsOverwritten": "As configurações do tablet foram sobrescritas com sucesso",
-        "deviceSettingsSaved": "As configurações do tablet foram salvas com sucesso",
-        "devicesMissing": "Nenhum tablet foi encontrado",
-        "profileCreateFailed": "Failed to create profile",
-        "profileCreateSuccess": "Perfil criado com sucesso",
-        "profileDeleteSuccess": "Perfil deletado com successo",
-        "profileLoadFailed": "Failed to load profile",
-        "profileMissing": "O perfil não pôde ser encontrado",
-        "profileNameEmpty": "O nome do perfil não pode estar vazio",
-        "profileUpdateSuccess": "Perfil atualizado com successo"
-    },
-
-    "menubar": {
-        "settings": {
-            "title": "Configurações"
+        "title": {
+            "success": "Successo",
+            "warning": "Aviso",
+            "error": "Erro"
         },
-        "other": {
-            "title": "Outros"
+        "content": {
+            "applicationSettingsSaved": "As configurações da aplicação foram salvas com sucesso",
+            "deviceMappingsSaved": "As configurações de mapeamento foram salvas com sucesso",
+            "deviceSettingsLoadFailed": "Não foi possível carregar as configurações do tablet",
+            "deviceSettingsLoadSuccess": "As configurações do tablet foram carregadas com sucesso",
+            "deviceSettingsMigrationFailed": "Não foi possível migrar as configurações do tablet",
+            "deviceSettingsMissing": "Não foi possível encontrar configurações salvas para o tablet, carregando diretamente do xsetwacom",
+            "deviceSettingsOutdatedSchema": "O schema do arquivo de configuração do tablet presente está desatualizado",
+            "deviceSettingsOverwritten": "As configurações do tablet foram sobrescritas com sucesso",
+            "deviceSettingsSaved": "As configurações do tablet foram salvas com sucesso",
+            "devicesMissing": "Nenhum tablet foi encontrado",
+            "profileCreateFailed": "Failed to create profile",
+            "profileCreateSuccess": "Perfil criado com sucesso",
+            "profileDeleteSuccess": "Perfil deletado com successo",
+            "profileLoadFailed": "Failed to load profile",
+            "profileMissing": "O perfil não pôde ser encontrado",
+            "profileNameEmpty": "O nome do perfil não pode estar vazio",
+            "profileUpdateSuccess": "Perfil atualizado com successo"
         }
     },
 
@@ -47,6 +42,14 @@
 
     "window": {
         "main": {
+            "menubar": {
+                "settings": {
+                    "title": "Configurações"
+                },
+                "other": {
+                    "title": "Outros"
+                }
+            },
             "tabs": {
                 "tablet": {
                     "title": "Configurações do Tablet",

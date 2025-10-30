@@ -154,9 +154,9 @@ static Result<void> run_gui(Context& context)
 
                 if (ImGui::BeginMenuBar())
                 {
-                    if (ImGui::BeginMenu(TRY(Localisation::get(context.settings.language(), Localisation::MenuBar_Settings))))
+                    if (ImGui::BeginMenu(TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_MenuBar_Settings))))
                     {
-                        if (ImGui::MenuItem(TRY(Localisation::get(context.settings.language(), Localisation::MenuBar_Settings_Application))))
+                        if (ImGui::MenuItem(TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_MenuBar_Settings_Application))))
                         {
                             isSettingsWindowOpen = true;
                         }
@@ -164,9 +164,9 @@ static Result<void> run_gui(Context& context)
                         ImGui::EndMenu();
                     }
 
-                    if (ImGui::BeginMenu(TRY(Localisation::get(context.settings.language(), Localisation::MenuBar_Other))))
+                    if (ImGui::BeginMenu(TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_MenuBar_Other))))
                     {
-                        if (ImGui::MenuItem(TRY(Localisation::get(context.settings.language(), Localisation::MenuBar_Other_Goddess))))
+                        if (ImGui::MenuItem(TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_MenuBar_Other_Goddess))))
                         {
                             isGoddessWindowOpen = true;
                         }
@@ -183,7 +183,7 @@ static Result<void> run_gui(Context& context)
                     ImGui::SetNextWindowSize({ applicationSettingsWidth, applicationSettingsHeight });
                     ImGui::SetNextWindowPos({ (float(windowWidth) - applicationSettingsWidth)/2, (float(windowHeight) - applicationSettingsHeight)/2 });
                     ImGui::Begin(
-                        TRY(Localisation::get(context.settings.language(), Localisation::MenuBar_Settings_Application)),
+                        TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_MenuBar_Settings_Application)),
                         &isSettingsWindowOpen,
                         ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
                     );
@@ -199,7 +199,7 @@ static Result<void> run_gui(Context& context)
                     ImGui::SetNextWindowSize({ goddessWidth, goddessHeight });
                     ImGui::SetNextWindowPos({ (float(windowWidth) - goddessWidth)/2, (float(windowHeight) - goddessHeight)/2 });
                     ImGui::Begin(
-                        TRY(Localisation::get(context.settings.language(), Localisation::MenuBar_Other_Goddess)),
+                        TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_MenuBar_Other_Goddess)),
                         &isGoddessWindowOpen,
                         ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
                     );

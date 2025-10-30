@@ -89,7 +89,7 @@ static Result<void> render_languages_tab(Context& context)
 {
     ImGui::Text("%s", TRY(Localisation::get(context.settings.language(), Localisation::Window_Settings_Tabs_Language_Language)));
 
-    static auto languages = get_available_languages();
+    static auto languages = Localisation::the().languages();
     static auto languagesData = languages | ranges::views::transform([] (auto const& language) { return language.data(); }) | ranges::to_vector;
 
     static int languageIndex = int(
