@@ -1,27 +1,33 @@
 {
+    "create": "Создать",
+    "delete": "Удалить",
+    "newProfile": "Новый профиль",
     "save": "Сохранить",
-    "saveApply": "Сохранить и применить",
 
     "toast": {
-        "success": "Успех",
-        "warning": "Внимание",
-        "error": "Ошибка",
-        "applicationSettingsSaved": "Настройки приложения сохранены",
-        "deviceSettingsSaved": "Настройки устройства сохранены",
-        "deviceSettingsOverwritten": "Настройки устройства перезаписаны",
-        "deviceSettingsLoadFailed": "Не удалось загрузить настройки устройства",
-        "deviceSettingsLoadSuccess": "Настройки устройства загружены",
-        "deviceSettingsMissing": "Не найдены настройки устройства, будут загружены данные из xsetwacom",
-        "deviceSettingsOutdatedSchema": "Формат настроек планшета устарел",
-        "devicesMissing": "Устройства не обнаружены"
-    },
-
-    "menubar": {
-        "settings": {
-            "title": "Настройки"
+        "title": {
+            "success": "Успех",
+            "warning": "Внимание",
+            "error": "Ошибка"
         },
-        "other": {
-            "title": "Другое"
+        "content": {
+            "applicationSettingsSaved": "Настройки приложения сохранены",
+            "deviceMappingsSaved": "Привязки устройства сохранены",
+            "deviceSettingsLoadFailed": "Не удалось загрузить настройки устройства",
+            "deviceSettingsLoadSuccess": "Настройки устройства загружены",
+            "deviceSettingsMigrationFailed": "Не удалось перенести настройки устройства",
+            "deviceSettingsMissing": "Не найдены настройки устройства, будут загружены данные из xsetwacom",
+            "deviceSettingsOutdatedSchema": "Формат настроек планшета устарел",
+            "deviceSettingsOverwritten": "Настройки устройства перезаписаны",
+            "deviceSettingsSaved": "Настройки устройства сохранены",
+            "devicesMissing": "Устройства не обнаружены",
+            "profileCreateFailed": "Не удалось создать профиль",
+            "profileCreateSuccess": "Профиль успешно создан",
+            "profileDeleteSuccess": "Профиль успешно удалён",
+            "profileLoadFailed": "Не удалось загрузить профиль",
+            "profileMissing": "Профиль не найден",
+            "profileNameEmpty": "Название профиля не может быть пустым",
+            "profileUpdateSuccess": "Профиль успешно обновлён"
         }
     },
 
@@ -36,13 +42,21 @@
 
     "window": {
         "main": {
+            "menubar": {
+                "settings": {
+                    "title": "Настройки"
+                },
+                "other": {
+                    "title": "Другое"
+                }
+            },
             "tabs": {
                 "tablet": {
                     "title": "Настройки планшета",
                     "device": "Устройство",
                     "orientation": "Ориентация",
-                    "orientationLeft": "Леворукая",
-                    "orientationRight": "Праворукая",
+                    "orientationLeft": "Левая",
+                    "orientationRight": "Правая",
                     "pressureCurve": "Кривая давления",
                     "width": "Ширина",
                     "height": "Высота",
@@ -99,6 +113,12 @@
         },
         "goddess": {
             "title": "Богиня"
+        },
+        "profile": {
+            "title": "Профиль",
+            "tab": {
+                "name": "Название"
+            }
         }
     }
 }

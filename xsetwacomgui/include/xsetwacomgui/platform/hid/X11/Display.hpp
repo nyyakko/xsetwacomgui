@@ -1,5 +1,7 @@
 #pragma once
 
+#include "platform/hid/X11/Area.hpp"
+
 #include <string>
 #include <vector>
 
@@ -7,16 +9,10 @@
 
 struct Display
 {
-    struct Area
-    {
-        float offsetX, offsetY;
-        float width, height;
-    };
-
     int id;
     bool primary;
     Area area;
-    std::string name = "";
+    std::string name = "INVALID";
 };
 
 liberror::Result<std::vector<Display>> get_available_displays();

@@ -1,19 +1,19 @@
 #include "platform/hid/X11/Display.hpp"
 
 #include <fmt/format.h>
-#include <fplus/split.hpp>
 #include <liberror/Try.hpp>
 #include <libexec/Execute.hpp>
+#include <range/v3/view.hpp>
 
+#include <algorithm>
 #include <cstdlib>
 #include <regex>
-#include <algorithm>
 
 using namespace liberror;
 
 static Result<std::string> execute(std::string const& command)
 {
-    auto [out, err] = TRY(libexec::execute("xrandr", fplus::split(' ', false, command)));
+    auto [out, err] = TRY(libexec::execute("xrandr", command | ranges::views::split(' ') | ranges::to<std::vector<std::string>>));
     if (!err.empty()) return make_error(err);
     return out;
 }
@@ -32,10 +32,10 @@ Result<std::vector<Display>> get_available_displays()
             .id = std::atoi(iterator->str(1).data()),
             .primary = !iterator->str(2).empty(),
             .area = {
-                .offsetX = static_cast<float>(std::atof(iterator->str(6).data())),
-                .offsetY = static_cast<float>(std::atof(iterator->str(7).data())),
-                .width = static_cast<float>(std::atof(iterator->str(4).data())),
-                .height = static_cast<float>(std::atof(iterator->str(5).data())),
+                .offsetX = float(std::atof(iterator->str(6).data())),
+                .offsetY = float(std::atof(iterator->str(7).data())),
+                .width = float(std::atof(iterator->str(4).data())),
+                .height = float(std::atof(iterator->str(5).data())),
             },
         };
 

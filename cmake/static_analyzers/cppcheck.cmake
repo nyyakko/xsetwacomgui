@@ -17,6 +17,7 @@ function(enable_cppcheck PROJECT)
             --template=${CPPCHECK_TEMPLATE}
             --enable=style,performance,warning,portability
             --inline-suppr
+            --suppress=*:xsetwacomgui/include/xsetwacomgui/external/*
             --suppress=normalCheckLevelMaxBranches
             --suppress=cppcheckError
             --suppress=internalAstError

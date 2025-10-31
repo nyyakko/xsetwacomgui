@@ -1,0 +1,8 @@
+[Desktop Entry]
+Categories = Wacom;Drawing;Graphics;Utility;
+Comment = @CMAKE_PROJECT_DESCRIPTION@
+Exec = @CMAKE_INSTALL_PREFIX@/bin/@CMAKE_PROJECT_NAME@
+Icon = @CMAKE_PROJECT_NAME@.png
+Name = XSetWacomGUI
+Terminal = false
+Type = Application

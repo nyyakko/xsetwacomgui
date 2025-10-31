@@ -9,10 +9,11 @@ class UDev
     using deleter_t = decltype(&udev_unref);
 
 public:
-    explicit UDev()
+    UDev()
         : udev_(udev_new(), udev_unref)
     {}
 
+    // cppcheck-suppress [functionStatic, constParameterReference]
     auto get(this auto& self) { return self.udev_.get(); }
 
 private:

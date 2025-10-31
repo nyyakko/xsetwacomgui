@@ -1,4 +1,5 @@
 add_subdirectory(hid)
+add_subdirectory(mqueue)
 
 set(DIR ${CMAKE_CURRENT_SOURCE_DIR})
 

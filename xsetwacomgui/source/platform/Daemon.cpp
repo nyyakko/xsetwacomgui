@@ -6,10 +6,10 @@
 #include <fmt/format.h>
 
 #include <fcntl.h>
-#include <sys/wait.h>
 #include <syslog.h>
 #include <sys/stat.h>
 #include <sys/syslog.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 #include <algorithm>
@@ -17,7 +17,7 @@
 
 using namespace liberror;
 
-Result<IsDaemon> daemonize(std::string_view name, QuitParent quitParent)
+Result<IsDaemon> daemonize(std::string_view name, Detached detached)
 {
     umask(0);
 
@@ -31,7 +31,7 @@ Result<IsDaemon> daemonize(std::string_view name, QuitParent quitParent)
     {
         waitpid(firstFork, nullptr, 0);
 
-        if (quitParent == QuitParent::TRUE)
+        if (detached == Detached::TRUE)
         {
             std::exit(0);
         }

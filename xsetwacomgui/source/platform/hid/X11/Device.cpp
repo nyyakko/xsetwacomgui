@@ -2,18 +2,18 @@
 
 #include <fmt/core.h>
 #include <fmt/format.h>
-#include <fplus/split.hpp>
 #include <liberror/Try.hpp>
 #include <libexec/Execute.hpp>
 #include <magic_enum/magic_enum.hpp>
+#include <range/v3/view.hpp>
 
-#include <sys/wait.h>
 #include <fcntl.h>
 #include <poll.h>
+#include <sys/wait.h>
 
-#include <ranges>
 #include <algorithm>
 #include <functional>
+#include <ranges>
 #include <regex>
 #include <sstream>
 
@@ -21,7 +21,7 @@ using namespace liberror;
 
 static Result<std::string> execute(std::string const& command)
 {
-    auto [out, err] = TRY(libexec::execute("xsetwacom", fplus::split(' ', false, command)));
+    auto [out, err] = TRY(libexec::execute("xsetwacom", command | ranges::views::split(' ') | ranges::to<std::vector<std::string>>));
     if (!err.empty()) return make_error(err);
     return out;
 }
@@ -71,10 +71,10 @@ Result<void> set_stylus_pressure_curve(Device stylus, Device::Pressure pressure)
 {
     auto command = fmt::format("--set {} PressureCurve {} {} {} {}",
         stylus.id,
-        static_cast<int>(std::round(pressure.minX * 100.f)),
-        static_cast<int>(std::round(pressure.minY * 100.f)),
-        static_cast<int>(std::round(pressure.maxX * 100.f)),
-        static_cast<int>(std::round(pressure.maxY * 100.f))
+        int(std::round(pressure.minX * 100.f)),
+        int(std::round(pressure.minY * 100.f)),
+        int(std::round(pressure.maxX * 100.f)),
+        int(std::round(pressure.maxY * 100.f))
     );
     TRY(execute(command));
     return {};
@@ -114,7 +114,7 @@ Result<void> set_stylus_cursor_proximity(Device stylus, int proximity)
     return {};
 }
 
-Result<Device::Area> get_stylus_default_area(Device stylus)
+Result<Area> get_stylus_default_area(Device stylus)
 {
     auto previousArea = TRY(get_stylus_area(stylus));
     TRY(reset_stylus_area(stylus));
@@ -123,9 +123,9 @@ Result<Device::Area> get_stylus_default_area(Device stylus)
     return defaultArea;
 }
 
-Result<Device::Area> get_stylus_area(Device stylus)
+Result<Area> get_stylus_area(Device stylus)
 {
-    Device::Area area {};
+    Area area {};
     auto command = fmt::format("--get {} Area", stylus.id);
     auto output = TRY(execute(command));
     std::stringstream sstream(output);
@@ -134,7 +134,7 @@ Result<Device::Area> get_stylus_area(Device stylus)
     return area;
 }
 
-Result<void> set_stylus_area(Device stylus, Device::Area area)
+Result<void> set_stylus_area(Device stylus, Area area)
 {
     auto command = fmt::format("--set {} Area {} {} {} {}",
         stylus.id,
@@ -161,14 +161,14 @@ Result<void> set_stylus_output_from_display_name(Device stylus, std::string_view
     return {};
 }
 
-Result<void> set_stylus_output_from_display_area(Device stylus, Display::Area area)
+Result<void> set_stylus_output_from_display_area(Device stylus, Area area)
 {
     auto command = fmt::format("--set {} MapToOutput {}x{}+{}+{}",
         stylus.id,
-        static_cast<int>(std::round(area.width)),
-        static_cast<int>(std::round(area.height)),
-        static_cast<int>(std::round(area.offsetX)),
-        static_cast<int>(std::round(area.offsetY))
+        int(std::round(area.width)),
+        int(std::round(area.height)),
+        int(std::round(area.offsetX)),
+        int(std::round(area.offsetY))
     );
     TRY(execute(command));
     return {};
@@ -199,23 +199,11 @@ Result<std::map<int, X11Action>> get_device_button_mappings(Device device)
 {
     std::map<int, X11Action> mappings {};
 
-    std::regex pattern(R"(button [^]([^]+))");
-
     for (auto button : std::views::iota(1zu, 25zu))
     {
         auto output = execute(fmt::format("--get {} Button {}", device.id, button));
-        if (!output.has_value()) continue;
-
-        if (!output->starts_with("button"))
-        {
-            continue;
-        }
-
-        std::sregex_iterator iterator(output->begin(), output->end(), pattern);
-        for (; iterator != std::sregex_iterator{}; iterator = std::next(iterator))
-        {
-            mappings.insert({ button, X11Action(std::atoi(iterator->str(1).data())) });
-        }
+        if (!(output.has_value() && output->starts_with("button"))) continue;
+        mappings.insert({ button, X11Action(std::atoi(output->substr(output->find_first_of('+')+1).data())) });
     }
 
     return mappings;
@@ -229,4 +217,24 @@ Result<void> set_device_button_mappings(Device device, std::map<int, X11Action> 
     }
 
     return {};
+}
+
+Result<void> reset_device_button_mappings(Device device)
+{
+    for (auto button : std::views::iota(1zu, 25zu))
+    {
+        execute(fmt::format("--set {} Button {}", device.id, button));
+    }
+
+    return {};
+}
+
+Result<std::map<int, X11Action>> get_device_default_button_mappings(Device device)
+{
+    auto previousMappings = TRY(get_device_button_mappings(device));
+    TRY(reset_device_button_mappings(device));
+    auto defaultMappings = TRY(get_device_button_mappings(device));
+    TRY(set_device_button_mappings(device, previousMappings));
+
+    return defaultMappings;
 }
