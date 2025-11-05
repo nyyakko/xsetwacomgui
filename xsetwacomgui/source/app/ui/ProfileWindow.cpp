@@ -167,7 +167,7 @@ Result<bool> render_profile_window(bool isWindowVisible, Context& context, Table
     if (!isWindowVisible)
     {
         ranges::fill_n(profileName.data(), profileName.size(), 0);
-        std::ranges::copy(currentProfile->name, profileName.data());
+        ranges::copy(currentProfile->name, profileName.data());
     }
 
     return isWindowClosed;

@@ -3,9 +3,9 @@
 #include <fmt/format.h>
 #include <liberror/Try.hpp>
 #include <libexec/Execute.hpp>
+#include <range/v3/algorithm.hpp>
 #include <range/v3/view.hpp>
 
-#include <algorithm>
 #include <cstdlib>
 #include <regex>
 
@@ -50,7 +50,7 @@ Result<std::vector<Display>> get_available_displays()
 Result<Display> get_primary_display()
 {
     auto displays = TRY(get_available_displays());
-    auto maybeDisplay = std::ranges::find_if(displays, &Display::primary);
+    auto maybeDisplay = ranges::find_if(displays, &Display::primary);
 
     if (maybeDisplay == displays.end())
     {

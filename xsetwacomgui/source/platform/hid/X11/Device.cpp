@@ -6,12 +6,12 @@
 #include <libexec/Execute.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <range/v3/view.hpp>
+#include <range/v3/algorithm.hpp>
 
 #include <fcntl.h>
 #include <poll.h>
 #include <sys/wait.h>
 
-#include <algorithm>
 #include <functional>
 #include <ranges>
 #include <regex>
@@ -32,7 +32,7 @@ Result<std::vector<Device>> get_available_devices()
 
     auto fnTrim = [] (auto const& value) {
         auto result = value;
-        result.erase(result.begin(), std::ranges::find_if(result, std::not_fn(isspace)));
+        result.erase(result.begin(), ranges::find_if(result, std::not_fn(isspace)));
         result.erase(std::find_if(result.rbegin(), result.rend(), std::not_fn(isspace)).base(), result.end());
         return result;
     };
