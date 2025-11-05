@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Action.hpp"
 #include "Area.hpp"
 
 #include <liberror/Result.hpp>
@@ -38,21 +39,7 @@ liberror::Result<void> reset_stylus_area(Device stylus);
 liberror::Result<void> set_stylus_output_from_display_name(Device stylus, std::string_view displayName);
 liberror::Result<void> set_stylus_output_from_display_area(Device stylus, Area area);
 liberror::Result<void> set_stylus_handedness(Device stylus, Device::Handedness handedness);
-
-enum class X11Action
-{
-    LEFT_BUTTON = 1,
-    MIDDLE_BUTTON,
-    RIGHT_BUTTON,
-    SCROLL_UP,
-    SCROLL_DOWN,
-    SCROLL_LEFT,
-    SCROLL_RIGHT,
-    BACKWARD_BUTTON,
-    FORWARD_BUTTON
-};
-
-liberror::Result<std::map<int, X11Action>> get_device_button_mappings(Device device);
-liberror::Result<void> set_device_button_mappings(Device device, std::map<int, X11Action> const& mappings);
+liberror::Result<std::map<int, Action>> get_device_button_mappings(Device device);
+liberror::Result<void> set_device_button_mappings(Device device, std::map<int, Action> const& mappings);
 liberror::Result<void> reset_device_button_mappings(Device device);
-liberror::Result<std::map<int, X11Action>> get_device_default_button_mappings(Device device);
+liberror::Result<std::map<int, Action>> get_device_default_button_mappings(Device device);

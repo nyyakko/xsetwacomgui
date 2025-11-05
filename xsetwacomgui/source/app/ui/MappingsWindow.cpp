@@ -15,7 +15,7 @@ using namespace liberror;
 static Result<void> render_stylus_tab(Context& context, TabletProfile& profile)
 {
     static auto actionNames =
-        magic_enum::enum_names<X11Action>()
+        magic_enum::enum_names<Action>()
             | ranges::views::transform([] (auto& action) { return action.data(); })
             | ranges::to_vector;
 
@@ -31,7 +31,7 @@ static Result<void> render_stylus_tab(Context& context, TabletProfile& profile)
         ImGui::SetNextItemWidth(180_scaled);
         if (ImGui::Combo(fmt::format("##Actions##Stylus##{}", mapping.first).data(), &actionIndexes[size_t(mapping.first)-1], actionNames.data(), int(actionNames.size())))
         {
-            profile.stylus.mappings.at(mapping.first) = *magic_enum::enum_cast<X11Action>(actionIndexes[size_t(mapping.first)-1]+1);
+            profile.stylus.mappings.at(mapping.first) = *magic_enum::enum_cast<Action>(actionIndexes[size_t(mapping.first)-1]+1);
         }
     }
 
@@ -41,7 +41,7 @@ static Result<void> render_stylus_tab(Context& context, TabletProfile& profile)
 static Result<void> render_pad_tab(Context& context, TabletProfile& profile)
 {
     static auto actionNames =
-        magic_enum::enum_names<X11Action>()
+        magic_enum::enum_names<Action>()
             | ranges::views::transform([] (auto& action) { return action.data(); })
             | ranges::to_vector;
 
@@ -57,7 +57,7 @@ static Result<void> render_pad_tab(Context& context, TabletProfile& profile)
         ImGui::SetNextItemWidth(180_scaled);
         if (ImGui::Combo(fmt::format("##Actions##Pad##{}", mapping.first).data(), &actionIndexes[size_t(mapping.first)-1], actionNames.data(), int(actionNames.size())))
         {
-            profile.pad.mappings.at(mapping.first) = *magic_enum::enum_cast<X11Action>(actionIndexes[size_t(mapping.first)-1]+1);
+            profile.pad.mappings.at(mapping.first) = *magic_enum::enum_cast<Action>(actionIndexes[size_t(mapping.first)-1]+1);
         }
     }
 

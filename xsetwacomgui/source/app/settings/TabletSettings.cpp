@@ -70,7 +70,7 @@ Result<TabletSettings, SettingsError> load_tablet_settings()
             {
                 profile.stylus.mappings.insert({
                     std::atoi(entry.items().begin().key().data()),
-                    *magic_enum::enum_cast<X11Action>(entry.items().begin().value().get<std::string>())
+                    *magic_enum::enum_cast<Action>(entry.items().begin().value().get<std::string>())
                 });
             }
 
@@ -80,7 +80,7 @@ Result<TabletSettings, SettingsError> load_tablet_settings()
             {
                 profile.pad.mappings.insert({
                     std::atoi(entry.items().begin().key().data()),
-                    *magic_enum::enum_cast<X11Action>(entry.items().begin().value().get<std::string>())
+                    *magic_enum::enum_cast<Action>(entry.items().begin().value().get<std::string>())
                 });
             }
 
@@ -172,14 +172,14 @@ Result<void> save_tablet_settings(TabletSettings const& settings)
         for (auto const& mapping : profile.stylus.mappings)
         {
             nlohmann::ordered_json mappingJson {};
-            mappingJson[std::to_string(mapping.first)] = magic_enum::enum_name<X11Action>(mapping.second);
+            mappingJson[std::to_string(mapping.first)] = magic_enum::enum_name<Action>(mapping.second);
             profileJson[name]["tablet"]["stylus"]["mappings"].push_back(mappingJson);
         }
 
         for (auto const& mapping : profile.pad.mappings)
         {
             nlohmann::ordered_json mappingJson {};
-            mappingJson[std::to_string(mapping.first)] = magic_enum::enum_name<X11Action>(mapping.second);
+            mappingJson[std::to_string(mapping.first)] = magic_enum::enum_name<Action>(mapping.second);
             profileJson[name]["tablet"]["pad"]["mappings"].push_back(mappingJson);
         }
 

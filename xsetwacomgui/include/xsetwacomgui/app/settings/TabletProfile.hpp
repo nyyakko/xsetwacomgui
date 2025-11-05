@@ -15,13 +15,13 @@ struct TabletProfile
         Device::Pressure pressure;
         bool forceFullArea;
         bool forceAspectRatio;
-        std::map<int, X11Action> mappings;
+        std::map<int, Action> mappings;
     };
 
     struct Pad
     {
         std::string name = "INVALID";
-        std::map<int, X11Action> mappings;
+        std::map<int, Action> mappings;
     };
 
     struct Display
