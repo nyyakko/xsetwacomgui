@@ -1,7 +1,7 @@
 #pragma once
 
-#include "devices/Tablet.hpp"
 #include "settings/ApplicationSettings.hpp"
+#include "settings/TabletSettings.hpp"
 
 #include <asio.hpp>
 #include <liberror/Result.hpp>
@@ -17,6 +17,8 @@ struct Context
     asio::thread_pool mtExecutor {8};
 
     Tablet tablet {};
+    TabletSettings tabletSettings {};
+
     Display display {};
 
     bool handleOutdatedDeviceSettings = false;
