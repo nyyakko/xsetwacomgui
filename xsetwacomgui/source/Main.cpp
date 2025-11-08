@@ -415,7 +415,7 @@ Result<void> safe_main(std::span<char const*> const& arguments)
 
     if (!std::filesystem::exists(APPLICATION_SETTINGS_FILE))
     {
-        save_application_settings(context.settings);
+        TRY(save_application_settings(context.settings));
     }
     else
     {
@@ -436,8 +436,8 @@ Result<void> safe_main(std::span<char const*> const& arguments)
                 auto choice = 0; std::cin >> choice;
                 if (choice == 1 || choice == 2)
                 {
-                    if (choice == 1) save_application_settings(context.settings);
-                    if (choice == 2) migrate_application_settings(context.settings);
+                    if (choice == 1) TRY(save_application_settings(context.settings));
+                    if (choice == 2) TRY(migrate_application_settings(context.settings));
                     break;
                 }
                 else
