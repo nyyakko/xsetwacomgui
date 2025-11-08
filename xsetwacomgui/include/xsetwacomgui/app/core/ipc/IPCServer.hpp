@@ -4,6 +4,8 @@
 #include "platform/mqueue/MQueueDescriptor.hpp"
 #include "platform/mqueue/MQueue.hpp"
 
+#include <asio/awaitable.hpp>
+#include <asio/io_context.hpp>
 #include <liberror/Result.hpp>
 #include <liberror/Try.hpp>
 
@@ -47,8 +49,8 @@ public:
 private:
     static liberror::Result<IPCServer> create();
 
-    void message_receiver();
-    void message_sender();
+    asio::awaitable<void> message_receiver(asio::io_context& context);
+    asio::awaitable<void> message_sender(asio::io_context& context);
 
 private:
     MQueue mqueue_;

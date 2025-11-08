@@ -1,3 +1,4 @@
+#include <asio/executor_work_guard.hpp>
 #include <spdlog/spdlog.h>
 
 #include "app/core/ipc/IPCServer.hpp"
@@ -5,7 +6,9 @@
 #include "platform/udev/UDevDevice.hpp"
 #include "platform/udev/UDevMonitor.hpp"
 
-#include <asio.hpp>
+#include <asio/co_spawn.hpp>
+#include <asio/detached.hpp>
+#include <asio/thread_pool.hpp>
 #include <liberror/Try.hpp>
 #include <magic_enum/magic_enum.hpp>
 
@@ -16,7 +19,6 @@
 #include <sys/syslog.h>
 #include <unistd.h>
 
-#include <functional>
 #include <csignal>
 
 using namespace liberror;
@@ -36,6 +38,7 @@ Result<IPCServer> IPCServer::create()
     IPCServer server {};
 
     auto mqueue = MQueue::create(SERVER_NAME);
+
     if (!mqueue.has_value())
     {
         if (mqueue.error().message() == strerror(EEXIST))
@@ -56,15 +59,21 @@ void IPCServer::start()
 
     asio::thread_pool pool(8);
 
-    asio::post(pool, std::bind_front(std::mem_fn(&IPCServer::message_receiver), this));
-    asio::post(pool, std::bind_front(std::mem_fn(&IPCServer::message_sender), this));
+    asio::io_context context;
+    asio::post(pool, [&] {
+        auto guard = asio::make_work_guard(context);
+        context.run();
+    });
+
+    asio::co_spawn(pool, message_receiver(context), asio::detached);
+    asio::co_spawn(pool, message_sender(context), asio::detached);
 
     pool.join();
 
     assert(false && "UNREACHABLE");
 }
 
-void IPCServer::message_receiver()
+asio::awaitable<void> IPCServer::message_receiver(asio::io_context&)
 {
     while (true)
     {
@@ -98,36 +107,22 @@ void IPCServer::message_receiver()
             spdlog::info("Client {} disconnected", clientName);
         }
     }
+
+    co_return;
 }
 
-void IPCServer::message_sender()
+asio::awaitable<void> IPCServer::message_sender(asio::io_context& context)
 {
-    UDev udev;
-
-    UDevMonitor monitor(udev);
+    UDevMonitor monitor(context);
     monitor.add_subsystem("usb");
     monitor.enable();
 
-    pollfd fd {
-        .fd=udev_monitor_get_fd(monitor.get()),
-        .events=POLLIN,
-        .revents={}
-    };
-
     while (true)
     {
-        if (auto result = poll(&fd, 1, -1); result == 0) continue;
-        else if (result < 0)
-        {
-            spdlog::error("Poll failed: {}", strerror(errno));
-            std::exit(EXIT_FAILURE);
-        }
+        auto device = co_await monitor.get_device_async();
+        if (!device.get_devnode()) continue;
 
-        clients_.with([&monitor] (auto const& clients) {
-            UDevDevice device(udev_monitor_receive_device(monitor.get()));
-
-            if (!device.get_devnode()) return;
-
+        clients_.with([&device] (auto const& clients) {
             auto action = magic_enum::enum_name<UDevDevice::Action>(device.get_action());
 
             for (auto const& client : clients)
