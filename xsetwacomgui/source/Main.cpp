@@ -460,12 +460,17 @@ Result<void> safe_main(std::span<char const*> const& arguments)
 
     if (TRY(daemonize(NAME"-server")) == IsDaemon::TRUE)
     {
+        asio::io_context executor;
+        auto guard = asio::make_work_guard(executor);
+
+        static auto server = TRY(IPCServer::create(executor));
+
         configure_signal_handler([] (int) {
-            IPCServer::the().~IPCServer();
+            server.~IPCServer();
             _exit(0);
         });
 
-        IPCServer::the().start();
+        server.start();
     }
     else
     {

@@ -2,7 +2,7 @@
 
 using namespace liberror;
 
-Result<MQueueDescriptor> MQueueDescriptor::create(std::string_view name, int flag, int mode)
+Result<MQueueDescriptor> MQueueDescriptor::create(std::string_view name, asio::io_context* context, int flag, int mode)
 {
     MQueueDescriptor descriptor {};
 
@@ -20,10 +20,20 @@ Result<MQueueDescriptor> MQueueDescriptor::create(std::string_view name, int fla
         return make_error(strerror(errno));
     }
 
+    if (context != nullptr)
+    {
+        descriptor.stream_ = asio::posix::stream_descriptor(*context, descriptor.value_);
+    }
+
     return descriptor;
 }
 
-Result<MQueueDescriptor> MQueueDescriptor::create(std::string_view name, int flag)
+Result<MQueueDescriptor> MQueueDescriptor::create(std::string_view name, int flag, int mode)
+{
+    return MQueueDescriptor::create(name, nullptr, flag, mode);
+}
+
+Result<MQueueDescriptor> MQueueDescriptor::create(std::string_view name, asio::io_context* context, int flag)
 {
     MQueueDescriptor descriptor {};
 
@@ -34,7 +44,17 @@ Result<MQueueDescriptor> MQueueDescriptor::create(std::string_view name, int fla
         return make_error(strerror(errno));
     }
 
+    if (context != nullptr)
+    {
+        descriptor.stream_ = asio::posix::stream_descriptor(*context, descriptor.value_);
+    }
+
     return descriptor;
+}
+
+Result<MQueueDescriptor> MQueueDescriptor::create(std::string_view name, int flag)
+{
+    return MQueueDescriptor::create(name, nullptr, flag);
 }
 
 Result<std::vector<char>> MQueueDescriptor::receive() const

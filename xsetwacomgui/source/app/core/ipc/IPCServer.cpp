@@ -1,4 +1,3 @@
-#include <asio/executor_work_guard.hpp>
 #include <spdlog/spdlog.h>
 
 #include "app/core/ipc/IPCServer.hpp"
@@ -8,6 +7,7 @@
 
 #include <asio/co_spawn.hpp>
 #include <asio/detached.hpp>
+#include <asio/executor_work_guard.hpp>
 #include <asio/thread_pool.hpp>
 #include <liberror/Try.hpp>
 #include <magic_enum/magic_enum.hpp>
@@ -23,8 +23,6 @@
 
 using namespace liberror;
 
-static constexpr auto SERVER_NAME = "/" NAME "-server";
-
 IPCServer::~IPCServer()
 {
     if (mqueue_.descriptor().value() != -1)
@@ -33,11 +31,11 @@ IPCServer::~IPCServer()
     }
 }
 
-Result<IPCServer> IPCServer::create()
+Result<IPCServer> IPCServer::create(asio::io_context& context)
 {
     IPCServer server {};
 
-    auto mqueue = MQueue::create(SERVER_NAME);
+    auto mqueue = MQueue::create("/" NAME "-server", &context);
 
     if (!mqueue.has_value())
     {
@@ -49,6 +47,7 @@ Result<IPCServer> IPCServer::create()
     }
 
     server.mqueue_ = std::move(*mqueue);
+    server.context_ = &context;
 
     return server;
 }
@@ -59,32 +58,26 @@ void IPCServer::start()
 
     asio::thread_pool pool(8);
 
-    asio::io_context context;
-    asio::post(pool, [&] {
-        auto guard = asio::make_work_guard(context);
-        context.run();
-    });
+    asio::post(pool, [&] { context_->run(); });
 
-    asio::co_spawn(pool, message_receiver(context), asio::detached);
-    asio::co_spawn(pool, message_sender(context), asio::detached);
+    asio::co_spawn(pool, message_receiver(), asio::detached);
+    asio::co_spawn(pool, message_sender(), asio::detached);
 
     pool.join();
 
     assert(false && "UNREACHABLE");
 }
 
-asio::awaitable<void> IPCServer::message_receiver(asio::io_context&)
+asio::awaitable<void> IPCServer::message_receiver()
 {
     while (true)
     {
-        auto buffer = mqueue_.receive();
-        if (!buffer.has_value())
-        {
-            spdlog::error("Receive failed: {}", buffer.error().message());
-            std::exit(EXIT_FAILURE);
-        }
+        auto buffer = co_await mqueue_.receive_async();
+        std::string_view message(buffer);
 
-        std::string_view message(*buffer);
+#if DEBUG
+        spdlog::info("Received '{}'", message);
+#endif
 
         if (message.starts_with("CONN"))
         {
@@ -111,9 +104,9 @@ asio::awaitable<void> IPCServer::message_receiver(asio::io_context&)
     co_return;
 }
 
-asio::awaitable<void> IPCServer::message_sender(asio::io_context& context)
+asio::awaitable<void> IPCServer::message_sender()
 {
-    UDevMonitor monitor(context);
+    UDevMonitor monitor(*context_);
     monitor.add_subsystem("usb");
     monitor.enable();
 
