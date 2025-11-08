@@ -13,8 +13,8 @@ struct Context
     std::vector<Device> devices;
     std::vector<Display> displays;
 
-    asio::io_context stExecutor {};
-    asio::thread_pool mtExecutor {8};
+    asio::io_context stExecutor {8};
+    asio::thread_pool mtExecutor {};
 
     Tablet tablet {};
     TabletSettings tabletSettings {};

@@ -1,14 +1,12 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "app/ui/MainWindow.hpp"
 
-#include "app/core/ipc/IPCClient.hpp"
 #include "app/core/Localisation.hpp"
 #include "app/core/Scaling.hpp"
 #include "app/ui/components/AreaMapper.hpp"
 #include "app/ui/components/DropupButton.hpp"
 #include "app/ui/MappingsWindow.hpp"
 #include "app/ui/ProfileWindow.hpp"
-#include "platform/udev/UDevDevice.hpp"
 
 #include <imgui/extensions/imgui_bezier.hpp>
 #include <imgui/extensions/imgui_text.hpp>
@@ -560,15 +558,16 @@ Result<void> render_main_window(Context& context)
 
     if (context.devices.empty() && !hasTriedToInitializeDeviceSettings)
     {
+        hasTriedToInitializeDeviceSettings = true;
         ImGui::PushToast(
             TRY(Localisation::get(context.settings.language(), Localisation::Toast_Warning)),
             TRY(Localisation::get(context.settings.language(), Localisation::Toast_Devices_Missing))
         );
-        hasTriedToInitializeDeviceSettings = true;
     }
 
     if (!(context.devices.empty() || hasTriedToInitializeDeviceSettings))
     {
+        hasTriedToInitializeDeviceSettings = true;
         asio::co_spawn(context.stExecutor, [] (Context& context_) -> asio::awaitable<void> {
             auto result = co_await asio::co_spawn(context_.mtExecutor, [] () -> asio::awaitable<Result<TabletSettings, SettingsError>> {
                 co_return load_tablet_settings();
@@ -685,108 +684,6 @@ Result<void> render_main_window(Context& context)
                 }
             }
         }(context), asio::detached);
-
-        hasTriedToInitializeDeviceSettings = true;
-    }
-
-    auto message = TRY(IPCClient::the().receive_message_async());
-    if (!message.empty())
-    {
-        auto action = magic_enum::enum_cast<UDevDevice::Action>(message.data());
-        assert(action && "INVALID ACTION");
-
-        static auto fnGetAvailableDevices = [] (auto shouldRetry) -> asio::awaitable<Result<std::vector<Device>>> {
-            Result<std::vector<Device>> maybeDevices {};
-
-            for (auto i = 0; i < 3; i += 1)
-            {
-                maybeDevices = get_available_devices();
-                if (!maybeDevices.has_value()) co_return make_error(maybeDevices.error());
-                if (!(maybeDevices->empty() && shouldRetry)) break;
-                std::this_thread::sleep_for(250ms);
-            }
-
-            co_return maybeDevices;
-        };
-
-        if (*action == UDevDevice::Action::BIND && ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) < 1)
-        {
-            asio::co_spawn(context.stExecutor, [] (Context& context_) -> asio::awaitable<void> {
-                auto maybeDevices = co_await asio::co_spawn(context_.mtExecutor, fnGetAvailableDevices(true));
-
-                if (!maybeDevices.has_value())
-                {
-                    ImGui::PushToast(
-                        MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Error)),
-                        MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Devices_Missing))
-                    );
-                    co_return;
-                }
-
-                if (maybeDevices->empty())
-                {
-                    ImGui::PushToast(
-                        MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Error)),
-                        MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Devices_Missing))
-                    );
-                    co_return;
-                }
-
-                context_.devices = *maybeDevices;
-
-                auto maybeSettings = co_await asio::co_spawn(context_.mtExecutor, [] -> asio::awaitable<Result<TabletSettings, SettingsError>> {
-                    co_return load_tablet_settings();
-                });
-                assert(maybeSettings.has_value() && "how did you even manage to make this happen?");
-
-                context_.tabletSettings = *maybeSettings;
-
-                auto stylus = ranges::find(context_.devices, context_.tabletSettings.profile()->second.stylus.name, &Device::name);
-                assert(stylus != context_.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
-                context_.tablet.stylus = *stylus;
-
-                auto pad = ranges::find(context_.devices, context_.tabletSettings.profile()->second.pad.name, &Device::name);
-                assert(pad != context_.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
-                context_.tablet.pad = *pad;
-
-                context_.display = *ranges::find(context_.displays, context_.tabletSettings.profile()->second.display.name, &Display::name);
-
-                context_.hasChangedDeviceSettings = true;
-
-                auto maybeLoaded = co_await asio::co_spawn(context_.mtExecutor, [] (auto settings_, auto tablet_, auto display_) -> asio::awaitable<Result<void>> {
-                    co_return load_tablet_profile(settings_.profile()->second, tablet_, display_);
-                }(context_.tabletSettings, context_.tablet, context_.display));
-
-                if (!maybeLoaded.has_value())
-                {
-                    ImGui::PushToast(
-                        MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Error)),
-                        MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Profile_Load_Failed))
-                    );
-                }
-            }(context), asio::detached);
-        }
-
-        if (*action == UDevDevice::Action::UNBIND && ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) <= 1)
-        {
-            asio::co_spawn(context.stExecutor, [] (Context& context_) -> asio::awaitable<void> {
-                auto maybeDevices = co_await asio::co_spawn(context_.mtExecutor, fnGetAvailableDevices(false));
-                if (!maybeDevices.has_value()) co_return;
-
-                context_.devices = *maybeDevices;
-
-                if (ranges::find(context_.devices, context_.tabletSettings.profile()->second.stylus.name, &Device::name) != context_.devices.end())
-                {
-                    co_return;
-                }
-
-                context_.display = {};
-                context_.tablet = {};
-                context_.tabletSettings = {};
-
-                context_.hasChangedDeviceSettings = true;
-            }(context), asio::detached);
-        }
     }
 
     ImGui::BeginDisabled(context.handleOutdatedDeviceSettings || context.tabletSettings.profile()->second.name == "INVALID");

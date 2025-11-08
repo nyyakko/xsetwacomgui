@@ -21,17 +21,12 @@ IPCClient::~IPCClient()
     }
 }
 
-Result<IPCClient> IPCClient::create()
+Result<IPCClient> IPCClient::create(asio::io_context& context)
 {
     IPCClient client {};
     client.name_ = fmt::format("{}-{}", CLIENT_NAME, getpid());
+    client.mqueue_ = TRY(MQueue::create(client.name_, &context));
     return client;
-}
-
-Result<void> IPCClient::configure(Mode mode)
-{
-    mqueue_ = TRY(MQueue::create(name_, O_RDONLY | O_CREAT | (mode == Mode::ASYNC ? O_NONBLOCK : 0)));
-    return {};
 }
 
 Result<void> IPCClient::connect() const
@@ -71,21 +66,9 @@ Result<void> IPCClient::connect() const
     return {};
 }
 
-Result<std::vector<char>> IPCClient::receive_message_async() const
+asio::awaitable<std::vector<char>> IPCClient::receive_message_async()
 {
-    auto received = mqueue_.receive();
-
-    if (!(received.has_value() || received.error().message() == strerror(EAGAIN)))
-    {
-        return make_error(received.error().message());
-    }
-    else
-    {
-        if (!received.has_value() && received.error().message() == strerror(EAGAIN))
-            return {};
-        else
-            return *received;
-    }
+    return mqueue_.receive_async();
 }
 
 Result<std::vector<char>> IPCClient::receive_message() const
