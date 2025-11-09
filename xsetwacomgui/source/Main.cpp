@@ -293,7 +293,7 @@ static Result<void> run_gui()
             glfwGetWindowSize(window, &windowWidth, &windowHeight);
             ImGui::SetNextWindowPos({});
             ImGui::SetNextWindowSize({ float(windowWidth), float(windowHeight) });
-            ImGui::Begin(NAME, nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar);
+            ImGui::Begin(NAME, nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoBringToFrontOnFocus);
             {
                 ImGui::RenderToasts();
 #ifdef DEBUG
