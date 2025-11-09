@@ -65,11 +65,11 @@ static Result<void> render_pad_tab(Context& context, TabletProfile& profile)
 
 Result<void> render_mappings_window(bool isWindowVisible, Context& context)
 {
-    static TabletProfile currentProfile = context.tabletSettings.profile()->second;
+    static TabletProfile currentProfile = context.tablet.settings.profile()->second;
 
-    if (currentProfile.name != context.tabletSettings.profile()->second.name)
+    if (currentProfile.name != context.tablet.settings.profile()->second.name)
     {
-        currentProfile = context.tabletSettings.profile()->second;
+        currentProfile = context.tablet.settings.profile()->second;
     }
 
     if (ImGui::BeginTabBar("##Tabs"))
@@ -97,11 +97,11 @@ Result<void> render_mappings_window(bool isWindowVisible, Context& context)
     {
         isSaveApplyButtonDisabled = true;
         asio::co_spawn(context.stExecutor, [] (Context& context_) -> asio::awaitable<void> {
-            context_.tabletSettings.profile(currentProfile);
+            context_.tablet.settings.profile(currentProfile);
 
             auto maybeLoaded = co_await asio::co_spawn(context_.mtExecutor, [] (auto settings_, auto tablet_, auto display_) -> asio::awaitable<Result<void>> {
-                co_return load_tablet_profile(settings_.profile()->second, tablet_, display_);
-            }(context_.tabletSettings, context_.tablet, context_.display));
+                co_return load_tablet_profile(settings_.profile()->second, tablet_.stylus, tablet_.pad, display_);
+            }(context_.tablet.settings, context_.tablet, context_.display));
             isSaveApplyButtonDisabled = false;
 
             if (!maybeLoaded)
@@ -116,7 +116,7 @@ Result<void> render_mappings_window(bool isWindowVisible, Context& context)
             co_await asio::co_spawn(context_.mtExecutor, [] (auto settings_) -> asio::awaitable<void> {
                 save_tablet_settings(settings_);
                 co_return;
-            }(context_.tabletSettings));
+            }(context_.tablet.settings));
 
             ImGui::PushToast(
                 MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Success)),
@@ -129,7 +129,7 @@ Result<void> render_mappings_window(bool isWindowVisible, Context& context)
 
     if (!isWindowVisible)
     {
-        currentProfile = context.tabletSettings.profile()->second;
+        currentProfile = context.tablet.settings.profile()->second;
     }
 
     return {};

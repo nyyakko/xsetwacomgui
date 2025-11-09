@@ -1,6 +1,5 @@
 #pragma once
 
-#include "app/devices/Tablet.hpp"
 #include "platform/Environment.hpp"
 #include "platform/hid/X11/Device.hpp"
 #include "platform/hid/X11/Display.hpp"
@@ -45,8 +44,8 @@ struct TabletProfile
     Display display;
 };
 
-liberror::Result<TabletProfile> make_tablet_profile(std::string_view name, Tablet const& tablet, Display const& display);
-liberror::Result<void> load_tablet_profile(TabletProfile const& profile, Tablet const& tablet, Display const& display);
+liberror::Result<TabletProfile> make_tablet_profile(std::string_view name, Device const& stylus, Device const& pad, Display const& display);
+liberror::Result<void> load_tablet_profile(TabletProfile const& profile, Device const& stylus, Device const& pad, Display const& display);
 
 class TabletSettings
 {

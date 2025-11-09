@@ -91,23 +91,23 @@ static asio::awaitable<void> ipc_message_handler(IPCClient& client, Context& con
             });
             assert(maybeSettings.has_value() && "how did you even manage to make this happen?");
 
-            context.tabletSettings = *maybeSettings;
+            context.tablet.settings = *maybeSettings;
 
-            auto stylus = ranges::find(context.devices, context.tabletSettings.profile()->second.stylus.name, &Device::name);
+            auto stylus = ranges::find(context.devices, context.tablet.settings.profile()->second.stylus.name, &Device::name);
             assert(stylus != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
             context.tablet.stylus = *stylus;
 
-            auto pad = ranges::find(context.devices, context.tabletSettings.profile()->second.pad.name, &Device::name);
+            auto pad = ranges::find(context.devices, context.tablet.settings.profile()->second.pad.name, &Device::name);
             assert(pad != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
             context.tablet.pad = *pad;
 
-            context.display = *ranges::find(context.displays, context.tabletSettings.profile()->second.display.name, &Display::name);
+            context.display = *ranges::find(context.displays, context.tablet.settings.profile()->second.display.name, &Display::name);
 
             context.hasChangedDeviceSettings = true;
 
             auto maybeLoaded = co_await asio::co_spawn(context.mtExecutor, [] (auto settings_, auto tablet_, auto display_) -> asio::awaitable<Result<void>> {
-                co_return load_tablet_profile(settings_.profile()->second, tablet_, display_);
-            }(context.tabletSettings, context.tablet, context.display));
+                co_return load_tablet_profile(settings_.profile()->second, tablet_.stylus, tablet_.pad, display_);
+            }(context.tablet.settings, context.tablet, context.display));
 
             if (!maybeLoaded.has_value())
             {
@@ -135,14 +135,14 @@ static asio::awaitable<void> ipc_message_handler(IPCClient& client, Context& con
         {
             context.devices = co_await asio::co_spawn(context.mtExecutor, fnGetAvailableDevices(false));
 
-            if (ranges::find(context.devices, context.tabletSettings.profile()->second.stylus.name, &Device::name) != context.devices.end())
+            if (ranges::find(context.devices, context.tablet.settings.profile()->second.stylus.name, &Device::name) != context.devices.end())
             {
                 continue;
             }
 
             context.display = {};
             context.tablet = {};
-            context.tabletSettings = {};
+            context.tablet.settings = {};
 
             context.hasChangedDeviceSettings = true;
         }
@@ -458,21 +458,21 @@ static Result<void> run_no_gui()
         auto result = load_tablet_settings();
         if (!result) return make_error("Failed to load device settings");
 
-        context.tabletSettings = *result;
+        context.tablet.settings = *result;
 
-        auto stylus = ranges::find(context.devices, context.tabletSettings.profile()->second.stylus.name, &Device::name);
+        auto stylus = ranges::find(context.devices, context.tablet.settings.profile()->second.stylus.name, &Device::name);
         assert(stylus != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
         context.tablet.stylus = *stylus;
 
-        auto pad = ranges::find(context.devices, context.tabletSettings.profile()->second.pad.name, &Device::name);
+        auto pad = ranges::find(context.devices, context.tablet.settings.profile()->second.pad.name, &Device::name);
         assert(pad != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
         context.tablet.pad = *pad;
 
-        context.display = *ranges::find(context.displays, context.tabletSettings.profile()->second.display.name, &Display::name);
+        context.display = *ranges::find(context.displays, context.tablet.settings.profile()->second.display.name, &Display::name);
 
-        TRY(load_tablet_profile(context.tabletSettings.profile()->second, context.tablet, context.display));
+        TRY(load_tablet_profile(context.tablet.settings.profile()->second, context.tablet.stylus, context.tablet.pad, context.display));
 
-        spdlog::info("Device settings (profile: {}) loaded successfully", context.tabletSettings.profile()->second.name);
+        spdlog::info("Device settings (profile: {}) loaded successfully", context.tablet.settings.profile()->second.name);
     }
 
     auto guard = asio::make_work_guard(context.stExecutor);
