@@ -12,6 +12,7 @@
 #include "app/ui/SettingsWindow.hpp"
 #include "platform/Daemon.hpp"
 #include "platform/Environment.hpp"
+#include "platform/Notify.hpp"
 #include "platform/udev/UDevDevice.hpp"
 
 #include <GLFW/glfw3.h>
@@ -34,8 +35,6 @@
 
 using namespace liberror;
 using namespace std::literals;
-
-std::filesystem::path APPLICATION_ICON_FILE = get_application_icon_path() / "64x64" / "apps" / NAME".png";
 
 static void configure_signal_handler(void(*handler)(int))
 {
@@ -82,12 +81,7 @@ static asio::awaitable<void> ipc_message_handler(IPCClient& client, Context& con
                 }
                 else
                 {
-                    MUST(libexec::execute("notify-send", {
-                        "XSetWacomGUI",
-                        MUST(Localisation::get(context.settings.language(), Localisation::Toast_Devices_Missing)),
-                        "--icon", APPLICATION_ICON_FILE,
-                        "--expire-time", "2000"
-                    }));
+                    MUST(notify_send("XSetWacomGUI", MUST(Localisation::get(context.settings.language(), Localisation::Toast_Devices_Missing))));
                 }
                 continue;
             }
@@ -126,24 +120,14 @@ static asio::awaitable<void> ipc_message_handler(IPCClient& client, Context& con
                 }
                 else
                 {
-                    MUST(libexec::execute("notify-send", {
-                        "XSetWacomGUI",
-                        MUST(Localisation::get(context.settings.language(), Localisation::Toast_Profile_Load_Failed)),
-                        "--icon", APPLICATION_ICON_FILE,
-                        "--expire-time", "2000"
-                    }));
+                    MUST(notify_send("XSetWacomGUI", MUST(Localisation::get(context.settings.language(), Localisation::Toast_Profile_Load_Failed))));
                 }
                 continue;
             }
 
             if (headless)
             {
-                MUST(libexec::execute("notify-send", {
-                    "XSetWacomGUI",
-                    MUST(Localisation::get(context.settings.language(), Localisation::Toast_Device_Settings_Load_Success)),
-                    "--icon", APPLICATION_ICON_FILE,
-                    "--expire-time", "2000"
-                }));
+                MUST(notify_send("XSetWacomGUI", MUST(Localisation::get(context.settings.language(), Localisation::Toast_Device_Settings_Load_Success))));
             }
         }
 
