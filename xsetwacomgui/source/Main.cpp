@@ -12,7 +12,6 @@
 #include "app/ui/SettingsWindow.hpp"
 #include "platform/Daemon.hpp"
 #include "platform/Environment.hpp"
-#include "platform/Notify.hpp"
 #include "platform/udev/UDevDevice.hpp"
 
 #include <GLFW/glfw3.h>
@@ -36,14 +35,12 @@
 using namespace liberror;
 using namespace std::literals;
 
-enum class Headless { FALSE, TRUE };
-
-static asio::awaitable<void> ipc_message_handler(IPCClient& client, Context& context, Headless headless)
+static asio::awaitable<void> ipc_message_handler(IPCClient& client, Context& context, bool headless)
 {
     static auto fnGetAvailableDevices = [] (auto shouldRetry) -> asio::awaitable<std::vector<Device>> {
         std::vector<Device> devices {};
 
-        for (auto i = 0; i < 3; i += 1)
+        for (auto _ : ranges::views::iota(0, 3))
         {
             devices = MUST(get_available_devices());
             if (!(devices.empty() && shouldRetry)) break;
@@ -66,7 +63,7 @@ static asio::awaitable<void> ipc_message_handler(IPCClient& client, Context& con
 
             if (context.devices.empty())
             {
-                if (headless == Headless::FALSE)
+                if (!headless)
                 {
                     ImGui::PushToast(
                         MUST(Localisation::get(context.settings.language(), Localisation::Toast_Error)),
@@ -75,7 +72,7 @@ static asio::awaitable<void> ipc_message_handler(IPCClient& client, Context& con
                 }
                 else
                 {
-                    MUST(notify_send("XSetWacomGUI", MUST(Localisation::get(context.settings.language(), Localisation::Toast_Devices_Missing))));
+                    spdlog::info("{}", MUST(Localisation::get(context.settings.language(), Localisation::Toast_Devices_Missing)));
                 }
                 continue;
             }
@@ -102,10 +99,9 @@ static asio::awaitable<void> ipc_message_handler(IPCClient& client, Context& con
             auto maybeLoaded = co_await asio::co_spawn(context.mtExecutor, [] (auto settings_, auto tablet_, auto display_) -> asio::awaitable<Result<void>> {
                 co_return load_tablet_profile(settings_.profile()->second, tablet_.stylus, tablet_.pad, display_);
             }(context.tablet.settings, context.tablet, context.display));
-
             if (!maybeLoaded.has_value())
             {
-                if (headless == Headless::FALSE)
+                if (!headless)
                 {
                     ImGui::PushToast(
                         MUST(Localisation::get(context.settings.language(), Localisation::Toast_Error)),
@@ -114,14 +110,9 @@ static asio::awaitable<void> ipc_message_handler(IPCClient& client, Context& con
                 }
                 else
                 {
-                    MUST(notify_send("XSetWacomGUI", MUST(Localisation::get(context.settings.language(), Localisation::Toast_Profile_Load_Failed))));
+                    spdlog::info("{}", MUST(Localisation::get(context.settings.language(), Localisation::Toast_Profile_Load_Failed)));
                 }
                 continue;
-            }
-
-            if (headless == Headless::TRUE)
-            {
-                MUST(notify_send("XSetWacomGUI", MUST(Localisation::get(context.settings.language(), Localisation::Toast_Device_Settings_Load_Success))));
             }
         }
 
@@ -250,7 +241,7 @@ static Result<void> run_gui()
     }
 
     auto guard = asio::make_work_guard(context.stExecutor);
-    asio::co_spawn(context.stExecutor, ipc_message_handler(client, context, Headless::FALSE), asio::detached);
+    asio::co_spawn(context.stExecutor, ipc_message_handler(client, context, false), asio::detached);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -469,7 +460,7 @@ static Result<void> run_no_gui()
     }
 
     auto guard = asio::make_work_guard(context.stExecutor);
-    asio::co_spawn(context.stExecutor, ipc_message_handler(client, context, Headless::TRUE), asio::detached);
+    asio::co_spawn(context.stExecutor, ipc_message_handler(client, context, true), asio::detached);
     context.stExecutor.run();
 
     return {};

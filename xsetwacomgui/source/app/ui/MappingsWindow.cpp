@@ -103,7 +103,6 @@ Result<void> render_mappings_window(bool isWindowVisible, Context& context)
                 co_return load_tablet_profile(settings_.profile()->second, tablet_.stylus, tablet_.pad, display_);
             }(context_.tablet.settings, context_.tablet, context_.display));
             isSaveApplyButtonDisabled = false;
-
             if (!maybeLoaded)
             {
                 ImGui::PushToast(

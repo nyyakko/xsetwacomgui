@@ -580,7 +580,6 @@ Result<void> render_main_window(Context& context)
                 auto maybeCreated = co_await asio::co_spawn(context_.mtExecutor, [] (auto tablet_, auto display_) -> asio::awaitable<Result<TabletProfile>> {
                     co_return make_tablet_profile("Default", tablet_.stylus, tablet_.pad, display_);
                 }(context_.tablet, context_.display));
-
                 if (!maybeCreated.has_value())
                 {
                     ImGui::PushToast(
@@ -606,7 +605,6 @@ Result<void> render_main_window(Context& context)
                 auto maybeLoaded = co_await asio::co_spawn(context_.mtExecutor, [] (auto settings_, auto tablet_, auto display_) -> asio::awaitable<Result<void>> {
                     co_return load_tablet_profile(settings_.profile()->second, tablet_.stylus, tablet_.pad, display_);
                 }(context_.tablet.settings, context_.tablet, context_.display));
-
                 if (!maybeLoaded.has_value())
                 {
                     ImGui::PushToast(
@@ -664,7 +662,6 @@ Result<void> render_main_window(Context& context)
                 auto maybeLoaded = co_await asio::co_spawn(context_.mtExecutor, [] (auto settings_, auto tablet_, auto display_) -> asio::awaitable<Result<void>> {
                     co_return load_tablet_profile(settings_.profile()->second, tablet_.stylus, tablet_.pad, display_);
                 }(context_.tablet.settings, context_.tablet, context_.display));
-
                 if (!maybeLoaded.has_value())
                 {
                     ImGui::PushToast(
@@ -730,7 +727,6 @@ Result<void> render_main_window(Context& context)
                 co_return load_tablet_profile(settings_.profile()->second, tablet_.stylus, tablet_.pad, display_);
             }(context_.tablet.settings, context_.tablet, context_.display));
             isDropupButtonDisabled = false;
-
             if (!maybeLoaded)
             {
                 ImGui::PushToast(
@@ -772,7 +768,6 @@ Result<void> render_main_window(Context& context)
                     auto maybeLoaded = co_await asio::co_spawn(context_.mtExecutor, [] (auto settings_, auto tablet_, auto display_) -> asio::awaitable<Result<void>> {
                         co_return load_tablet_profile(settings_.profile()->second, tablet_.stylus, tablet_.pad, display_);
                     }(context_.tablet.settings, context_.tablet, context_.display));
-
                     if (!maybeLoaded)
                     {
                         ImGui::PushToast(

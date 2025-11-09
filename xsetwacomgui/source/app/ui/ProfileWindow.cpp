@@ -39,7 +39,6 @@ Result<void> render_profile_window(Context& context)
                     co_return make_tablet_profile(profileName.data(), tablet_.stylus, tablet_.pad, display_);
                 }(context_.tablet, context_.display));
                 isCreateButtonDisabled = false;
-
                 if (!maybeProfile.has_value())
                 {
                     ImGui::PushToast(
