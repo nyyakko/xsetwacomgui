@@ -9,6 +9,7 @@
 #include <magic_enum/magic_enum.hpp>
 #include <nlohmann/json.hpp>
 #include <range/v3/algorithm.hpp>
+#include <range/v3/view.hpp>
 
 #include <cstdlib>
 #include <filesystem>
@@ -153,7 +154,7 @@ Result<void> save_tablet_settings(TabletSettings const& settings)
         { "profiles", nlohmann::json::array() }
     };
 
-    for (auto const& [name, profile] : settings.profiles() | std::views::filter([] (auto const& profile) { return profile.first != "INVALID"; }))
+    for (auto const& [name, profile] : settings.profiles() | ranges::views::filter([] (auto const& profile) { return profile.first != "INVALID"; }))
     {
         nlohmann::ordered_json profileJson {};
 

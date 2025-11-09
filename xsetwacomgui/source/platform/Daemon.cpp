@@ -5,6 +5,7 @@
 
 #include <fmt/format.h>
 #include <range/v3/algorithm.hpp>
+#include <range/v3/view.hpp>
 
 #include <fcntl.h>
 #include <syslog.h>

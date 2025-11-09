@@ -199,7 +199,7 @@ Result<std::map<int, Action>> get_device_button_mappings(Device device)
 {
     std::map<int, Action> mappings {};
 
-    for (auto button : std::views::iota(1zu, 25zu))
+    for (auto button : ranges::views::iota(1zu, 25zu))
     {
         auto output = execute(fmt::format("--get {} Button {}", device.id, button));
         if (!(output.has_value() && output->starts_with("button"))) continue;
@@ -221,7 +221,7 @@ Result<void> set_device_button_mappings(Device device, std::map<int, Action> con
 
 Result<void> reset_device_button_mappings(Device device)
 {
-    for (auto button : std::views::iota(1zu, 25zu))
+    for (auto button : ranges::views::iota(1zu, 25zu))
     {
         execute(fmt::format("--set {} Button {}", device.id, button));
     }
