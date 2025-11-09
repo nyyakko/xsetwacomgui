@@ -136,7 +136,6 @@ static asio::awaitable<void> ipc_message_handler(IPCClient& client, Context& con
 
             context.display = {};
             context.tablet = {};
-            context.tablet.settings = {};
 
             context.hasChangedDeviceSettings = true;
         }
