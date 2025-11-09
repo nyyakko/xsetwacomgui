@@ -20,7 +20,6 @@ struct TabletProfile
         Area area;
         Device::Pressure pressure;
         bool forceFullArea;
-        bool forceAspectRatio;
         std::map<int, Action> mappings;
     };
 
@@ -35,7 +34,6 @@ struct TabletProfile
         std::string name = "INVALID";
         Area area;
         bool forceFullArea;
-        bool forceAspectRatio;
     };
 
     std::string name = "INVALID";
@@ -50,7 +48,7 @@ liberror::Result<void> load_tablet_profile(TabletProfile const& profile, Device 
 class TabletSettings
 {
     // Should be updated every time a change is made
-    static constexpr auto SCHEMA_VERSION = "1.4";
+    static constexpr auto SCHEMA_VERSION = "1.5";
 
 public:
     TabletSettings()

@@ -81,8 +81,7 @@ static Result<void> render_area_mappers(Context& context)
             displayAreaAnchors,
             displayMapperSize,
             &displayMapperPosition,
-            context.tablet.settings.profile()->second.display.forceFullArea,
-            context.tablet.settings.profile()->second.display.forceAspectRatio
+            context.tablet.settings.profile()->second.display.forceFullArea
         );
     ImGui::SetCursorPosX(previousCursorPosition.x);
 
@@ -149,8 +148,7 @@ static Result<void> render_area_mappers(Context& context)
             deviceAreaAnchors,
             deviceMapperSize,
             &deviceMapperPosition,
-            context.tablet.settings.profile()->second.stylus.forceFullArea,
-            context.tablet.settings.profile()->second.stylus.forceAspectRatio
+            context.tablet.settings.profile()->second.stylus.forceFullArea
         );
     ImGui::SetCursorPosX(previousCursorPosition.x);
 
@@ -227,7 +225,6 @@ static Result<void> render_tablet_tab(Context& context)
                 context_.tablet.settings.profile()->second.stylus.name = context_.tablet.stylus.name;
                 context_.tablet.settings.profile()->second.stylus.pressure = { 0, 0, 1, 1 };
                 context_.tablet.settings.profile()->second.stylus.forceFullArea = false;
-                context_.tablet.settings.profile()->second.stylus.forceAspectRatio = false;
                 context_.tablet.settings.profile()->second.stylus.handedness = Device::Handedness::RIGHT;
             }(context), asio::detached);
         }
@@ -323,9 +320,6 @@ static Result<void> render_tablet_tab(Context& context)
         ImGui::BeginGroup();
         {
             context.hasChangedDeviceArea |= ImGui::Checkbox(TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_Tabs_Tablet_FullArea)), &context.tablet.settings.profile()->second.stylus.forceFullArea);
-            ImGui::BeginDisabled();
-            ImGui::Checkbox(TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_Tabs_Tablet_ForceProportions)), &context.tablet.settings.profile()->second.stylus.forceAspectRatio);
-            ImGui::EndDisabled();
         }
         ImGui::EndGroup();
     }
@@ -410,7 +404,6 @@ static Result<void> render_display_tab(Context& context)
             context.tablet.settings.profile()->second.display.name = context.display.name;
             context.tablet.settings.profile()->second.display.area = { 0, 0, context.display.area.width, context.display.area.height };
             context.tablet.settings.profile()->second.display.forceFullArea = false;
-            context.tablet.settings.profile()->second.display.forceAspectRatio = false;
         }
 
         ImGui::BeginDisabled(context.tablet.settings.profile()->second.display.forceFullArea);
@@ -457,9 +450,6 @@ static Result<void> render_display_tab(Context& context)
         ImGui::BeginGroup();
         {
             context.hasChangedDisplayArea |= ImGui::Checkbox(TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_Tabs_Display_FullArea)), &context.tablet.settings.profile()->second.display.forceFullArea);
-            ImGui::BeginDisabled();
-            ImGui::Checkbox(TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_Tabs_Display_ForceProportions)), &context.tablet.settings.profile()->second.display.forceAspectRatio);
-            ImGui::EndDisabled();
         }
         ImGui::EndGroup();
     }

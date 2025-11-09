@@ -29,7 +29,6 @@ Result<TabletProfile> make_tablet_profile(std::string_view name, Device const& s
     profile.stylus.area = TRY(get_stylus_default_area(stylus));
     profile.stylus.pressure = { 0, 0, 1, 1 };
     profile.stylus.forceFullArea = false;
-    profile.stylus.forceAspectRatio = false;
     profile.stylus.mappings = TRY(get_device_default_button_mappings(stylus));
 
     profile.pad.name = pad.name;
@@ -38,7 +37,6 @@ Result<TabletProfile> make_tablet_profile(std::string_view name, Device const& s
     profile.display.name = display.name;
     profile.display.area = { 0, 0, display.area.width, display.area.height };
     profile.display.forceFullArea = false;
-    profile.display.forceAspectRatio = false;
 
     return profile;
 }
@@ -89,7 +87,6 @@ Result<TabletSettings, SettingsError> load_tablet_settings()
 
             profile.display.name             = profileJson.begin().value()["display"]["name"].get<std::string>();
             profile.display.forceFullArea    = profileJson.begin().value()["display"]["forceFullArea"].get<bool>();
-            profile.display.forceAspectRatio = profileJson.begin().value()["display"]["forceAspectRatio"].get<bool>();
             profile.display.area.offsetX     = profileJson.begin().value()["display"]["area"]["offsetX"].get<float>();
             profile.display.area.offsetY     = profileJson.begin().value()["display"]["area"]["offsetY"].get<float>();
             profile.display.area.width       = profileJson.begin().value()["display"]["area"]["width"].get<float>();
@@ -98,7 +95,6 @@ Result<TabletSettings, SettingsError> load_tablet_settings()
             profile.stylus.name              = profileJson.begin().value()["tablet"]["stylus"]["name"].get<std::string>();
             profile.stylus.handedness        = *magic_enum::enum_cast<Device::Handedness>(profileJson.begin().value()["tablet"]["stylus"]["handedness"].get<std::string>());
             profile.stylus.forceFullArea     = profileJson.begin().value()["tablet"]["stylus"]["forceFullArea"].get<bool>();
-            profile.stylus.forceAspectRatio  = profileJson.begin().value()["tablet"]["stylus"]["forceAspectRatio"].get<bool>();
             profile.stylus.area.offsetX      = profileJson.begin().value()["tablet"]["stylus"]["area"]["offsetX"].get<float>();
             profile.stylus.area.offsetY      = profileJson.begin().value()["tablet"]["stylus"]["area"]["offsetY"].get<float>();
             profile.stylus.area.width        = profileJson.begin().value()["tablet"]["stylus"]["area"]["width"].get<float>();
@@ -182,7 +178,6 @@ Result<void> save_tablet_settings(TabletSettings const& settings)
                                 }
                             },
                             { "forceFullArea", profile.stylus.forceFullArea },
-                            { "forceAspectRatio", profile.stylus.forceAspectRatio },
                             { "mappings", nlohmann::json::array() }
                         }
                     },
@@ -206,7 +201,6 @@ Result<void> save_tablet_settings(TabletSettings const& settings)
                         }
                     },
                     { "forceFullArea", profile.display.forceFullArea },
-                    { "forceAspectRatio", profile.display.forceAspectRatio },
                 }
             }
         };
