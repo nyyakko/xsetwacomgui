@@ -36,7 +36,9 @@
 using namespace liberror;
 using namespace std::literals;
 
-static asio::awaitable<void> ipc_message_handler(IPCClient& client, Context& context, bool headless = false)
+enum class Headless { FALSE, TRUE };
+
+static asio::awaitable<void> ipc_message_handler(IPCClient& client, Context& context, Headless headless)
 {
     static auto fnGetAvailableDevices = [] (auto shouldRetry) -> asio::awaitable<std::vector<Device>> {
         std::vector<Device> devices {};
@@ -64,7 +66,7 @@ static asio::awaitable<void> ipc_message_handler(IPCClient& client, Context& con
 
             if (context.devices.empty())
             {
-                if (!headless)
+                if (headless == Headless::FALSE)
                 {
                     ImGui::PushToast(
                         MUST(Localisation::get(context.settings.language(), Localisation::Toast_Error)),
@@ -103,7 +105,7 @@ static asio::awaitable<void> ipc_message_handler(IPCClient& client, Context& con
 
             if (!maybeLoaded.has_value())
             {
-                if (!headless)
+                if (headless == Headless::FALSE)
                 {
                     ImGui::PushToast(
                         MUST(Localisation::get(context.settings.language(), Localisation::Toast_Error)),
@@ -117,7 +119,7 @@ static asio::awaitable<void> ipc_message_handler(IPCClient& client, Context& con
                 continue;
             }
 
-            if (headless)
+            if (headless == Headless::TRUE)
             {
                 MUST(notify_send("XSetWacomGUI", MUST(Localisation::get(context.settings.language(), Localisation::Toast_Device_Settings_Load_Success))));
             }
@@ -249,7 +251,7 @@ static Result<void> run_gui()
     }
 
     auto guard = asio::make_work_guard(context.stExecutor);
-    asio::co_spawn(context.stExecutor, ipc_message_handler(client, context), asio::detached);
+    asio::co_spawn(context.stExecutor, ipc_message_handler(client, context, Headless::FALSE), asio::detached);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -468,7 +470,7 @@ static Result<void> run_no_gui()
     }
 
     auto guard = asio::make_work_guard(context.stExecutor);
-    asio::co_spawn(context.stExecutor, ipc_message_handler(client, context, true), asio::detached);
+    asio::co_spawn(context.stExecutor, ipc_message_handler(client, context, Headless::TRUE), asio::detached);
     context.stExecutor.run();
 
     return {};
