@@ -36,14 +36,6 @@
 using namespace liberror;
 using namespace std::literals;
 
-static void configure_signal_handler(void(*handler)(int))
-{
-    struct sigaction action;
-    action.sa_handler = handler;
-    sigaction(SIGINT, &action, NULL);
-    sigaction(SIGTERM, &action, NULL);
-}
-
 static asio::awaitable<void> ipc_message_handler(IPCClient& client, Context& context, bool headless = false)
 {
     static auto fnGetAvailableDevices = [] (auto shouldRetry) -> asio::awaitable<std::vector<Device>> {
@@ -161,10 +153,10 @@ static Result<void> run_gui()
     static auto client = TRY(IPCClient::create(context.stExecutor));
     TRY(client.connect());
 
-    configure_signal_handler([] (int) {
-        client.~IPCClient();
-        _exit(0);
-    });
+    struct sigaction action;
+    action.sa_handler = [] (int) { client.~IPCClient(); _exit(0); };
+    sigaction(SIGINT, &action, NULL);
+    sigaction(SIGTERM, &action, NULL);
 
     if (!glfwInit()) return make_error("Failed to initialize glfw");
 
@@ -403,10 +395,10 @@ static Result<void> run_no_gui()
     static auto client = TRY(IPCClient::create(context.stExecutor));
     TRY(client.connect());
 
-    configure_signal_handler([] (int) {
-        client.~IPCClient();
-        _exit(0);
-    });
+    struct sigaction action;
+    action.sa_handler = [] (int) { client.~IPCClient(); _exit(0); };
+    sigaction(SIGINT, &action, NULL);
+    sigaction(SIGTERM, &action, NULL);
 
     if (!std::filesystem::exists(APPLICATION_SETTINGS_FILE))
     {
@@ -510,10 +502,10 @@ static Result<void> safe_main(std::span<char const*> const& arguments)
 
         static auto server = TRY(IPCServer::create(executor));
 
-        configure_signal_handler([] (int) {
-            server.~IPCServer();
-            _exit(0);
-        });
+        struct sigaction action;
+        action.sa_handler = [] (int) { server.~IPCServer(); _exit(0); };
+        sigaction(SIGINT, &action, NULL);
+        sigaction(SIGTERM, &action, NULL);
 
         server.start();
 
