@@ -142,13 +142,8 @@ static Result<void> run_gui()
         .displays = TRY(get_available_displays()),
     };
 
-    static auto client = TRY(IPCClient::create(context.stExecutor));
+    auto client = TRY(IPCClient::create(context.stExecutor));
     TRY(client.connect());
-
-    struct sigaction action;
-    action.sa_handler = [] (int) { client.~IPCClient(); _exit(0); };
-    sigaction(SIGINT, &action, NULL);
-    sigaction(SIGTERM, &action, NULL);
 
     if (!glfwInit()) return make_error("Failed to initialize glfw");
 
