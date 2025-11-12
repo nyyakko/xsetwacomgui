@@ -29,7 +29,7 @@ target_include_directories(${PROJECT_NAME}
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_23)
 
 configure_file(
-    ${PROJECT_SOURCE_DIR}/resources/manifest/${PROJECT_NAME}.desktop.in
+    ${PROJECT_SOURCE_DIR}/resources/${PROJECT_NAME}.desktop.in
     ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.desktop
 )
 

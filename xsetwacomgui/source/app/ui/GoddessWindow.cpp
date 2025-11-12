@@ -21,7 +21,7 @@ static std::filesystem::path get_random_jahy()
 {
     auto count = 0;
 
-    ranges::for_each(std::filesystem::directory_iterator(get_application_data_path() / "images"), [&] (auto) {
+    ranges::for_each(std::filesystem::directory_iterator(get_application_images_path()), [&] (auto) {
         count += 1;
     });
 
@@ -29,7 +29,7 @@ static std::filesystem::path get_random_jahy()
     std::mt19937 generator(device());
     std::uniform_int_distribution<> distribution(0, count-1);
 
-    return get_application_data_path() / "images" / fmt::format("Jahy-{}.png", distribution(generator));
+    return get_application_images_path() / fmt::format("Jahy-{}.png", distribution(generator));
 }
 
 Result<void> render_goddess_window()
