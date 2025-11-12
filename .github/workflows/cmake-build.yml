@@ -16,7 +16,7 @@ jobs:
     - name: Install Deps
       run: |
          sudo apt update
-         sudo apt install libfreetype6-dev libglu1-mesa-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libudev-dev
+         sudo apt install gcc-14 libfreetype6-dev libglu1-mesa-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libudev-dev
     
     - name: Configure
       run: cmake --preset release
