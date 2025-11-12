@@ -21,9 +21,11 @@ and, of course, a X11 installation with `xsetwacom` available. If not available,
 sudo apt install xserver-xorg-input-wacom
 ```
 
-You will also need a [C++23 compiler](https://github.com/llvm/llvm-project/releases) and [cmake](https://cmake.org/) installed.
+for non debian based distros, refer to your package manager.
 
 # Building
+
+You will need to have a [C++23 compiler](https://github.com/llvm/llvm-project/releases) installed.
 
 ```bash
 python configure.py && python build.py
