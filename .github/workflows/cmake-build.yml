@@ -16,7 +16,7 @@ jobs:
     - name: Install Deps
       run: |
          sudo apt update
-         sudo apt install libfreetype6-dev
+         sudo apt install libfreetype6-dev libglu1-mesa-dev
     
     - name: Configure
       run: cmake --preset release
