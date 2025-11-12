@@ -17,20 +17,19 @@ jobs:
     steps:
     - name: Install Git and Checkout
       run: |
-        apt-get update
-        apt-get install -y git
+        apt update
+        apt install -y git
         git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
     - uses: actions/checkout@v4
 
     - name: Install Build Dependencies
       run: |
-        apt-get update
-        apt-get install -y \
+        apt update
+        apt install -y \
           build-essential \
           cmake \
           ninja-build \
-          clang-16 \
           libfreetype6-dev \
           libglu1-mesa-dev \
           libxrandr-dev \
@@ -40,12 +39,18 @@ jobs:
           libudev-dev \
           wget \
           software-properties-common
-          
+
+    - name: Install Compiler
+      run: |
+        wget https://apt.llvm.org/llvm.sh
+        chmod +x llvm.sh
+        ./llvm.sh 20
+    
     - name: Build
       run: |
         VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
         [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
-        cmake --preset release -DCMAKE_C_COMPILER=clang-16 -DCMAKE_CXX_COMPILER=clang++-16 -DCPACK_PACKAGE_VERSION=$VERSION
+        cmake --preset release -DCMAKE_C_COMPILER=clang-20 -DCMAKE_CXX_COMPILER=clang++-20 -DCPACK_PACKAGE_VERSION=$VERSION
         cmake --build build
 
     - name: Package
