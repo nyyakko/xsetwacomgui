@@ -19,11 +19,13 @@ jobs:
     - name: Upload
       uses: actions/upload-artifact@v4
       with:
+        name: xsetwacomgui-${{ github.ref_name:1 }}_amd64.deb
         path: _packages/xsetwacomgui_*_amd64.deb
 
     - name: Release
       uses: softprops/action-gh-release@v1
       with:
+        tag_name: ${{ github.ref_name }}
         files: _packages/xsetwacomgui_*_amd64.deb
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
