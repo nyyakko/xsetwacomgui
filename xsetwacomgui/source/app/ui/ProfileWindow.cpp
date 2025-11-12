@@ -36,10 +36,9 @@ Result<void> render_profile_window(Context& context)
             isCreateButtonDisabled = true;
             asio::co_spawn(context.stExecutor, [] (Context& context_) -> asio::awaitable<void> {
                 auto maybeProfile = co_await asio::co_spawn(context_.mtExecutor, [] (auto tablet_, auto display_) -> asio::awaitable<Result<TabletProfile>> {
-                    co_return make_tablet_profile(profileName.data(), tablet_, display_);
+                    co_return make_tablet_profile(profileName.data(), tablet_.stylus, tablet_.pad, display_);
                 }(context_.tablet, context_.display));
                 isCreateButtonDisabled = false;
-
                 if (!maybeProfile.has_value())
                 {
                     ImGui::PushToast(
@@ -167,7 +166,7 @@ Result<bool> render_profile_window(bool isWindowVisible, Context& context, Table
     if (!isWindowVisible)
     {
         ranges::fill_n(profileName.data(), profileName.size(), 0);
-        std::ranges::copy(currentProfile->name, profileName.data());
+        ranges::copy(currentProfile->name, profileName.data());
     }
 
     return isWindowClosed;

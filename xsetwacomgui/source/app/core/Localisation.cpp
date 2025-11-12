@@ -18,13 +18,13 @@ Result<Localisation> Localisation::create()
     Localisation localisation;
 
     for (auto const& language :
-        ranges::subrange { fs::directory_iterator(get_application_data_path() / "languages"), fs::directory_iterator {} }
+        ranges::subrange { fs::directory_iterator(get_application_languages_path()), fs::directory_iterator {} }
             | ranges::views::filter([] (auto& entry) { return entry.path().extension() == ".json"; })
             | ranges::views::transform([] (auto& entry) { return entry.path().stem().string(); }))
     {
         try
         {
-            std::ifstream stream(get_application_data_path() / "languages" / fmt::format("{}.json", language));
+            std::ifstream stream(get_application_languages_path() / fmt::format("{}.json", language));
             std::stringstream content;
             content << stream.rdbuf();
 

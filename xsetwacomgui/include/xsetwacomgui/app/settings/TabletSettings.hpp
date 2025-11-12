@@ -1,25 +1,61 @@
 #pragma once
 
 #include "platform/Environment.hpp"
+#include "platform/hid/X11/Device.hpp"
+#include "platform/hid/X11/Display.hpp"
 #include "SettingsError.hpp"
-#include "TabletProfile.hpp"
 
-#include <algorithm>
+#include <range/v3/algorithm.hpp>
+
 #include <map>
 
 inline std::filesystem::path TABLET_SETTINGS_FILE = get_application_config_path() / "tablet_settings.json";
 
+struct TabletProfile
+{
+    struct Stylus
+    {
+        std::string name = "INVALID";
+        Device::Handedness handedness = Device::Handedness::RIGHT;
+        Area area;
+        Device::Pressure pressure;
+        bool forceFullArea;
+        std::map<int, Action> mappings;
+    };
+
+    struct Pad
+    {
+        std::string name = "INVALID";
+        std::map<int, Action> mappings;
+    };
+
+    struct Display
+    {
+        std::string name = "INVALID";
+        Area area;
+        bool forceFullArea;
+    };
+
+    std::string name = "INVALID";
+    Stylus stylus;
+    Pad pad;
+    Display display;
+};
+
+liberror::Result<TabletProfile> make_tablet_profile(std::string_view name, Device const& stylus, Device const& pad, Display const& display);
+liberror::Result<void> load_tablet_profile(TabletProfile const& profile, Device const& stylus, Device const& pad, Display const& display);
+
 class TabletSettings
 {
     // Should be updated every time a change is made
-    static constexpr auto SCHEMA_VERSION = "1.4";
+    static constexpr auto SCHEMA_VERSION = "1.5";
 
 public:
     TabletSettings()
         : profiles_{ { "INVALID", {} } }
         , profile_{}
     {
-        profile_ = std::ranges::find_if(this->profiles_, [&] (auto const& entry) {
+        profile_ = ranges::find_if(this->profiles_, [&] (auto const& entry) {
             return entry.first == "INVALID";
         });
     }
@@ -40,7 +76,7 @@ public:
         : profiles_{that.profiles_}
         , profile_{}
     {
-        this->profile_ = std::ranges::find_if(this->profiles_, [&] (auto const& entry) {
+        this->profile_ = ranges::find_if(this->profiles_, [&] (auto const& entry) {
             return entry.first == that.profile_->first;
         });
     }
@@ -48,7 +84,7 @@ public:
     TabletSettings& operator=(TabletSettings const& that)
     {
         this->profiles_ = that.profiles_;
-        this->profile_ = std::ranges::find_if(this->profiles_, [&] (auto const& entry) {
+        this->profile_ = ranges::find_if(this->profiles_, [&] (auto const& entry) {
             return entry.first == that.profile_->first;
         });
         return *this;

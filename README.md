@@ -13,7 +13,6 @@ A graphical `xsetwacom` wrapper for ease of use.
 
 Before building, make sure you have the following depencies installed on your system:
 
-* libnotify package
 * freetype development package
 * udev development package
 * opengl development package

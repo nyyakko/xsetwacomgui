@@ -8,4 +8,4 @@ std::filesystem::path get_application_config_path();
 std::filesystem::path get_application_data_path();
 std::filesystem::path get_application_icon_path();
 std::filesystem::path get_application_languages_path();
-
+std::filesystem::path get_application_images_path();

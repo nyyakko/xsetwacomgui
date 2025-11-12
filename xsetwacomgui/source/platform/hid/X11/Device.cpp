@@ -6,12 +6,12 @@
 #include <libexec/Execute.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <range/v3/view.hpp>
+#include <range/v3/algorithm.hpp>
 
 #include <fcntl.h>
 #include <poll.h>
 #include <sys/wait.h>
 
-#include <algorithm>
 #include <functional>
 #include <ranges>
 #include <regex>
@@ -32,7 +32,7 @@ Result<std::vector<Device>> get_available_devices()
 
     auto fnTrim = [] (auto const& value) {
         auto result = value;
-        result.erase(result.begin(), std::ranges::find_if(result, std::not_fn(isspace)));
+        result.erase(result.begin(), ranges::find_if(result, std::not_fn(isspace)));
         result.erase(std::find_if(result.rbegin(), result.rend(), std::not_fn(isspace)).base(), result.end());
         return result;
     };
@@ -195,21 +195,21 @@ Result<void> set_stylus_handedness(Device stylus, Device::Handedness handedness)
     return {};
 }
 
-Result<std::map<int, X11Action>> get_device_button_mappings(Device device)
+Result<std::map<int, Action>> get_device_button_mappings(Device device)
 {
-    std::map<int, X11Action> mappings {};
+    std::map<int, Action> mappings {};
 
-    for (auto button : std::views::iota(1zu, 25zu))
+    for (auto button : ranges::views::iota(1zu, 25zu))
     {
         auto output = execute(fmt::format("--get {} Button {}", device.id, button));
         if (!(output.has_value() && output->starts_with("button"))) continue;
-        mappings.insert({ button, X11Action(std::atoi(output->substr(output->find_first_of('+')+1).data())) });
+        mappings.insert({ button, Action(std::atoi(output->substr(output->find_first_of('+')+1).data())) });
     }
 
     return mappings;
 }
 
-Result<void> set_device_button_mappings(Device device, std::map<int, X11Action> const& mappings)
+Result<void> set_device_button_mappings(Device device, std::map<int, Action> const& mappings)
 {
     for (auto const& [button, action] : mappings)
     {
@@ -221,7 +221,7 @@ Result<void> set_device_button_mappings(Device device, std::map<int, X11Action> 
 
 Result<void> reset_device_button_mappings(Device device)
 {
-    for (auto button : std::views::iota(1zu, 25zu))
+    for (auto button : ranges::views::iota(1zu, 25zu))
     {
         execute(fmt::format("--set {} Button {}", device.id, button));
     }
@@ -229,7 +229,7 @@ Result<void> reset_device_button_mappings(Device device)
     return {};
 }
 
-Result<std::map<int, X11Action>> get_device_default_button_mappings(Device device)
+Result<std::map<int, Action>> get_device_default_button_mappings(Device device)
 {
     auto previousMappings = TRY(get_device_button_mappings(device));
     TRY(reset_device_button_mappings(device));

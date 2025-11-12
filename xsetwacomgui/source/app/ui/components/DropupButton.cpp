@@ -5,7 +5,7 @@
 
 #include <numeric>
 
-#define DROPUP_BUTTON_COLOR        ImGui::GetStyle().Colors[ImGuiCol_FrameBg]
+#define DROPUP_BUTTON_COLOR        ImGui::GetStyle().Colors[ImGuiCol_Button]
 #define DROPUP_BUTTON_COLOR_ACTIVE ImGui::GetStyle().Colors[ImGuiCol_ButtonHovered]
 
 std::pair<bool, ImGuiMouseButton> DropupButton(char const* label, std::pair<int, int>* const itemIndex, std::vector<std::vector<char const*>> items, ImVec2 const& size)
@@ -14,10 +14,12 @@ std::pair<bool, ImGuiMouseButton> DropupButton(char const* label, std::pair<int,
 
     auto [previousX, previousY] = ImGui::GetCursorPos();
 
+    ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyle().Colors[ImGuiCol_FrameBg]);
     if (ImGui::Button(label, size))
     {
         pressed.first = true;
     }
+    ImGui::PopStyleColor();
 
     auto* drawList = ImGui::GetWindowDrawList();
     auto previouslyPreviousY = previousY;

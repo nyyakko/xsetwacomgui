@@ -9,6 +9,7 @@
 #include <magic_enum/magic_enum.hpp>
 #include <nlohmann/json.hpp>
 #include <range/v3/algorithm.hpp>
+#include <range/v3/view.hpp>
 
 #include <cstdlib>
 #include <filesystem>
@@ -47,7 +48,6 @@ Result<TabletSettings, SettingsError> load_tablet_settings()
 
             profile.display.name             = profileJson.begin().value()["display"]["name"].get<std::string>();
             profile.display.forceFullArea    = profileJson.begin().value()["display"]["forceFullArea"].get<bool>();
-            profile.display.forceAspectRatio = profileJson.begin().value()["display"]["forceAspectRatio"].get<bool>();
             profile.display.area.offsetX     = profileJson.begin().value()["display"]["area"]["offsetX"].get<float>();
             profile.display.area.offsetY     = profileJson.begin().value()["display"]["area"]["offsetY"].get<float>();
             profile.display.area.width       = profileJson.begin().value()["display"]["area"]["width"].get<float>();
@@ -56,7 +56,6 @@ Result<TabletSettings, SettingsError> load_tablet_settings()
             profile.stylus.name              = profileJson.begin().value()["tablet"]["stylus"]["name"].get<std::string>();
             profile.stylus.handedness        = *magic_enum::enum_cast<Device::Handedness>(profileJson.begin().value()["tablet"]["stylus"]["handedness"].get<std::string>());
             profile.stylus.forceFullArea     = profileJson.begin().value()["tablet"]["stylus"]["forceFullArea"].get<bool>();
-            profile.stylus.forceAspectRatio  = profileJson.begin().value()["tablet"]["stylus"]["forceAspectRatio"].get<bool>();
             profile.stylus.area.offsetX      = profileJson.begin().value()["tablet"]["stylus"]["area"]["offsetX"].get<float>();
             profile.stylus.area.offsetY      = profileJson.begin().value()["tablet"]["stylus"]["area"]["offsetY"].get<float>();
             profile.stylus.area.width        = profileJson.begin().value()["tablet"]["stylus"]["area"]["width"].get<float>();
@@ -70,7 +69,7 @@ Result<TabletSettings, SettingsError> load_tablet_settings()
             {
                 profile.stylus.mappings.insert({
                     std::atoi(entry.items().begin().key().data()),
-                    *magic_enum::enum_cast<X11Action>(entry.items().begin().value().get<std::string>())
+                    *magic_enum::enum_cast<Action>(entry.items().begin().value().get<std::string>())
                 });
             }
 
@@ -80,7 +79,7 @@ Result<TabletSettings, SettingsError> load_tablet_settings()
             {
                 profile.pad.mappings.insert({
                     std::atoi(entry.items().begin().key().data()),
-                    *magic_enum::enum_cast<X11Action>(entry.items().begin().value().get<std::string>())
+                    *magic_enum::enum_cast<Action>(entry.items().begin().value().get<std::string>())
                 });
             }
 
@@ -112,7 +111,7 @@ Result<void> save_tablet_settings(TabletSettings const& settings)
         { "profiles", nlohmann::json::array() }
     };
 
-    for (auto const& [name, profile] : settings.profiles() | std::views::filter([] (auto const& profile) { return profile.first != "INVALID"; }))
+    for (auto const& [name, profile] : settings.profiles() | ranges::views::filter([] (auto const& profile) { return profile.first != "INVALID"; }))
     {
         nlohmann::ordered_json profileJson {};
 
@@ -140,7 +139,6 @@ Result<void> save_tablet_settings(TabletSettings const& settings)
                                 }
                             },
                             { "forceFullArea", profile.stylus.forceFullArea },
-                            { "forceAspectRatio", profile.stylus.forceAspectRatio },
                             { "mappings", nlohmann::json::array() }
                         }
                     },
@@ -164,7 +162,6 @@ Result<void> save_tablet_settings(TabletSettings const& settings)
                         }
                     },
                     { "forceFullArea", profile.display.forceFullArea },
-                    { "forceAspectRatio", profile.display.forceAspectRatio },
                 }
             }
         };
@@ -172,14 +169,14 @@ Result<void> save_tablet_settings(TabletSettings const& settings)
         for (auto const& mapping : profile.stylus.mappings)
         {
             nlohmann::ordered_json mappingJson {};
-            mappingJson[std::to_string(mapping.first)] = magic_enum::enum_name<X11Action>(mapping.second);
+            mappingJson[std::to_string(mapping.first)] = magic_enum::enum_name<Action>(mapping.second);
             profileJson[name]["tablet"]["stylus"]["mappings"].push_back(mappingJson);
         }
 
         for (auto const& mapping : profile.pad.mappings)
         {
             nlohmann::ordered_json mappingJson {};
-            mappingJson[std::to_string(mapping.first)] = magic_enum::enum_name<X11Action>(mapping.second);
+            mappingJson[std::to_string(mapping.first)] = magic_enum::enum_name<Action>(mapping.second);
             profileJson[name]["tablet"]["pad"]["mappings"].push_back(mappingJson);
         }
 
@@ -208,6 +205,45 @@ Result<void> migrate_tablet_settings(TabletSettings const& settings)
     if (!execResult.second.empty()) return make_error(execResult.second);
     std::ofstream stream(get_application_config_path() / "conflict.diff");
     stream << execResult.first;
+
+    return {};
+}
+
+Result<TabletProfile> make_tablet_profile(std::string_view name, Device const& stylus, Device const& pad, Display const& display)
+{
+    TabletProfile profile {};
+
+    profile.name = name;
+
+    profile.stylus.name = stylus.name;
+    profile.stylus.handedness = Device::Handedness::RIGHT;
+    profile.stylus.area = TRY(get_stylus_default_area(stylus));
+    profile.stylus.pressure = { 0, 0, 1, 1 };
+    profile.stylus.forceFullArea = false;
+    profile.stylus.mappings = TRY(get_device_default_button_mappings(stylus));
+
+    profile.pad.name = pad.name;
+    profile.pad.mappings = TRY(get_device_default_button_mappings(pad));
+
+    profile.display.name = display.name;
+    profile.display.area = { 0, 0, display.area.width, display.area.height };
+    profile.display.forceFullArea = false;
+
+    return profile;
+}
+
+Result<void> load_tablet_profile(TabletProfile const& profile, Device const& stylus, Device const& pad, Display const& display)
+{
+    TRY(set_stylus_area(stylus, profile.stylus.area));
+    TRY(set_stylus_handedness(stylus, profile.stylus.handedness));
+    TRY(set_stylus_pressure_curve(stylus, profile.stylus.pressure));
+    TRY(set_device_button_mappings(stylus, profile.stylus.mappings));
+    auto displayArea = profile.display.area;
+    displayArea.offsetX += display.area.offsetX;
+    displayArea.offsetY += display.area.offsetY;
+    TRY(set_stylus_output_from_display_area(stylus, displayArea));
+
+    TRY(set_device_button_mappings(pad, profile.pad.mappings));
 
     return {};
 }

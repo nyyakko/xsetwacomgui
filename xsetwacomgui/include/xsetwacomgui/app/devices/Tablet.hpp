@@ -7,6 +7,5 @@ struct Tablet
 {
     Device stylus;
     Device pad;
-
     TabletSettings settings;
 };

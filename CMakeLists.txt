@@ -1,8 +1,13 @@
 cmake_minimum_required(VERSION 3.25)
 
-project(xsetwacomgui LANGUAGES CXX DESCRIPTION "A graphical xsetwacom wrapper for ease of use")
+project(
+    xsetwacomgui
+        LANGUAGES CXX
+        DESCRIPTION "A graphical xsetwacom wrapper for ease of use"
+)
 
 include(cmake/get_cpm.cmake)
+include(cmake/packaging.cmake)
 
 find_package(Freetype REQUIRED)
 find_package(OpenGL REQUIRED)

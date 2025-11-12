@@ -4,6 +4,8 @@
 #include "platform/Daemon.hpp"
 
 #include <fmt/format.h>
+#include <range/v3/algorithm.hpp>
+#include <range/v3/view.hpp>
 
 #include <fcntl.h>
 #include <syslog.h>
@@ -12,7 +14,6 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#include <algorithm>
 #include <ranges>
 
 using namespace liberror;
@@ -53,7 +54,7 @@ Result<IsDaemon> daemonize(std::string_view name, Detached detached)
         std::exit(EXIT_FAILURE);
     }
 
-    std::ranges::for_each(std::views::iota(0, 1024), close);
+    ranges::for_each(std::views::iota(0, 1024), close);
 
     auto fd0 = open("/dev/null", O_RDWR);
     auto fd1 = dup(0);

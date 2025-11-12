@@ -2,7 +2,6 @@
 
 #include "app/core/Localisation.hpp"
 #include "app/core/Scaling.hpp"
-#include "platform/hid/X11/Device.hpp"
 
 #include <imgui/extensions/imgui_toast.hpp>
 #include <imgui/imgui.hpp>
@@ -15,7 +14,7 @@ using namespace liberror;
 static Result<void> render_stylus_tab(Context& context, TabletProfile& profile)
 {
     static auto actionNames =
-        magic_enum::enum_names<X11Action>()
+        magic_enum::enum_names<Action>()
             | ranges::views::transform([] (auto& action) { return action.data(); })
             | ranges::to_vector;
 
@@ -31,7 +30,7 @@ static Result<void> render_stylus_tab(Context& context, TabletProfile& profile)
         ImGui::SetNextItemWidth(180_scaled);
         if (ImGui::Combo(fmt::format("##Actions##Stylus##{}", mapping.first).data(), &actionIndexes[size_t(mapping.first)-1], actionNames.data(), int(actionNames.size())))
         {
-            profile.stylus.mappings.at(mapping.first) = *magic_enum::enum_cast<X11Action>(actionIndexes[size_t(mapping.first)-1]+1);
+            profile.stylus.mappings.at(mapping.first) = *magic_enum::enum_cast<Action>(actionIndexes[size_t(mapping.first)-1]+1);
         }
     }
 
@@ -41,7 +40,7 @@ static Result<void> render_stylus_tab(Context& context, TabletProfile& profile)
 static Result<void> render_pad_tab(Context& context, TabletProfile& profile)
 {
     static auto actionNames =
-        magic_enum::enum_names<X11Action>()
+        magic_enum::enum_names<Action>()
             | ranges::views::transform([] (auto& action) { return action.data(); })
             | ranges::to_vector;
 
@@ -57,7 +56,7 @@ static Result<void> render_pad_tab(Context& context, TabletProfile& profile)
         ImGui::SetNextItemWidth(180_scaled);
         if (ImGui::Combo(fmt::format("##Actions##Pad##{}", mapping.first).data(), &actionIndexes[size_t(mapping.first)-1], actionNames.data(), int(actionNames.size())))
         {
-            profile.pad.mappings.at(mapping.first) = *magic_enum::enum_cast<X11Action>(actionIndexes[size_t(mapping.first)-1]+1);
+            profile.pad.mappings.at(mapping.first) = *magic_enum::enum_cast<Action>(actionIndexes[size_t(mapping.first)-1]+1);
         }
     }
 
@@ -101,10 +100,9 @@ Result<void> render_mappings_window(bool isWindowVisible, Context& context)
             context_.tablet.settings.profile(currentProfile);
 
             auto maybeLoaded = co_await asio::co_spawn(context_.mtExecutor, [] (auto settings_, auto tablet_, auto display_) -> asio::awaitable<Result<void>> {
-                co_return load_tablet_profile(settings_.profile()->second, tablet_, display_);
+                co_return load_tablet_profile(settings_.profile()->second, tablet_.stylus, tablet_.pad, display_);
             }(context_.tablet.settings, context_.tablet, context_.display));
             isSaveApplyButtonDisabled = false;
-
             if (!maybeLoaded)
             {
                 ImGui::PushToast(
