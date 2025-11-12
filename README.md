@@ -4,22 +4,26 @@ A graphical `xsetwacom` wrapper for ease of use.
 
 <img width="806" height="839" alt="image" src="https://github.com/user-attachments/assets/0432fbae-9017-4452-954f-16d59d31aa50" />
 
-# Building
-
 > [!WARNING]
-> Unless you're willing to contribute, make sure to always build from the `stable` branch!
+> Wayland is not supported! check [this issue](https://github.com/nyyakko/xsetwacomgui/issues/13) to understand why.
 
-## Dependencies
+# Dependencies
 
 Before building, make sure you have the following depencies installed on your system:
 
-* freetype development package
-* udev development package
-* opengl development package
+```bash
+sudo apt install cmake ninja-build libfreetype6-dev libglu1-mesa-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libudev-dev
+```
 
-and, of course, a X11 installation with `xsetwacom` available.
+and, of course, a X11 installation with `xsetwacom` available. If not available, you can install with the following command:
+
+```bash
+sudo apt install xserver-xorg-input-wacom
+```
 
 You will also need a [C++23 compiler](https://github.com/llvm/llvm-project/releases) and [cmake](https://cmake.org/) installed.
+
+# Building
 
 ```bash
 python configure.py && python build.py
