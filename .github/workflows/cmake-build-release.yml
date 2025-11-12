@@ -22,7 +22,7 @@ jobs:
 
     - name: Build
       run: |
-        cmake --preset release -DCMAKE_C_COMPILER=clang-20 -DCMAKE_CXX_COMPILER=clang++-20 -DCPACK_PACKAGE_VERSION=${{github.event.release.tag_name}}
+        cmake --preset release -DCMAKE_C_COMPILER=clang-20 -DCMAKE_CXX_COMPILER=clang++-20 -DCPACK_PACKAGE_VERSION=${{ github.event.release.tag_name }}
         cmake --build build
 
     - name: Package
