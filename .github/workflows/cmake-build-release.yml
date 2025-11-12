@@ -15,31 +15,25 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install Deps
+    - name: Install Build Dependencies
       run: |
          sudo apt update
          sudo apt install clang-20 libfreetype6-dev libglu1-mesa-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libudev-dev
 
-    - name: Configure
-      run: cmake --preset release -DCMAKE_C_COMPILER=clang-20 -DCMAKE_CXX_COMPILER=clang++-20
-
     - name: Build
+      run: cmake --preset release -DCMAKE_C_COMPILER=clang-20 -DCMAKE_CXX_COMPILER=clang++-20 -DCPACK_PACKAGE_VERSION=${{ref_name}}
       run: cmake --build build
 
     - name: Package
-      run: |
-         cd build
-         cpack -G DEB
+      run: cd build && cpack -G DEB
     - name: Upload
       uses: actions/upload-artifact@v4
       with:
-        name: xsetwacomgui-${{ github.ref_name }}_amd64.deb
         path: _packages/xsetwacomgui_*_amd64.deb
 
     - name: Release
       uses: softprops/action-gh-release@v1
       with:
-        tag_name: ${{ github.ref_name }}
         files: _packages/xsetwacomgui_*_amd64.deb
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
