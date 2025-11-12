@@ -1,4 +1,4 @@
-name: cmake package
+name: cmake build release
 
 on:
   push:
@@ -19,7 +19,7 @@ jobs:
       run: |
          sudo apt update
          sudo apt install clang-20 libfreetype6-dev libglu1-mesa-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libudev-dev
-    
+
     - name: Configure
       run: cmake --preset release -DCMAKE_C_COMPILER=clang-20 -DCMAKE_CXX_COMPILER=clang++-20
 
