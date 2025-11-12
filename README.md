@@ -21,7 +21,7 @@ and, of course, a X11 installation with `xsetwacom` available. If not available,
 sudo apt install xserver-xorg-input-wacom
 ```
 
-for non debian based distros, refer to your package manager.
+for non debian based distros, refer to your package manager for equivalent packages.
 
 # Building
 
