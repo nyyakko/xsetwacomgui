@@ -104,15 +104,15 @@ Result<bool> render_profile_window(bool isWindowVisible, Context& context, Table
         {
             isWindowClosed = true;
             asio::co_spawn(context.stExecutor, [] (Context& context_, TabletProfile profile_) -> asio::awaitable<void> {
-                auto previousNameOfTheProfileBeingEdited = profile_.name;
-                auto previousNameOfTheCurrentProfile = context_.tablet.settings.profile()->first;
+                auto nameOfTheProfileBeingEdited = profile_.name;
+                auto nameOfTheCurrentProfile = context_.tablet.settings.profile()->first;
 
                 std::erase_if(context_.tablet.settings.profiles(), [&] (auto const& entry) { return entry.first == profile_.name; });
 
                 profile_.name = profileName.data();
                 auto [iterator, _] = context_.tablet.settings.profiles().insert({ profile_.name, profile_ });
 
-                if (previousNameOfTheProfileBeingEdited == previousNameOfTheCurrentProfile)
+                if (nameOfTheProfileBeingEdited == nameOfTheCurrentProfile)
                 {
                     context_.tablet.settings.profile(iterator);
                 }
