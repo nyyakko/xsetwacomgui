@@ -2,6 +2,7 @@
 
 #include "app/core/Localisation.hpp"
 #include "app/core/Scaling.hpp"
+#include "utils/MakeAsync.hpp"
 
 #include <imgui/extensions/imgui_toast.hpp>
 #include <imgui/imgui.hpp>
@@ -139,10 +140,7 @@ Result<void> render_settings_window(Context& context)
     {
         isSaveButtonDisabled = true;
         asio::co_spawn(context.stExecutor, [] (Context& context_) -> asio::awaitable<void> {
-            co_await asio::co_spawn(context_.mtExecutor, [] (auto settings_) -> asio::awaitable<void> {
-                save_application_settings(settings_);
-                co_return;
-            }(context_.settings));
+            co_await asio::co_spawn(context_.mtExecutor, make_async<save_application_settings>(auto(context_.settings)));
             isSaveButtonDisabled = false;
             ImGui::PushToast(
                 MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Success)),

@@ -2,9 +2,11 @@
 
 #include "app/core/Localisation.hpp"
 #include "app/core/Scaling.hpp"
+#include "utils/MakeAsync.hpp"
 
 #include <imgui/extensions/imgui_toast.hpp>
 #include <imgui/imgui.hpp>
+#include <liberror/Result.hpp>
 #include <liberror/Try.hpp>
 #include <range/v3/algorithm.hpp>
 
@@ -35,9 +37,7 @@ Result<void> render_profile_window(Context& context)
         {
             isCreateButtonDisabled = true;
             asio::co_spawn(context.stExecutor, [] (Context& context_) -> asio::awaitable<void> {
-                auto maybeProfile = co_await asio::co_spawn(context_.mtExecutor, [] (auto tablet_, auto display_) -> asio::awaitable<Result<TabletProfile>> {
-                    co_return make_tablet_profile(profileName.data(), tablet_.stylus, tablet_.pad, display_);
-                }(context_.tablet, context_.display));
+                auto maybeProfile = co_await asio::co_spawn(context_.mtExecutor, make_async<make_tablet_profile>(profileName.data(), auto(context_.tablet.stylus), auto(context_.tablet.pad), auto(context_.display)));
                 isCreateButtonDisabled = false;
                 if (!maybeProfile.has_value())
                 {
@@ -50,10 +50,7 @@ Result<void> render_profile_window(Context& context)
 
                 context_.tablet.settings.profiles().insert({ maybeProfile->name, *maybeProfile });
 
-                co_await asio::co_spawn(context_.mtExecutor, [] (auto settings_) -> asio::awaitable<void> {
-                    save_tablet_settings(settings_);
-                    co_return;
-                }(context_.tablet.settings));
+                MUST(co_await asio::co_spawn(context_.mtExecutor, make_async<save_tablet_settings>(auto(context_.tablet.settings))));
 
                 ImGui::PushToast(
                     MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Success)),
@@ -119,10 +116,7 @@ Result<bool> render_profile_window(bool isWindowVisible, Context& context, Table
 
                 context_.hasChangedDeviceSettings = true;
 
-                co_await asio::co_spawn(context_.mtExecutor, [] (auto settings_) -> asio::awaitable<void> {
-                    save_tablet_settings(settings_);
-                    co_return;
-                }(context_.tablet.settings));
+                co_await asio::co_spawn(context_.mtExecutor, make_async<save_tablet_settings>(auto(context_.tablet.settings)));
 
                 ImGui::PushToast(
                     MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Success)),
@@ -148,10 +142,7 @@ Result<bool> render_profile_window(bool isWindowVisible, Context& context, Table
 
             context_.hasChangedDeviceSettings = true;
 
-            co_await asio::co_spawn(context_.mtExecutor, [] (auto settings_) -> asio::awaitable<void> {
-                save_tablet_settings(settings_);
-                co_return;
-            }(context_.tablet.settings));
+            co_await asio::co_spawn(context_.mtExecutor, make_async<save_tablet_settings>(auto(context_.tablet.settings)));
 
             ImGui::PushToast(
                 MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Success)),

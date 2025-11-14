@@ -13,6 +13,7 @@
 #include "platform/Daemon.hpp"
 #include "platform/Environment.hpp"
 #include "platform/udev/UDevDevice.hpp"
+#include "utils/MakeAsync.hpp"
 
 #include <GLFW/glfw3.h>
 #include <GL/gl.h>
@@ -77,12 +78,7 @@ static asio::awaitable<void> ipc_message_handler(IPCClient& client, Context& con
                 continue;
             }
 
-            auto maybeSettings = co_await asio::co_spawn(context.mtExecutor, [] -> asio::awaitable<Result<TabletSettings, SettingsError>> {
-                co_return load_tablet_settings();
-            });
-            assert(maybeSettings.has_value() && "how did you even manage to make this happen?");
-
-            context.tablet.settings = *maybeSettings;
+            context.tablet.settings = MUST(co_await asio::co_spawn(context.mtExecutor, make_async<load_tablet_settings>()));
 
             auto stylus = ranges::find(context.devices, context.tablet.settings.profile()->second.stylus.name, &Device::name);
             assert(stylus != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
@@ -96,9 +92,7 @@ static asio::awaitable<void> ipc_message_handler(IPCClient& client, Context& con
 
             context.hasChangedDeviceSettings = true;
 
-            auto maybeLoaded = co_await asio::co_spawn(context.mtExecutor, [] (auto settings_, auto tablet_, auto display_) -> asio::awaitable<Result<void>> {
-                co_return load_tablet_profile(settings_.profile()->second, tablet_.stylus, tablet_.pad, display_);
-            }(context.tablet.settings, context.tablet, context.display));
+            auto maybeLoaded = co_await asio::co_spawn(context.mtExecutor, make_async<load_tablet_profile>(auto(context.tablet.settings.profile()->second), auto(context.tablet.stylus), auto(context.tablet.pad), auto(context.display)));
             if (!maybeLoaded.has_value())
             {
                 if (!headless)
