@@ -2,7 +2,7 @@
 
 A graphical `xsetwacom` wrapper for ease of use.
 
-<img width="806" height="839" alt="image" src="https://github.com/user-attachments/assets/0432fbae-9017-4452-954f-16d59d31aa50" />
+<img width="808" height="823" alt="preview" src="https://github.com/user-attachments/assets/33eba57f-fd21-4b52-98ce-5b0f01fe6885" />
 
 > [!WARNING]
 > Wayland is not supported! check [this issue](https://github.com/nyyakko/xsetwacomgui/issues/13) to understand why.
