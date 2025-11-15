@@ -23,13 +23,13 @@ jobs:
         sudo apt update
         sudo apt install -y build-essential cmake ninja-build libfreetype6-dev libglu1-mesa-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libudev-dev wget software-properties-common
 
-    - name: Prepare Clang
+    - name: Install Clang
       run: |
         wget https://apt.llvm.org/llvm.sh
         chmod +x llvm.sh
         sudo ./llvm.sh 20
 
-    - name: Prepare AppImage Tools
+    - name: Install AppImage Tools
       run: |
         wget https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage
         chmod +x linuxdeployqt-continuous-x86_64.AppImage
@@ -40,41 +40,34 @@ jobs:
         cmake --preset release -DCMAKE_C_COMPILER=clang-20 -DCMAKE_CXX_COMPILER=clang++-20 -DCPACK_PACKAGE_VERSION=$VERSION
         cmake --build build
 
-    - name: Build Packages
+    - name: Generate Artifacts
       run: |
         cmake --install build --prefix _AppDir/usr
         ./linuxdeployqt-continuous-x86_64.AppImage _AppDir/usr/share/applications/xsetwacomgui.desktop -appimage
         ls -l
 
-    # - name: Upload
-    #   uses: actions/upload-artifact@v4
-    #   with:
-    #     name: 
-    #     path: _packages/xsetwacomgui_*_amd64.deb
-    #
-    # - name: Upload Build Tree
-    #   uses: actions/upload-artifact@v4
-    #   with:
-    #     name: build-tree
-    #     path: build
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: AppImage
+        path: *.AppImage
 
-  # release:
-  #   needs: build
-  #   runs-on: ubuntu-22.04
-  #   permissions:
-  #     contents: write
-  #
-  #   steps:
-  #   - name: Download Build Tree
-  #     uses: actions/download-artifact@v4
-  #     with:
-  #       name: build-tree
-  #       path: build
-  #
-  #   - name: Release
-  #     uses: softprops/action-gh-release@v1
-  #     with:
-  #       files: |
-  #         _packages/xsetwacomgui_*_amd64.deb
-  #     env:
-  #       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  release:
+    needs: build
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+
+    steps:
+    - name: Download Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: AppImage
+
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          *.AppImage
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
