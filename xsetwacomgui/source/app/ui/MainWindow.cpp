@@ -591,8 +591,8 @@ Result<void> render_main_window(Context& context)
 
                 switch (result.error())
                 {
-                case SettingsError::Type::WRITE_FAILURE: break;
-                case SettingsError::Type::FILE_NOT_FOUND: {
+                case SettingsError::WRITE_FAILURE: break;
+                case SettingsError::FILE_NOT_FOUND: {
                     MUST(co_await asio::co_spawn(context_.mtExecutor, make_async<save_tablet_settings>(auto(context_.tablet.settings))));
                     ImGui::PushToast(
                         MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Warning)),
@@ -600,21 +600,14 @@ Result<void> render_main_window(Context& context)
                     );
                     break;
                 }
-                case SettingsError::Type::PROFILE_NOT_FOUND: {
-                    ImGui::PushToast(
-                        MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Error)),
-                        MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Profile_Missing))
-                    );
-                    break;
-                }
-                case SettingsError::Type::READ_FAILURE: {
+                case SettingsError::READ_FAILURE: {
                     ImGui::PushToast(
                         MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Warning)),
                         MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Device_Settings_Load_Failed))
                     );
                     break;
                 }
-                case SettingsError::Type::OUTDATED_SCHEMA: {
+                case SettingsError::OUTDATED_SCHEMA: {
                     context_.handleOutdatedDeviceSettings = true;
                     break;
                 }

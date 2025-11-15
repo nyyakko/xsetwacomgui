@@ -24,20 +24,20 @@ Result<TabletSettings, SettingsError> load_tablet_settings()
 
     if (!std::filesystem::exists(TABLET_SETTINGS_FILE))
     {
-        return make_error<SettingsError>(SettingsError::Type::FILE_NOT_FOUND);
+        return make_error<SettingsError>(SettingsError::FILE_NOT_FOUND);
     }
-
-    std::ifstream stream(TABLET_SETTINGS_FILE);
-    std::stringstream content;
-    content << stream.rdbuf();
 
     try
     {
+        std::ifstream stream(TABLET_SETTINGS_FILE);
+        std::stringstream content;
+        content << stream.rdbuf();
+
         auto json = nlohmann::json::parse(content.str());
 
         if (json["version"].is_null() || json["version"].get<std::string>() != TabletSettings::SCHEMA_VERSION)
         {
-            return make_error<SettingsError>(SettingsError::Type::OUTDATED_SCHEMA);
+            return make_error<SettingsError>(SettingsError::OUTDATED_SCHEMA);
         }
 
         for (auto const& profileJson : json["profiles"])
@@ -46,24 +46,23 @@ Result<TabletSettings, SettingsError> load_tablet_settings()
 
             profile.name = profileJson.begin().key();
 
-            profile.display.name             = profileJson.begin().value()["display"]["name"].get<std::string>();
-            profile.display.forceFullArea    = profileJson.begin().value()["display"]["forceFullArea"].get<bool>();
-            profile.display.area.offsetX     = profileJson.begin().value()["display"]["area"]["offsetX"].get<float>();
-            profile.display.area.offsetY     = profileJson.begin().value()["display"]["area"]["offsetY"].get<float>();
-            profile.display.area.width       = profileJson.begin().value()["display"]["area"]["width"].get<float>();
-            profile.display.area.height      = profileJson.begin().value()["display"]["area"]["height"].get<float>();
-
-            profile.stylus.name              = profileJson.begin().value()["tablet"]["stylus"]["name"].get<std::string>();
-            profile.stylus.handedness        = *magic_enum::enum_cast<Device::Handedness>(profileJson.begin().value()["tablet"]["stylus"]["handedness"].get<std::string>());
-            profile.stylus.forceFullArea     = profileJson.begin().value()["tablet"]["stylus"]["forceFullArea"].get<bool>();
-            profile.stylus.area.offsetX      = profileJson.begin().value()["tablet"]["stylus"]["area"]["offsetX"].get<float>();
-            profile.stylus.area.offsetY      = profileJson.begin().value()["tablet"]["stylus"]["area"]["offsetY"].get<float>();
-            profile.stylus.area.width        = profileJson.begin().value()["tablet"]["stylus"]["area"]["width"].get<float>();
-            profile.stylus.area.height       = profileJson.begin().value()["tablet"]["stylus"]["area"]["height"].get<float>();
-            profile.stylus.pressure.minX     = profileJson.begin().value()["tablet"]["stylus"]["pressure"]["minX"].get<float>();
-            profile.stylus.pressure.minY     = profileJson.begin().value()["tablet"]["stylus"]["pressure"]["minY"].get<float>();
-            profile.stylus.pressure.maxX     = profileJson.begin().value()["tablet"]["stylus"]["pressure"]["maxX"].get<float>();
-            profile.stylus.pressure.maxY     = profileJson.begin().value()["tablet"]["stylus"]["pressure"]["maxY"].get<float>();
+            profile.display.name = profileJson.begin().value()["display"]["name"].get<std::string>();
+            profile.display.forceFullArea = profileJson.begin().value()["display"]["forceFullArea"].get<bool>();
+            profile.display.area.offsetX = profileJson.begin().value()["display"]["area"]["offsetX"].get<float>();
+            profile.display.area.offsetY = profileJson.begin().value()["display"]["area"]["offsetY"].get<float>();
+            profile.display.area.width = profileJson.begin().value()["display"]["area"]["width"].get<float>();
+            profile.display.area.height = profileJson.begin().value()["display"]["area"]["height"].get<float>();
+            profile.stylus.name = profileJson.begin().value()["tablet"]["stylus"]["name"].get<std::string>();
+            profile.stylus.handedness = *magic_enum::enum_cast<Device::Handedness>(profileJson.begin().value()["tablet"]["stylus"]["handedness"].get<std::string>());
+            profile.stylus.forceFullArea = profileJson.begin().value()["tablet"]["stylus"]["forceFullArea"].get<bool>();
+            profile.stylus.area.offsetX = profileJson.begin().value()["tablet"]["stylus"]["area"]["offsetX"].get<float>();
+            profile.stylus.area.offsetY = profileJson.begin().value()["tablet"]["stylus"]["area"]["offsetY"].get<float>();
+            profile.stylus.area.width = profileJson.begin().value()["tablet"]["stylus"]["area"]["width"].get<float>();
+            profile.stylus.area.height = profileJson.begin().value()["tablet"]["stylus"]["area"]["height"].get<float>();
+            profile.stylus.pressure.minX = profileJson.begin().value()["tablet"]["stylus"]["pressure"]["minX"].get<float>();
+            profile.stylus.pressure.minY = profileJson.begin().value()["tablet"]["stylus"]["pressure"]["minY"].get<float>();
+            profile.stylus.pressure.maxX = profileJson.begin().value()["tablet"]["stylus"]["pressure"]["maxX"].get<float>();
+            profile.stylus.pressure.maxY = profileJson.begin().value()["tablet"]["stylus"]["pressure"]["maxY"].get<float>();
 
             for (auto const& entry : profileJson.begin().value()["tablet"]["stylus"]["mappings"])
             {
@@ -88,7 +87,7 @@ Result<TabletSettings, SettingsError> load_tablet_settings()
 
         if (!settings.profiles().contains(json["profile"].get<std::string>()))
         {
-            return make_error<SettingsError>(SettingsError::Type::PROFILE_NOT_FOUND);
+            return make_error<SettingsError>(SettingsError::READ_FAILURE);
         }
 
         settings.profile(ranges::find_if(settings.profiles(), [&] (auto const& entry) {
@@ -97,13 +96,13 @@ Result<TabletSettings, SettingsError> load_tablet_settings()
     }
     catch (std::exception const& error)
     {
-        return make_error<SettingsError>(SettingsError::Type::READ_FAILURE);
+        return make_error<SettingsError>(SettingsError::READ_FAILURE);
     }
 
     return settings;
 }
 
-Result<void> save_tablet_settings(TabletSettings const& settings)
+Result<void, SettingsError> save_tablet_settings(TabletSettings const& settings)
 {
     nlohmann::ordered_json json {
         { "version", TabletSettings::SCHEMA_VERSION },
@@ -183,13 +182,20 @@ Result<void> save_tablet_settings(TabletSettings const& settings)
         json["profiles"].push_back(profileJson);
     }
 
-    std::ofstream stream(TABLET_SETTINGS_FILE);
-    stream << std::setw(4) << json;
+    try
+    {
+        std::ofstream stream(TABLET_SETTINGS_FILE);
+        stream << std::setw(4) << json;
+    }
+    catch (std::exception const& error)
+    {
+        return make_error<SettingsError>(SettingsError::WRITE_FAILURE);
+    }
 
     return {};
 }
 
-Result<void> migrate_tablet_settings(TabletSettings const& settings)
+Result<void, SettingsError> migrate_tablet_settings(TabletSettings const& settings)
 {
     static auto newSettingsSchema = get_application_config_path() / "tablet_settings.json";
     static auto oldSettingsSchema = get_application_config_path() / "tablet_settings.old.json";
@@ -198,13 +204,21 @@ Result<void> migrate_tablet_settings(TabletSettings const& settings)
 
     save_tablet_settings(settings);
 
-    auto execResult = TRY(libexec::execute("xdg-open", { get_application_config_path() }, libexec::Mode::DETACHED));
-    if (!execResult.second.empty()) return make_error(execResult.second);
+    auto execResult = libexec::execute("xdg-open", { get_application_config_path() }, libexec::Mode::DETACHED);
+    if (!execResult.has_value() || !execResult->second.empty()) return make_error<SettingsError>(SettingsError::WRITE_FAILURE);
 
-    execResult = TRY(libexec::execute("git", { "diff", oldSettingsSchema, newSettingsSchema }));
-    if (!execResult.second.empty()) return make_error(execResult.second);
-    std::ofstream stream(get_application_config_path() / "conflict.diff");
-    stream << execResult.first;
+    execResult = libexec::execute("git", { "diff", oldSettingsSchema, newSettingsSchema });
+    if (!execResult.has_value() || !execResult->second.empty()) return make_error<SettingsError>(SettingsError::WRITE_FAILURE);
+
+    try
+    {
+        std::ofstream stream(get_application_config_path() / "conflict.diff");
+        stream << execResult->first;
+    }
+    catch (std::exception const& error)
+    {
+        return make_error<SettingsError>(SettingsError::WRITE_FAILURE);
+    }
 
     return {};
 }

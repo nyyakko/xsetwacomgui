@@ -58,7 +58,7 @@ public:
 
 public:
     friend liberror::Result<TabletSettings, SettingsError> load_tablet_settings();
-    friend liberror::Result<void> save_tablet_settings(TabletSettings const& settings);
+    friend liberror::Result<void, SettingsError> save_tablet_settings(TabletSettings const& settings);
 
     // cppcheck-suppress [functionStatic, constParameterReference]
     inline constexpr auto& profiles(this auto& self) { return self.profiles_; }
@@ -80,5 +80,5 @@ private:
 };
 
 liberror::Result<TabletSettings, SettingsError> load_tablet_settings();
-liberror::Result<void> save_tablet_settings(TabletSettings const& settings);
-liberror::Result<void> migrate_tablet_settings(TabletSettings const& settings);
+liberror::Result<void, SettingsError> save_tablet_settings(TabletSettings const& settings);
+liberror::Result<void, SettingsError> migrate_tablet_settings(TabletSettings const& settings);

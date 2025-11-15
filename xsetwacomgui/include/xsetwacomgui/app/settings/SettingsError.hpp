@@ -1,57 +1,59 @@
 #pragma once
 
 #include <magic_enum/magic_enum.hpp>
+
 class [[nodiscard]] SettingsError
 {
 public:
-    enum class Type
+    enum class Error
     {
         FILE_NOT_FOUND,
+        OUTDATED_SCHEMA,
         READ_FAILURE,
         WRITE_FAILURE,
-        OUTDATED_SCHEMA,
-        PROFILE_NOT_FOUND
     };
 
-public:
-    using message_t = Type;
+    using enum Error;
 
-    constexpr explicit SettingsError(Type reason)
-        : reason_{reason}
+public:
+    using error_t = Error;
+
+    constexpr explicit SettingsError(Error reason)
+        : error_{reason}
     {}
 
     constexpr SettingsError()
-        : reason_{}
+        : error_{}
     {}
 
     constexpr SettingsError(SettingsError&& that)
-        : reason_{std::exchange(that.reason_, {})}
+        : error_{std::exchange(that.error_, {})}
     {}
 
     constexpr SettingsError& operator=(SettingsError&& that)
     {
-        this->reason_ = std::exchange(that.reason_, {});
+        this->error_ = std::exchange(that.error_, {});
         return *this;
     }
 
     constexpr SettingsError(SettingsError const& that)
-        : reason_{that.reason_}
+        : error_{that.error_}
     {}
 
     constexpr SettingsError& operator=(SettingsError const& that)
     {
-        this->reason_ = that.reason_;
+        this->error_ = that.error_;
         return *this;
     }
 
     constexpr ~SettingsError() noexcept = default;
 
 public:
-    [[nodiscard]] constexpr auto message() const noexcept { return magic_enum::enum_name<Type>(reason_); }
+    [[nodiscard]] constexpr auto message() const noexcept { return magic_enum::enum_name<Error>(error_); }
 
 public:
-    constexpr operator Type() const { return reason_; }
+    constexpr operator Error() const { return error_; }
 
 private:
-    Type reason_;
+    Error error_;
 };
