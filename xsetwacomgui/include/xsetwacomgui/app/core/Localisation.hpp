@@ -11,10 +11,13 @@ class Localisation
 {
     enum class Message
     {
+        About,
+        Author,
         Create,
         Delete,
         New_Profile,
         Save,
+        Version,
 
         Toast_Success,
         Toast_Warning,
@@ -44,7 +47,7 @@ class Localisation
         Popup_Outdated_Device_Settings_Title,
 
         Window_Main_MenuBar_Other,
-        Window_Main_MenuBar_Other_Goddess,
+        Window_Main_MenuBar_Other_About,
         Window_Main_MenuBar_Settings,
         Window_Main_MenuBar_Settings_Application,
         Window_Main_Tabs_Display_Display,

@@ -58,7 +58,7 @@ public:
 
 public:
     friend liberror::Result<ApplicationSettings, SettingsError> load_application_settings();
-    friend liberror::Result<void> save_application_settings(ApplicationSettings const& settings);
+    friend liberror::Result<void, SettingsError> save_application_settings(ApplicationSettings const& settings);
 
     // cppcheck-suppress [functionStatic, constParameterReference]
     auto& scale(this auto& self) { return self.scale_; }
@@ -84,5 +84,5 @@ private:
 };
 
 liberror::Result<ApplicationSettings, SettingsError> load_application_settings();
-liberror::Result<void> save_application_settings(ApplicationSettings const& settings);
-liberror::Result<void> migrate_application_settings(ApplicationSettings const& settings);
+liberror::Result<void, SettingsError> save_application_settings(ApplicationSettings const& settings);
+liberror::Result<void, SettingsError> migrate_application_settings(ApplicationSettings const& settings);

@@ -7,12 +7,13 @@
 #include "app/core/ipc/IPCServer.hpp"
 #include "app/core/Localisation.hpp"
 #include "app/core/Scaling.hpp"
-#include "app/ui/GoddessWindow.hpp"
+#include "app/ui/AboutWindow.hpp"
 #include "app/ui/MainWindow.hpp"
 #include "app/ui/SettingsWindow.hpp"
 #include "platform/Daemon.hpp"
 #include "platform/Environment.hpp"
 #include "platform/udev/UDevDevice.hpp"
+#include "utils/MakeAsync.hpp"
 
 #include <GLFW/glfw3.h>
 #include <GL/gl.h>
@@ -77,12 +78,7 @@ static asio::awaitable<void> ipc_message_handler(IPCClient& client, Context& con
                 continue;
             }
 
-            auto maybeSettings = co_await asio::co_spawn(context.mtExecutor, [] -> asio::awaitable<Result<TabletSettings, SettingsError>> {
-                co_return load_tablet_settings();
-            });
-            assert(maybeSettings.has_value() && "how did you even manage to make this happen?");
-
-            context.tablet.settings = *maybeSettings;
+            context.tablet.settings = MUST(co_await asio::co_spawn(context.mtExecutor, make_async<load_tablet_settings>()));
 
             auto stylus = ranges::find(context.devices, context.tablet.settings.profile()->second.stylus.name, &Device::name);
             assert(stylus != context.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
@@ -96,9 +92,7 @@ static asio::awaitable<void> ipc_message_handler(IPCClient& client, Context& con
 
             context.hasChangedDeviceSettings = true;
 
-            auto maybeLoaded = co_await asio::co_spawn(context.mtExecutor, [] (auto settings_, auto tablet_, auto display_) -> asio::awaitable<Result<void>> {
-                co_return load_tablet_profile(settings_.profile()->second, tablet_.stylus, tablet_.pad, display_);
-            }(context.tablet.settings, context.tablet, context.display));
+            auto maybeLoaded = co_await asio::co_spawn(context.mtExecutor, make_async<load_tablet_profile>(auto(context.tablet.settings.profile()->second), auto(context.tablet.stylus), auto(context.tablet.pad), auto(context.display)));
             if (!maybeLoaded.has_value())
             {
                 if (!headless)
@@ -142,13 +136,8 @@ static Result<void> run_gui()
         .displays = TRY(get_available_displays()),
     };
 
-    static auto client = TRY(IPCClient::create(context.stExecutor));
+    auto client = TRY(IPCClient::create(context.stExecutor));
     TRY(client.connect());
-
-    struct sigaction action;
-    action.sa_handler = [] (int) { client.~IPCClient(); _exit(0); };
-    sigaction(SIGINT, &action, NULL);
-    sigaction(SIGTERM, &action, NULL);
 
     if (!glfwInit()) return make_error("Failed to initialize glfw");
 
@@ -290,7 +279,7 @@ static Result<void> run_gui()
                 }
 #endif
                 static auto isSettingsWindowOpen = false;
-                static auto isGoddessWindowOpen = false;
+                static auto isAboutWindowOpen = false;
 
                 if (ImGui::BeginMenuBar())
                 {
@@ -306,9 +295,9 @@ static Result<void> run_gui()
 
                     if (ImGui::BeginMenu(TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_MenuBar_Other))))
                     {
-                        if (ImGui::MenuItem(TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_MenuBar_Other_Goddess))))
+                        if (ImGui::MenuItem(TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_MenuBar_Other_About))))
                         {
-                            isGoddessWindowOpen = true;
+                            isAboutWindowOpen = true;
                         }
 
                         ImGui::EndMenu();
@@ -333,18 +322,18 @@ static Result<void> run_gui()
                     ImGui::End();
                 }
 
-                if (isGoddessWindowOpen)
+                if (isAboutWindowOpen)
                 {
                     float goddessWidth = float(windowWidth)/1.5f, goddessHeight = float(windowHeight)/1.5f;
                     ImGui::SetNextWindowSize({ goddessWidth, goddessHeight });
                     ImGui::SetNextWindowPos({ (float(windowWidth) - goddessWidth)/2, (float(windowHeight) - goddessHeight)/2 });
                     ImGui::Begin(
-                        TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_MenuBar_Other_Goddess)),
-                        &isGoddessWindowOpen,
+                        TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_MenuBar_Other_About)),
+                        &isAboutWindowOpen,
                         ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
                     );
                     {
-                        TRY(render_goddess_window());
+                        TRY(render_about_window(context));
                     }
                     ImGui::End();
                 }

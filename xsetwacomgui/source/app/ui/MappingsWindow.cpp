@@ -2,6 +2,7 @@
 
 #include "app/core/Localisation.hpp"
 #include "app/core/Scaling.hpp"
+#include "utils/MakeAsync.hpp"
 
 #include <imgui/extensions/imgui_toast.hpp>
 #include <imgui/imgui.hpp>
@@ -99,9 +100,7 @@ Result<void> render_mappings_window(bool isWindowVisible, Context& context)
         asio::co_spawn(context.stExecutor, [] (Context& context_) -> asio::awaitable<void> {
             context_.tablet.settings.profile(currentProfile);
 
-            auto maybeLoaded = co_await asio::co_spawn(context_.mtExecutor, [] (auto settings_, auto tablet_, auto display_) -> asio::awaitable<Result<void>> {
-                co_return load_tablet_profile(settings_.profile()->second, tablet_.stylus, tablet_.pad, display_);
-            }(context_.tablet.settings, context_.tablet, context_.display));
+            auto maybeLoaded = co_await asio::co_spawn(context_.mtExecutor, make_async<load_tablet_profile>(auto(context_.tablet.settings.profile()->second), auto(context_.tablet.stylus), auto(context_.tablet.pad), auto(context_.display)));
             isSaveApplyButtonDisabled = false;
             if (!maybeLoaded)
             {
@@ -112,10 +111,7 @@ Result<void> render_mappings_window(bool isWindowVisible, Context& context)
                 co_return;
             }
 
-            co_await asio::co_spawn(context_.mtExecutor, [] (auto settings_) -> asio::awaitable<void> {
-                save_tablet_settings(settings_);
-                co_return;
-            }(context_.tablet.settings));
+            co_await asio::co_spawn(context_.mtExecutor, make_async<save_tablet_settings>(auto(context_.tablet.settings)));
 
             ImGui::PushToast(
                 MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Success)),

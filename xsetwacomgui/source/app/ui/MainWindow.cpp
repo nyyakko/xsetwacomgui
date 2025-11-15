@@ -7,6 +7,7 @@
 #include "app/ui/components/DropupButton.hpp"
 #include "app/ui/MappingsWindow.hpp"
 #include "app/ui/ProfileWindow.hpp"
+#include "utils/MakeAsync.hpp"
 
 #include <imgui/extensions/imgui_bezier.hpp>
 #include <imgui/extensions/imgui_text.hpp>
@@ -106,9 +107,7 @@ static Result<void> render_area_mappers(Context& context)
     if ((context.hasChangedDeviceSettings && context.tablet.stylus.name != "INVALID") || (context.hasChangedDevice && context.tablet.settings.profile()->second.stylus.name != "INVALID"))
     {
         asio::co_spawn(context.stExecutor, [] (Context& context_) -> asio::awaitable<void> {
-            deviceDefaultArea = co_await asio::co_spawn(context_.mtExecutor, [] (auto stylus_) -> asio::awaitable<Area> {
-                co_return MUST(get_stylus_default_area(stylus_));
-            }(context_.tablet.stylus));
+            deviceDefaultArea = MUST(co_await asio::co_spawn(context_.mtExecutor, make_async<get_stylus_default_area>(auto(context_.tablet.stylus))));
         }(context), asio::detached);
     }
 
@@ -185,9 +184,7 @@ static Result<void> render_tablet_tab(Context& context)
     if ((context.hasChangedDeviceSettings && context.tablet.stylus.name != "INVALID") || (context.hasChangedDevice && context.tablet.settings.profile()->second.stylus.name != "INVALID"))
     {
         asio::co_spawn(context.stExecutor, [] (Context& context_) -> asio::awaitable<void> {
-            deviceDefaultArea = co_await asio::co_spawn(context_.mtExecutor, [] (auto stylus_) -> asio::awaitable<Area> {
-                co_return MUST(get_stylus_default_area(stylus_));
-            }(context_.tablet.stylus));
+            deviceDefaultArea = MUST(co_await asio::co_spawn(context_.mtExecutor, make_async<get_stylus_default_area>(auto(context_.tablet.stylus))));
         }(context), asio::detached);
     }
 
@@ -219,9 +216,7 @@ static Result<void> render_tablet_tab(Context& context)
         {
             asio::co_spawn(context.stExecutor, [] (Context& context_) -> asio::awaitable<void> {
                 context_.tablet.stylus = context_.devices.at(size_t(deviceIndex));
-                context_.tablet.settings.profile()->second.stylus.area = co_await asio::co_spawn(context_.mtExecutor, [] (auto stylus_) -> asio::awaitable<Area> {
-                    co_return MUST(get_stylus_default_area(stylus_));
-                }(context_.tablet.stylus));
+                context_.tablet.settings.profile()->second.stylus.area = MUST(co_await asio::co_spawn(context_.mtExecutor, make_async<get_stylus_default_area>(auto(context_.tablet.stylus))));
                 context_.tablet.settings.profile()->second.stylus.name = context_.tablet.stylus.name;
                 context_.tablet.settings.profile()->second.stylus.pressure = { 0, 0, 1, 1 };
                 context_.tablet.settings.profile()->second.stylus.forceFullArea = false;
@@ -490,10 +485,7 @@ static Result<void> render_migration_popup(Context& context)
     {
         context.handleOutdatedDeviceSettings = false;
         asio::co_spawn(context.stExecutor, [] (Context& context_) -> asio::awaitable<void> {
-            co_await asio::co_spawn(context_.mtExecutor, [] (auto settings_) -> asio::awaitable<void> {
-                save_tablet_settings(settings_);
-                co_return;
-            }(context_.tablet.settings));
+            MUST(co_await asio::co_spawn(context_.mtExecutor, make_async<save_tablet_settings>(auto(context_.tablet.settings))));
             ImGui::PushToast(
                 MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Success)),
                 MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Device_Settings_Overwritten))
@@ -507,9 +499,7 @@ static Result<void> render_migration_popup(Context& context)
     {
         context.handleOutdatedDeviceSettings = false;
         asio::co_spawn(context.stExecutor, [] (Context& context_) -> asio::awaitable<void> {
-            auto maybeMigrated = co_await asio::co_spawn(context_.mtExecutor, [] (auto settings_) -> asio::awaitable<Result<void>> {
-                co_return migrate_tablet_settings(settings_);
-            }(context_.tablet.settings));
+            auto maybeMigrated = co_await asio::co_spawn(context_.mtExecutor, make_async<migrate_tablet_settings>(auto(context_.tablet.settings)));
             if (!maybeMigrated.has_value())
             {
                 ImGui::PushToast(
@@ -559,9 +549,7 @@ Result<void> render_main_window(Context& context)
     {
         hasTriedToInitializeDeviceSettings = true;
         asio::co_spawn(context.stExecutor, [] (Context& context_) -> asio::awaitable<void> {
-            auto result = co_await asio::co_spawn(context_.mtExecutor, [] () -> asio::awaitable<Result<TabletSettings, SettingsError>> {
-                co_return load_tablet_settings();
-            }());
+            auto result = co_await asio::co_spawn(context_.mtExecutor, make_async<load_tablet_settings>());
 
             if (!result.has_value())
             {
@@ -577,9 +565,7 @@ Result<void> render_main_window(Context& context)
                 assert(display != context_.displays.end());
                 context_.display = *display;
 
-                auto maybeCreated = co_await asio::co_spawn(context_.mtExecutor, [] (auto tablet_, auto display_) -> asio::awaitable<Result<TabletProfile>> {
-                    co_return make_tablet_profile("Default", tablet_.stylus, tablet_.pad, display_);
-                }(context_.tablet, context_.display));
+                auto maybeCreated = co_await asio::co_spawn(context_.mtExecutor, make_async<make_tablet_profile>("Default", auto(context_.tablet.stylus), auto(context_.tablet.pad), auto(context_.display)));
                 if (!maybeCreated.has_value())
                 {
                     ImGui::PushToast(
@@ -594,17 +580,7 @@ Result<void> render_main_window(Context& context)
 
                 context_.hasChangedDeviceSettings = true;
 
-                if (result.error().message() == SettingsError::Type::FILE_NOT_FOUND)
-                {
-                    co_await asio::co_spawn(context_.mtExecutor, [] (auto settings_) -> asio::awaitable<void> {
-                        save_tablet_settings(settings_);
-                        co_return;
-                    }(context_.tablet.settings));
-                }
-
-                auto maybeLoaded = co_await asio::co_spawn(context_.mtExecutor, [] (auto settings_, auto tablet_, auto display_) -> asio::awaitable<Result<void>> {
-                    co_return load_tablet_profile(settings_.profile()->second, tablet_.stylus, tablet_.pad, display_);
-                }(context_.tablet.settings, context_.tablet, context_.display));
+                auto maybeLoaded = co_await asio::co_spawn(context_.mtExecutor, make_async<load_tablet_profile>(auto(context_.tablet.settings.profile()->second), auto(context_.tablet.stylus), auto(context_.tablet.pad), auto(context_.display)));
                 if (!maybeLoaded.has_value())
                 {
                     ImGui::PushToast(
@@ -613,31 +589,25 @@ Result<void> render_main_window(Context& context)
                     );
                 }
 
-                switch (result.error().message())
+                switch (result.error())
                 {
-                case SettingsError::Type::WRITE_FAILURE: break;
-                case SettingsError::Type::FILE_NOT_FOUND: {
+                case SettingsError::WRITE_FAILURE: break;
+                case SettingsError::FILE_NOT_FOUND: {
+                    MUST(co_await asio::co_spawn(context_.mtExecutor, make_async<save_tablet_settings>(auto(context_.tablet.settings))));
                     ImGui::PushToast(
                         MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Warning)),
                         MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Device_Settings_Missing))
                     );
                     break;
                 }
-                case SettingsError::Type::PROFILE_NOT_FOUND: {
-                    ImGui::PushToast(
-                        MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Error)),
-                        MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Profile_Missing))
-                    );
-                    break;
-                }
-                case SettingsError::Type::READ_FAILURE: {
+                case SettingsError::READ_FAILURE: {
                     ImGui::PushToast(
                         MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Warning)),
                         MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Device_Settings_Load_Failed))
                     );
                     break;
                 }
-                case SettingsError::Type::OUTDATED_SCHEMA: {
+                case SettingsError::OUTDATED_SCHEMA: {
                     context_.handleOutdatedDeviceSettings = true;
                     break;
                 }
@@ -659,9 +629,7 @@ Result<void> render_main_window(Context& context)
 
                 context_.hasChangedDeviceSettings = true;
 
-                auto maybeLoaded = co_await asio::co_spawn(context_.mtExecutor, [] (auto settings_, auto tablet_, auto display_) -> asio::awaitable<Result<void>> {
-                    co_return load_tablet_profile(settings_.profile()->second, tablet_.stylus, tablet_.pad, display_);
-                }(context_.tablet.settings, context_.tablet, context_.display));
+                auto maybeLoaded = co_await asio::co_spawn(context_.mtExecutor, make_async<load_tablet_profile>(auto(context_.tablet.settings.profile()->second), auto(context_.tablet.stylus), auto(context_.tablet.pad), auto(context_.display)));
                 if (!maybeLoaded.has_value())
                 {
                     ImGui::PushToast(
@@ -723,9 +691,7 @@ Result<void> render_main_window(Context& context)
     {
         isDropupButtonDisabled = true;
         asio::co_spawn(context.stExecutor, [] (Context& context_) -> asio::awaitable<void> {
-            auto maybeLoaded = co_await asio::co_spawn(context_.mtExecutor, [] (auto settings_, auto tablet_, auto display_) -> asio::awaitable<Result<void>> {
-                co_return load_tablet_profile(settings_.profile()->second, tablet_.stylus, tablet_.pad, display_);
-            }(context_.tablet.settings, context_.tablet, context_.display));
+            auto maybeLoaded = co_await asio::co_spawn(context_.mtExecutor, make_async<load_tablet_profile>(auto(context_.tablet.settings.profile()->second), auto(context_.tablet.stylus), auto(context_.tablet.pad), auto(context_.display)));
             isDropupButtonDisabled = false;
             if (!maybeLoaded)
             {
@@ -736,10 +702,7 @@ Result<void> render_main_window(Context& context)
                 co_return;
             }
 
-            co_await asio::co_spawn(context_.mtExecutor, [] (auto settings_) -> asio::awaitable<void> {
-                save_tablet_settings(settings_);
-                co_return;
-            }(context_.tablet.settings));
+            MUST(co_await asio::co_spawn(context_.mtExecutor, make_async<save_tablet_settings>(auto(context_.tablet.settings))));
 
             ImGui::PushToast(
                 MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Success)),
@@ -765,9 +728,7 @@ Result<void> render_main_window(Context& context)
 
                     context_.hasChangedDeviceSettings = true;
 
-                    auto maybeLoaded = co_await asio::co_spawn(context_.mtExecutor, [] (auto settings_, auto tablet_, auto display_) -> asio::awaitable<Result<void>> {
-                        co_return load_tablet_profile(settings_.profile()->second, tablet_.stylus, tablet_.pad, display_);
-                    }(context_.tablet.settings, context_.tablet, context_.display));
+                    auto maybeLoaded = co_await asio::co_spawn(context_.mtExecutor, make_async<load_tablet_profile>(auto(context_.tablet.settings.profile()->second), auto(context_.tablet.stylus), auto(context_.tablet.pad), auto(context_.display)));
                     if (!maybeLoaded)
                     {
                         ImGui::PushToast(

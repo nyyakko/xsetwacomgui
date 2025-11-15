@@ -32,10 +32,13 @@ Result<Localisation> Localisation::create()
 
             localisation.data_.insert({
                 language.data(), {
+                    { Localisation::About, json["about"].get<std::string>() },
+                    { Localisation::Author, json["author"].get<std::string>() },
                     { Localisation::Create, json["create"].get<std::string>() },
                     { Localisation::Delete, json["delete"].get<std::string>() },
                     { Localisation::New_Profile, json["newProfile"].get<std::string>() },
                     { Localisation::Save, json["save"].get<std::string>() },
+                    { Localisation::Version, json["version"].get<std::string>() },
 
                     { Localisation::Toast_Success, json["toast"]["title"]["success"].get<std::string>() },
                     { Localisation::Toast_Warning, json["toast"]["title"]["warning"].get<std::string>() },
@@ -64,7 +67,7 @@ Result<Localisation> Localisation::create()
                     { Localisation::Popup_Outdated_Device_Settings_Text, json["popup"]["outdatedDeviceSettings"]["text"].get<std::string>() },
                     { Localisation::Popup_Outdated_Device_Settings_Title, json["popup"]["outdatedDeviceSettings"]["title"].get<std::string>() },
 
-                    { Localisation::Window_Main_MenuBar_Other_Goddess, json["window"]["goddess"]["title"].get<std::string>() },
+                    { Localisation::Window_Main_MenuBar_Other_About, json["window"]["about"]["title"].get<std::string>() },
                     { Localisation::Window_Main_MenuBar_Other, json["window"]["main"]["menubar"]["other"]["title"].get<std::string>() },
                     { Localisation::Window_Main_MenuBar_Settings_Application, json["window"]["settings"]["title"].get<std::string>() },
                     { Localisation::Window_Main_MenuBar_Settings, json["window"]["main"]["menubar"]["settings"]["title"].get<std::string>() },

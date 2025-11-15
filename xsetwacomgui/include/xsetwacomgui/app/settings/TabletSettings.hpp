@@ -1,49 +1,15 @@
 #pragma once
 
+#include "app/settings/TabletProfile.hpp"
 #include "platform/Environment.hpp"
-#include "platform/hid/X11/Device.hpp"
-#include "platform/hid/X11/Display.hpp"
 #include "SettingsError.hpp"
 
+#include <liberror/Result.hpp>
 #include <range/v3/algorithm.hpp>
 
 #include <map>
 
 inline std::filesystem::path TABLET_SETTINGS_FILE = get_application_config_path() / "tablet_settings.json";
-
-struct TabletProfile
-{
-    struct Stylus
-    {
-        std::string name = "INVALID";
-        Device::Handedness handedness = Device::Handedness::RIGHT;
-        Area area;
-        Device::Pressure pressure;
-        bool forceFullArea;
-        std::map<int, Action> mappings;
-    };
-
-    struct Pad
-    {
-        std::string name = "INVALID";
-        std::map<int, Action> mappings;
-    };
-
-    struct Display
-    {
-        std::string name = "INVALID";
-        Area area;
-        bool forceFullArea;
-    };
-
-    std::string name = "INVALID";
-    Stylus stylus;
-    Pad pad;
-    Display display;
-};
-
-liberror::Result<TabletProfile> make_tablet_profile(std::string_view name, Device const& stylus, Device const& pad, Display const& display);
-liberror::Result<void> load_tablet_profile(TabletProfile const& profile, Device const& stylus, Device const& pad, Display const& display);
 
 class TabletSettings
 {
@@ -92,7 +58,7 @@ public:
 
 public:
     friend liberror::Result<TabletSettings, SettingsError> load_tablet_settings();
-    friend liberror::Result<void> save_tablet_settings(TabletSettings const& settings);
+    friend liberror::Result<void, SettingsError> save_tablet_settings(TabletSettings const& settings);
 
     // cppcheck-suppress [functionStatic, constParameterReference]
     inline constexpr auto& profiles(this auto& self) { return self.profiles_; }
@@ -114,5 +80,5 @@ private:
 };
 
 liberror::Result<TabletSettings, SettingsError> load_tablet_settings();
-liberror::Result<void> save_tablet_settings(TabletSettings const& settings);
-liberror::Result<void> migrate_tablet_settings(TabletSettings const& settings);
+liberror::Result<void, SettingsError> save_tablet_settings(TabletSettings const& settings);
+liberror::Result<void, SettingsError> migrate_tablet_settings(TabletSettings const& settings);

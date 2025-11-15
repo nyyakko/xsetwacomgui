@@ -1,6 +1,8 @@
-#include "app/ui/GoddessWindow.hpp"
+#include "app/ui/AboutWindow.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
+#include "app/core/Localisation.hpp"
+#include "app/core/Scaling.hpp"
 #include "external/stb_image/stb_image.h"
 #include "platform/Environment.hpp"
 
@@ -32,7 +34,7 @@ static std::filesystem::path get_random_jahy()
     return get_application_images_path() / fmt::format("Jahy-{}.png", distribution(generator));
 }
 
-Result<void> render_goddess_window()
+Result<void> render_about_window(Context& context)
 {
     static auto width = 0, height = 0;
     static auto channels = 0;
@@ -61,6 +63,11 @@ Result<void> render_goddess_window()
     static ImVec2 frameDimensions { float(width) * 70/100, float(height) * 70/100 };
     ImGui::SetCursorPos({ (ImGui::GetWindowWidth() - frameDimensions.x) / 2, (ImGui::GetWindowHeight() - frameDimensions.y) / 2 });
     ImGui::Image(imageTexture, frameDimensions);
+
+    ImGui::SetCursorPosY(ImGui::GetWindowHeight() - (45_scaled + ImGui::GetStyle().WindowPadding.x));
+
+    ImGui::Text("%s: nyakonyns@gmail.com", TRY(Localisation::get(context.settings.language(), Localisation::Author)));
+    ImGui::Text("%s: %s", TRY(Localisation::get(context.settings.language(), Localisation::Version)), VERSION);
 
     return {};
 }

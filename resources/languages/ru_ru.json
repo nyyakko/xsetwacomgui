@@ -1,8 +1,11 @@
 {
+    "about": "About (FIXME)",
+    "author": "Author (FIXME)",
     "create": "Создать",
     "delete": "Удалить",
     "newProfile": "Новый профиль",
     "save": "Сохранить",
+    "version": "Version (FIXME)",
 
     "toast": {
         "title": {
@@ -111,8 +114,8 @@
                 }
             }
         },
-        "goddess": {
-            "title": "Богиня"
+        "about": {
+            "title": "About (FIXME)"
         },
         "profile": {
             "title": "Профиль",
