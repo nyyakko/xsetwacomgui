@@ -35,9 +35,8 @@ jobs:
         chmod +x linuxdeployqt-continuous-x86_64.AppImage
 
     - name: Build
-      env:
-        VERSION: $(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,' | sed -e 's/^v//')
       run: |
+        VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,' | sed -e 's/^v//')
         cmake --preset release -DCMAKE_C_COMPILER=clang-20 -DCMAKE_CXX_COMPILER=clang++-20 -DCPACK_PACKAGE_VERSION=$VERSION
         cmake --build build
 
