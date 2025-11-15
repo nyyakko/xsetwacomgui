@@ -1,6 +1,8 @@
 #include "platform/Environment.hpp"
 
+#include <array>
 #include <filesystem>
+#include <range/v3/algorithm/find_if.hpp>
 
 std::filesystem::path get_system_home_path()
 {
@@ -23,7 +25,18 @@ std::filesystem::path get_application_data_path()
 #if DEBUG
     return std::filesystem::path(HOME) / "resources";
 #else
-    return "/usr/local/share";
+    static std::array paths {
+        std::filesystem::path("/usr/local/share") / NAME,
+        std::filesystem::path("/usr/share") / NAME,
+        get_system_home_path() / ".local" / "share" / NAME
+    };
+
+    auto path = ranges::find_if(paths, [] (auto const& path) {
+        return std::filesystem::exists(path);
+    });
+    assert(path != paths.end());
+
+    return *path;
 #endif
 }
 
@@ -32,7 +45,7 @@ std::filesystem::path get_application_languages_path()
 #if DEBUG
     return std::filesystem::path(HOME) / "resources" / "languages";
 #else
-    return get_application_data_path() / NAME / "languages";
+    return get_application_data_path() / "languages";
 #endif
 
 }
@@ -42,16 +55,7 @@ std::filesystem::path get_application_images_path()
 #if DEBUG
     return std::filesystem::path(HOME) / "resources" / "images";
 #else
-    return get_application_data_path() / NAME / "images";
+    return get_application_data_path() / "images";
 #endif
 
-}
-
-std::filesystem::path get_application_icon_path()
-{
-#if DEBUG
-    return std::filesystem::path(HOME) / "resources" / "icons";
-#else
-    return get_application_data_path() / "icons" / "hicolor";
-#endif
 }
