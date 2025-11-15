@@ -91,6 +91,6 @@ jobs:
       with:
         files: |
           ./*.AppImage
-          ./*.deb
+          ./_packages/*.deb
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
