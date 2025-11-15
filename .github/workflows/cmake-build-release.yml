@@ -42,8 +42,7 @@ jobs:
 
     - name: Build Packages
       run: |
-        cd build
-        cpack -G DEB
+        ls -l
         cd ..
         ./linuxdeployqt-continuous-x86_64.AppImage build/release/xsetwacomgui
 
