@@ -1,6 +1,6 @@
 #include <spdlog/spdlog.h>
 
-#include "app/core/ipc/IPCClient.hpp"
+#include "app/core/ipc/DeviceListenerClient.hpp"
 
 #include <range/v3/view/iota.hpp>
 
@@ -14,7 +14,7 @@ using namespace liberror;
 static constexpr auto SERVER_NAME = "/" NAME "-server";
 static constexpr auto CLIENT_NAME = "/" NAME "-client";
 
-IPCClient::~IPCClient()
+DeviceListenerClient::~DeviceListenerClient()
 {
     if (mqueue_.descriptor().value() != -1)
     {
@@ -23,15 +23,15 @@ IPCClient::~IPCClient()
     }
 }
 
-Result<IPCClient> IPCClient::create(asio::io_context& context)
+Result<DeviceListenerClient> DeviceListenerClient::create(asio::io_context& context)
 {
-    IPCClient client {};
+    DeviceListenerClient client {};
     client.name_ = fmt::format("{}-{}", CLIENT_NAME, getpid());
     client.mqueue_ = TRY(MQueue::create(client.name_, &context));
     return client;
 }
 
-Result<void> IPCClient::connect() const
+Result<void> DeviceListenerClient::connect() const
 {
     using namespace std::literals;
 
@@ -62,12 +62,12 @@ Result<void> IPCClient::connect() const
     return {};
 }
 
-asio::awaitable<std::vector<char>> IPCClient::receive_message_async()
+asio::awaitable<std::vector<char>> DeviceListenerClient::receive_message_async()
 {
     return mqueue_.receive_async();
 }
 
-Result<std::vector<char>> IPCClient::receive_message() const
+Result<std::vector<char>> DeviceListenerClient::receive_message() const
 {
     return TRY(mqueue_.receive());
 }
