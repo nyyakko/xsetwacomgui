@@ -37,7 +37,7 @@ Result<void> IPCClient::connect() const
 
     if (mqueue_.descriptor().value() == -1)
     {
-        return make_error("Client descriptor was -1. did you call configure?");
+        return make_error("Client descriptor was -1");
     }
 
     MQueueDescriptor server {};
