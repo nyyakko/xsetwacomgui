@@ -6,48 +6,77 @@ on:
       - "*"
 
 jobs:
-  build_release:
+  build:
     runs-on: ubuntu-22.04
-    container:
-      image: debian:12-slim
-
-    permissions:
-      contents: write
 
     steps:
+    - uses: actions/checkout@v4
+
     - name: Install Git
       run: |
         apt update
         apt install -y git
         git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
-    - uses: actions/checkout@v4
-
-    - name: Install Build Dependencies
+    - name: Install Packages
       run: |
         apt update
         apt install -y build-essential cmake ninja-build libfreetype6-dev libglu1-mesa-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libudev-dev wget software-properties-common
+
+    - name: Prepare Clang
+      run: |
         wget https://apt.llvm.org/llvm.sh
         chmod +x llvm.sh
         ./llvm.sh 20
 
-    - name: Build
+    - name: Prepare AppImage Tools
       run: |
-        VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,' | sed -e 's/^v//')
+        wget https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage
+        chmod +x linuxdeployqt-continuous-x86_64.AppImage
+
+    - name: Build
+      env:
+        VERSION: $(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,' | sed -e 's/^v//')
+      run: |
         cmake --preset release -DCMAKE_C_COMPILER=clang-20 -DCMAKE_CXX_COMPILER=clang++-20 -DCPACK_PACKAGE_VERSION=$VERSION
         cmake --build build
 
-    - name: Package
-      run: cd build && cpack -G DEB
+    - name: Build Packages
+      run: |
+        cd build
+        cpack -G DEB
+        cd ..
+        ./linuxdeployqt-continuous-x86_64.AppImage build/release/xsetwacomgui
 
-    - name: Upload
-      uses: actions/upload-artifact@v4
-      with:
-        path: _packages/xsetwacomgui_*_amd64.deb
+    # - name: Upload
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: 
+    #     path: _packages/xsetwacomgui_*_amd64.deb
+    #
+    # - name: Upload Build Tree
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: build-tree
+    #     path: build
 
-    - name: Release
-      uses: softprops/action-gh-release@v1
-      with:
-        files: _packages/xsetwacomgui_*_amd64.deb
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  # release:
+  #   needs: build
+  #   runs-on: ubuntu-22.04
+  #   permissions:
+  #     contents: write
+  #
+  #   steps:
+  #   - name: Download Build Tree
+  #     uses: actions/download-artifact@v4
+  #     with:
+  #       name: build-tree
+  #       path: build
+  #
+  #   - name: Release
+  #     uses: softprops/action-gh-release@v1
+  #     with:
+  #       files: |
+  #         _packages/xsetwacomgui_*_amd64.deb
+  #     env:
+  #       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
