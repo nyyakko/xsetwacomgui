@@ -23,6 +23,8 @@
 
 using namespace liberror;
 
+static constexpr auto SERVER_NAME = "/" NAME "-server";
+
 IPCServer::~IPCServer()
 {
     if (mqueue_.descriptor().value() != -1)
@@ -35,8 +37,7 @@ Result<IPCServer> IPCServer::create(asio::io_context& context)
 {
     IPCServer server {};
 
-    auto mqueue = MQueue::create("/" NAME "-server", &context);
-
+    auto mqueue = MQueue::create(SERVER_NAME, &context);
     if (!mqueue.has_value())
     {
         if (mqueue.error().message() == strerror(EEXIST))
