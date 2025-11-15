@@ -3,9 +3,6 @@
 #include <range/v3/algorithm/fill_n.hpp>
 #include <range/v3/algorithm/find_if.hpp>
 
-#include <unistd.h>
-
-#include <array>
 #include <filesystem>
 
 std::filesystem::path get_system_home_path()

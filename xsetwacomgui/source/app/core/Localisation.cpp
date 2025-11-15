@@ -13,16 +13,14 @@ using namespace liberror;
 
 Result<Localisation> Localisation::create()
 {
-    namespace fs = std::filesystem;
-
     Localisation localisation;
 
-    for (auto const& language :
-        ranges::subrange { fs::directory_iterator(get_application_languages_path()), fs::directory_iterator {} }
-            | ranges::views::filter([] (auto& entry) { return entry.path().extension() == ".json"; })
-            | ranges::views::transform([] (auto& entry) { return entry.path().stem().string(); }))
+    try
     {
-        try
+        for (auto const& language :
+            ranges::subrange { std::filesystem::directory_iterator(get_application_languages_path()), std::filesystem::directory_iterator {} }
+                | ranges::views::filter([] (auto& entry) { return entry.path().extension() == ".json"; })
+                | ranges::views::transform([] (auto& entry) { return entry.path().stem().string(); }))
         {
             std::ifstream stream(get_application_languages_path() / fmt::format("{}.json", language));
             std::stringstream content;
@@ -114,10 +112,10 @@ Result<Localisation> Localisation::create()
                 }
             });
         }
-        catch (std::exception const& error)
-        {
-            return make_error("{}", error.what());
-        }
+    }
+    catch (std::exception const& error)
+    {
+        return make_error("{}", error.what());
     }
 
     return localisation;
