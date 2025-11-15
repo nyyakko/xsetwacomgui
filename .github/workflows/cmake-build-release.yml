@@ -14,14 +14,14 @@ jobs:
 
     - name: Install Git
       run: |
-        apt update
-        apt install -y git
+        sudo apt update
+        sudo apt install -y git
         git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
     - name: Install Packages
       run: |
-        apt update
-        apt install -y build-essential cmake ninja-build libfreetype6-dev libglu1-mesa-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libudev-dev wget software-properties-common
+        sudo apt update
+        sudo apt install -y build-essential cmake ninja-build libfreetype6-dev libglu1-mesa-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libudev-dev wget software-properties-common
 
     - name: Prepare Clang
       run: |
