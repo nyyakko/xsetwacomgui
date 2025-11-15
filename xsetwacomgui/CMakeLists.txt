@@ -8,7 +8,7 @@ target_compile_definitions(
         $<$<CONFIG:Debug>:DEBUG>
         HOME="${PROJECT_SOURCE_DIR}"
         NAME="${PROJECT_NAME}"
-        VERSION=$<IF:$<CONFIG:Debug>,"DEBUG",${CPACK_PACKAGE_VERSION}>
+        VERSION=$<IF:$<CONFIG:Debug>,"DEBUG","${CPACK_PACKAGE_VERSION}">
 )
 
 if (ENABLE_CLANGTIDY)
