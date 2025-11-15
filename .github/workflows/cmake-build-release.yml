@@ -29,30 +29,53 @@ jobs:
         chmod +x llvm.sh
         sudo ./llvm.sh 20
 
-    - name: Install AppImage Tools
-      run: |
-        wget https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage
-        chmod +x linuxdeployqt-continuous-x86_64.AppImage
-
     - name: Build
       run: |
         VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,' | sed -e 's/^v//')
         cmake --preset release -DCMAKE_C_COMPILER=clang-20 -DCMAKE_CXX_COMPILER=clang++-20 -DCPACK_PACKAGE_VERSION=$VERSION
         cmake --build build
 
-    - name: Generate Artifacts
+    - name: Upload Source
+      uses: actions/upload-artifact@v4
+      with:
+        name: Source
+        path: .
+
+  package:
+    needs: build
+    runs-on: ubuntu-22.04
+
+    steps:
+    - name: Download Source
+      uses: actions/download-artifact@v4
+      with:
+        name: Source
+
+    - name: Install AppImage Tools
+      run: |
+        wget https://github.com/linuxdeploy/linuxdeploy/releases/download/1-alpha-20251107-1/linuxdeploy-x86_64.AppImage
+        chmod +x linuxdeploy-x86_64.AppImage
+
+    - name: Generate Package (Deb)
+      run: |
+        cd build
+        cpack -G DEB
+
+    - name: Generate Package (AppImage)
       run: |
         cmake --install build --prefix _appdir/usr
-        ./linuxdeployqt-continuous-x86_64.AppImage _AppDir/usr/share/applications/xsetwacomgui.desktop -appimage
+        ./linuxdeploy-x86_64.AppImage --appdir _appdir/ --output appimage
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: AppImage
-        path: ./XSetWacomGUI-*.AppImage
+        name: Release-Artifacts
+        path: |
+          ./XSetWacomGUI-*.AppImage
+          ./_packages/xsetwacomgui_*.deb
 
   release:
-    needs: build
+    needs: package
     runs-on: ubuntu-22.04
     permissions:
       contents: write
@@ -61,12 +84,13 @@ jobs:
     - name: Download Artifacts
       uses: actions/download-artifact@v4
       with:
-        name: AppImage
+        name: Release-Artifacts
 
     - name: Release
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          ./XSetWacomGUI-*.AppImage
+          ./*.AppImage
+          ./*.deb
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
