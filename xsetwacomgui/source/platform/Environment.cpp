@@ -33,12 +33,6 @@ std::filesystem::path get_application_data_path()
         std::filesystem::path("/usr/local/share") / NAME,
         std::filesystem::path("/usr/share") / NAME,
         get_system_home_path() / ".local" / "share" / NAME,
-        std::filesystem::path([] {
-            std::array<char, 256> buffer;
-            if (readlink("/proc/self/exe", buffer.data(), buffer.size() - 1) == -1)
-                return std::filesystem::path(".");
-            return std::filesystem::path(buffer.data()).parent_path().parent_path();
-        }()) / "share" / NAME,
     };
 
     auto path = ranges::find_if(paths, [] (auto const& path) { return std::filesystem::exists(path); });

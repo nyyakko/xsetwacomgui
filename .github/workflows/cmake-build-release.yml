@@ -51,27 +51,16 @@ jobs:
       with:
         name: Source
 
-    - name: Install AppImage Tools
-      run: |
-        wget https://github.com/linuxdeploy/linuxdeploy/releases/download/1-alpha-20251107-1/linuxdeploy-x86_64.AppImage
-        chmod +x linuxdeploy-x86_64.AppImage
-
     - name: Generate Package (Deb)
       run: |
         cd build
         cpack -G DEB
-
-    - name: Generate Package (AppImage)
-      run: |
-        cmake --install build --prefix _appdir/usr
-        ./linuxdeploy-x86_64.AppImage --appdir _appdir/ --output appimage
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
         name: Release-Artifacts
         path: |
-          ./XSetWacomGUI-*.AppImage
           ./_packages/xsetwacomgui_*.deb
 
   release:
@@ -90,7 +79,6 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          ./*.AppImage
           ./_packages/*.deb
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
