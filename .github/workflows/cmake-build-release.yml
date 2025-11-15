@@ -43,7 +43,6 @@ jobs:
     - name: Build Packages
       run: |
         ls -l
-        cd ..
         ./linuxdeployqt-continuous-x86_64.AppImage build/release/xsetwacomgui
 
     # - name: Upload
