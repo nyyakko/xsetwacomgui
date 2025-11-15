@@ -1,8 +1,11 @@
 {
+    "about": "Sobre",
+    "author": "Autor",
     "create": "Criar",
     "delete": "Deletar",
     "newProfile": "Novo Perfil",
     "save": "Salvar",
+    "version": "Versão",
 
     "toast": {
         "title": {
@@ -111,8 +114,8 @@
                 }
             }
         },
-        "goddess": {
-            "title": "Deusa"
+        "about": {
+            "title": "Sobre"
         },
         "profile": {
             "title": "Perfil",

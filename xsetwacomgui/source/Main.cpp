@@ -7,7 +7,7 @@
 #include "app/core/ipc/IPCServer.hpp"
 #include "app/core/Localisation.hpp"
 #include "app/core/Scaling.hpp"
-#include "app/ui/GoddessWindow.hpp"
+#include "app/ui/AboutWindow.hpp"
 #include "app/ui/MainWindow.hpp"
 #include "app/ui/SettingsWindow.hpp"
 #include "platform/Daemon.hpp"
@@ -279,7 +279,7 @@ static Result<void> run_gui()
                 }
 #endif
                 static auto isSettingsWindowOpen = false;
-                static auto isGoddessWindowOpen = false;
+                static auto isAboutWindowOpen = false;
 
                 if (ImGui::BeginMenuBar())
                 {
@@ -295,9 +295,9 @@ static Result<void> run_gui()
 
                     if (ImGui::BeginMenu(TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_MenuBar_Other))))
                     {
-                        if (ImGui::MenuItem(TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_MenuBar_Other_Goddess))))
+                        if (ImGui::MenuItem(TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_MenuBar_Other_About))))
                         {
-                            isGoddessWindowOpen = true;
+                            isAboutWindowOpen = true;
                         }
 
                         ImGui::EndMenu();
@@ -322,18 +322,18 @@ static Result<void> run_gui()
                     ImGui::End();
                 }
 
-                if (isGoddessWindowOpen)
+                if (isAboutWindowOpen)
                 {
                     float goddessWidth = float(windowWidth)/1.5f, goddessHeight = float(windowHeight)/1.5f;
                     ImGui::SetNextWindowSize({ goddessWidth, goddessHeight });
                     ImGui::SetNextWindowPos({ (float(windowWidth) - goddessWidth)/2, (float(windowHeight) - goddessHeight)/2 });
                     ImGui::Begin(
-                        TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_MenuBar_Other_Goddess)),
-                        &isGoddessWindowOpen,
+                        TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_MenuBar_Other_About)),
+                        &isAboutWindowOpen,
                         ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
                     );
                     {
-                        TRY(render_goddess_window());
+                        TRY(render_about_window(context));
                     }
                     ImGui::End();
                 }
