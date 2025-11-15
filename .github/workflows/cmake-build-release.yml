@@ -42,8 +42,9 @@ jobs:
 
     - name: Build Packages
       run: |
-        cmake --install build --prefix AppDir/usr
-        ./linuxdeployqt-continuous-x86_64.AppImage AppDir/usr/share/applications/xsetwacomgui.desktop -appimage
+        cmake --install build --prefix _AppDir/usr
+        ./linuxdeployqt-continuous-x86_64.AppImage _AppDir/usr/share/applications/xsetwacomgui.desktop -appimage
+        ls -l
 
     # - name: Upload
     #   uses: actions/upload-artifact@v4
