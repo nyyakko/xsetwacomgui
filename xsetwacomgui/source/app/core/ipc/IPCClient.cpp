@@ -2,6 +2,8 @@
 
 #include "app/core/ipc/IPCClient.hpp"
 
+#include <range/v3/view/iota.hpp>
+
 #include <mqueue.h>
 #include <unistd.h>
 
@@ -40,7 +42,7 @@ Result<void> IPCClient::connect() const
 
     MQueueDescriptor server {};
 
-    while (true)
+    for (auto retry : ranges::views::iota(0, 3))
     {
         auto maybeServer = MQueueDescriptor::create(SERVER_NAME, O_WRONLY);
         if (maybeServer.has_value())
@@ -49,14 +51,8 @@ Result<void> IPCClient::connect() const
             break;
         }
 
-        static auto retry = 0;
-
+        if (retry+1 == 3) return make_error("Failed to connect to IPCServer");
         spdlog::warn("Could not connect to IPCServer ({}/3)", retry+1);
-
-        if (retry++ == 3)
-        {
-            return make_error("Failed to connect to IPCServer");
-        }
 
         std::this_thread::sleep_for(1s);
     }
