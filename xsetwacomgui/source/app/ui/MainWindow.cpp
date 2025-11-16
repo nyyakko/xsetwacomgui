@@ -550,7 +550,6 @@ Result<void> render_main_window(Context& context)
         hasTriedToInitializeDeviceSettings = true;
         asio::co_spawn(context.stExecutor, [] (Context& context_) -> asio::awaitable<void> {
             auto result = co_await asio::co_spawn(context_.mtExecutor, make_async<load_tablet_settings>());
-
             if (!result.has_value())
             {
                 auto stylus = ranges::find(context_.devices, Device::Kind::STYLUS, &Device::kind);
@@ -620,7 +619,6 @@ Result<void> render_main_window(Context& context)
                 auto stylus = ranges::find(context_.devices, context_.tablet.settings.profile()->second.stylus.name, &Device::name);
                 assert(stylus != context_.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
                 context_.tablet.stylus = *stylus;
-
                 auto pad = ranges::find(context_.devices, context_.tablet.settings.profile()->second.pad.name, &Device::name);
                 assert(pad != context_.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
                 context_.tablet.pad = *pad;
@@ -742,7 +740,7 @@ Result<void> render_main_window(Context& context)
         }
         else
         {
-            isProfileEditWindowOpen = isProfileWindowOpen = (itemIndex.first != 0);
+            isProfileEditWindowOpen = isProfileWindowOpen = itemIndex.first != 0;
         }
     }
 
@@ -765,9 +763,8 @@ Result<void> render_main_window(Context& context)
                     return entry.first == profiles.at(size_t(itemIndex.second));
                 });
                 assert(profile != context.tablet.settings.profiles().end());
-                auto isWindowClosed = TRY(render_profile_window(isProfileWindowOpen, context, profile->second));
 
-                if (isWindowClosed || !isProfileWindowOpen)
+                if (TRY(render_profile_window(isProfileWindowOpen, context, profile->second)) || !isProfileWindowOpen)
                 {
                     itemIndex = { 1, std::distance(profiles.begin(), ranges::find(profiles, context.tablet.settings.profile()->second.name)) };
                     isProfileWindowOpen = false;
