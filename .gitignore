@@ -6,5 +6,7 @@
 build/
 cmake/CPM.cmake
 _packages/
+_appdir/
 
 imgui.ini
+*.AppImage
