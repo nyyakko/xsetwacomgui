@@ -41,7 +41,6 @@ public:
 
 public:
     static liberror::Result<MQueue> create(std::string_view name, asio::io_context* context, int flag = O_RDONLY | O_CREAT | O_EXCL);
-    static liberror::Result<MQueue> create(std::string_view name, int flag = O_RDONLY | O_CREAT | O_EXCL);
 
     // cppcheck-suppress [functionStatic, constParameterReference]
     auto& descriptor(this auto& self) { return self.descriptor_; }
