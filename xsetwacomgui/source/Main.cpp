@@ -458,7 +458,7 @@ static Result<void> run_no_gui()
 static Result<void> safe_main(std::span<char const*> const& arguments)
 {
     auto mainHelp = [] {
-        fmt::println("Usage: " NAME " [--help] [--no-gui] {{config}}");
+        fmt::println("Usage: " NAME " [--help] [--no-gui]");
         fmt::println("\na graphical xsetwacom wrapper for ease of use");
         fmt::println("\nOptional arguments:");
         fmt::println("  --help {:>21}", "shows help message");
