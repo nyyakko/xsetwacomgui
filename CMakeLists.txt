@@ -6,7 +6,8 @@ project(
         DESCRIPTION "A graphical xsetwacom wrapper for ease of use"
 )
 
-include(cmake/get_cpm.cmake)
+include(cmake/helpers/add_subproject.cmake)
+include(cmake/helpers/use_cpm.cmake)
 include(cmake/packaging.cmake)
 
 find_package(Freetype REQUIRED)
@@ -27,23 +28,10 @@ CPMAddPackage(URI "gh:OlivierLDff/asio.cmake@1.3.1" EXCLUDE_FROM_ALL YES)
 include(cmake/static_analyzers.cmake)
 include(GNUInstallDirs)
 
-set(xsetwacomgui_CompilerOptions ${xsetwacomgui_CompilerOptions} -Wno-gnu-statement-expression-from-macro-expansion)
-set(xsetwacomgui_LinkerOptions ${xsetwacomgui_LinkerOptions})
-
-set(xsetwacomgui_ExternalLibraries
-    asio::asio
-    fmt::fmt
-    freetype
-    glfw
-    imgui::imgui
-    LibError::LibError
-    LibExec::LibExec
-    magic_enum::magic_enum
-    nlohmann_json::nlohmann_json
-    OpenGL::GL
-    range-v3::range-v3
-    spdlog::spdlog
-    udev
+add_subproject(xsetwacomgui
+    CC_OPTIONS "-Wno-gnu-statement-expression-from-macro-expansion"
+    LIBRARIES
+        asio::asio fmt::fmt freetype glfw imgui::imgui LibError::LibError
+        LibExec::LibExec magic_enum::magic_enum nlohmann_json::nlohmann_json
+        OpenGL::GL range-v3::range-v3 spdlog::spdlog udev
 )
-
-add_subdirectory(xsetwacomgui)
