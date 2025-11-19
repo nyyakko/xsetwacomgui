@@ -9,25 +9,25 @@
 
 #include <mqueue.h>
 
-class IPCClient
+class DeviceListenerClient
 {
 public:
-    IPCClient()
+    DeviceListenerClient()
         : name_{}
         , client_{-1}
         , mqueue_{}
     {}
 
-    IPCClient(IPCClient const&) = delete;
-    IPCClient& operator=(IPCClient const&) = delete;
+    DeviceListenerClient(DeviceListenerClient const&) = delete;
+    DeviceListenerClient& operator=(DeviceListenerClient const&) = delete;
 
-    IPCClient(IPCClient&& that)
+    DeviceListenerClient(DeviceListenerClient&& that)
         : name_{std::move(that.name_)}
         , client_{std::exchange(that.client_, -1)}
         , mqueue_{std::move(that.mqueue_)}
     {}
 
-    IPCClient& operator=(IPCClient&& that)
+    DeviceListenerClient& operator=(DeviceListenerClient&& that)
     {
         this->name_ = std::move(that.name_);
         this->client_ = std::exchange(that.client_, -1);
@@ -35,10 +35,10 @@ public:
         return *this;
     }
 
-    ~IPCClient();
+    ~DeviceListenerClient();
 
 public:
-    static liberror::Result<IPCClient> create(asio::io_context& context);
+    static liberror::Result<DeviceListenerClient> create(asio::io_context& context);
 
     liberror::Result<void> connect() const;
 

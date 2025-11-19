@@ -12,25 +12,25 @@
 #include <mqueue.h>
 #include <sys/poll.h>
 
-class IPCServer
+class DeviceListenerServer
 {
 public:
-    IPCServer()
+    DeviceListenerServer()
         : mqueue_{}
         , clients_{}
         , context_{nullptr}
     {}
 
-    IPCServer(IPCServer const&) = delete;
-    IPCServer& operator=(IPCServer const&) = delete;
+    DeviceListenerServer(DeviceListenerServer const&) = delete;
+    DeviceListenerServer& operator=(DeviceListenerServer const&) = delete;
 
-    IPCServer(IPCServer&& that)
+    DeviceListenerServer(DeviceListenerServer&& that)
         : mqueue_{std::move(that.mqueue_)}
         , clients_{std::move(that.clients_)}
         , context_{std::exchange(that.context_, nullptr)}
     {}
 
-    IPCServer& operator=(IPCServer&& that)
+    DeviceListenerServer& operator=(DeviceListenerServer&& that)
     {
         this->mqueue_ = std::move(that.mqueue_);
         this->clients_ = std::move(that.clients_);
@@ -38,10 +38,10 @@ public:
         return *this;
     }
 
-    ~IPCServer();
+    ~DeviceListenerServer();
 
 public:
-    static liberror::Result<IPCServer> create(asio::io_context& context);
+    static liberror::Result<DeviceListenerServer> create(asio::io_context& context);
 
     void start();
 

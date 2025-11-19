@@ -1,6 +1,6 @@
 #include <spdlog/spdlog.h>
 
-#include "app/core/ipc/IPCServer.hpp"
+#include "app/core/ipc/DeviceListenerServer.hpp"
 
 #include "platform/udev/UDevDevice.hpp"
 #include "platform/udev/UDevMonitor.hpp"
@@ -25,7 +25,7 @@ using namespace liberror;
 
 static constexpr auto SERVER_NAME = "/" NAME "-server";
 
-IPCServer::~IPCServer()
+DeviceListenerServer::~DeviceListenerServer()
 {
     if (mqueue_.descriptor().value() != -1)
     {
@@ -33,9 +33,9 @@ IPCServer::~IPCServer()
     }
 }
 
-Result<IPCServer> IPCServer::create(asio::io_context& context)
+Result<DeviceListenerServer> DeviceListenerServer::create(asio::io_context& context)
 {
-    IPCServer server {};
+    DeviceListenerServer server {};
 
     auto mqueue = MQueue::create(SERVER_NAME, &context);
     if (!mqueue.has_value())
@@ -53,7 +53,7 @@ Result<IPCServer> IPCServer::create(asio::io_context& context)
     return server;
 }
 
-void IPCServer::start()
+void DeviceListenerServer::start()
 {
     spdlog::info("Server started");
 
@@ -69,7 +69,7 @@ void IPCServer::start()
     assert(false && "UNREACHABLE");
 }
 
-asio::awaitable<void> IPCServer::message_receiver()
+asio::awaitable<void> DeviceListenerServer::message_receiver()
 {
     while (true)
     {
@@ -105,7 +105,7 @@ asio::awaitable<void> IPCServer::message_receiver()
     co_return;
 }
 
-asio::awaitable<void> IPCServer::message_sender()
+asio::awaitable<void> DeviceListenerServer::message_sender()
 {
     UDevMonitor monitor(*context_);
     monitor.add_subsystem("usb");

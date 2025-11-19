@@ -140,7 +140,7 @@ Result<void> render_settings_window(Context& context)
     {
         isSaveButtonDisabled = true;
         asio::co_spawn(context.stExecutor, [] (Context& context_) -> asio::awaitable<void> {
-            co_await asio::co_spawn(context_.mtExecutor, make_async<save_application_settings>(auto(context_.settings)));
+            MUST(co_await asio::co_spawn(context_.mtExecutor, make_async<save_application_settings>(auto(context_.settings))));
             isSaveButtonDisabled = false;
             ImGui::PushToast(
                 MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Success)),

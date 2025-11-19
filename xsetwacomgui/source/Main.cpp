@@ -3,8 +3,8 @@
 #include <spdlog/spdlog.h>
 
 #include "app/Context.hpp"
-#include "app/core/ipc/IPCClient.hpp"
-#include "app/core/ipc/IPCServer.hpp"
+#include "app/core/ipc/DeviceListenerClient.hpp"
+#include "app/core/ipc/DeviceListenerServer.hpp"
 #include "app/core/Localisation.hpp"
 #include "app/core/Scaling.hpp"
 #include "app/ui/AboutWindow.hpp"
@@ -36,7 +36,7 @@
 using namespace liberror;
 using namespace std::literals;
 
-static asio::awaitable<void> ipc_message_handler(IPCClient& client, Context& context, bool headless)
+static asio::awaitable<void> ipc_message_handler(DeviceListenerClient& client, Context& context, bool headless)
 {
     static auto fnGetAvailableDevices = [] (auto shouldRetry) -> asio::awaitable<std::vector<Device>> {
         std::vector<Device> devices {};
@@ -131,12 +131,12 @@ static asio::awaitable<void> ipc_message_handler(IPCClient& client, Context& con
 
 static Result<void> run_gui()
 {
-    static Context context {
+    Context context {
         .devices  = TRY(get_available_devices()),
         .displays = TRY(get_available_displays()),
     };
 
-    auto client = TRY(IPCClient::create(context.stExecutor));
+    auto client = TRY(DeviceListenerClient::create(context.stExecutor));
     TRY(client.connect());
 
     if (!glfwInit()) return make_error("Failed to initialize glfw");
@@ -373,11 +373,11 @@ static Result<void> run_no_gui()
         .displays = TRY(get_available_displays()),
     };
 
-    static auto client = TRY(IPCClient::create(context.stExecutor));
+    static auto client = TRY(DeviceListenerClient::create(context.stExecutor));
     TRY(client.connect());
 
     struct sigaction action;
-    action.sa_handler = [] (int) { client.~IPCClient(); _exit(0); };
+    action.sa_handler = [] (int) { client.~DeviceListenerClient(); _exit(0); };
     sigaction(SIGINT, &action, NULL);
     sigaction(SIGTERM, &action, NULL);
 
@@ -458,7 +458,7 @@ static Result<void> run_no_gui()
 static Result<void> safe_main(std::span<char const*> const& arguments)
 {
     auto mainHelp = [] {
-        fmt::println("Usage: " NAME " [--help] [--no-gui] {{config}}");
+        fmt::println("Usage: " NAME " [--help] [--no-gui]");
         fmt::println("\na graphical xsetwacom wrapper for ease of use");
         fmt::println("\nOptional arguments:");
         fmt::println("  --help {:>21}", "shows help message");
@@ -481,10 +481,10 @@ static Result<void> safe_main(std::span<char const*> const& arguments)
         asio::io_context executor;
         auto guard = asio::make_work_guard(executor);
 
-        static auto server = TRY(IPCServer::create(executor));
+        static auto server = TRY(DeviceListenerServer::create(executor));
 
         struct sigaction action;
-        action.sa_handler = [] (int) { server.~IPCServer(); _exit(0); };
+        action.sa_handler = [] (int) { server.~DeviceListenerServer(); _exit(0); };
         sigaction(SIGINT, &action, NULL);
         sigaction(SIGTERM, &action, NULL);
 

@@ -103,16 +103,10 @@ Result<bool> render_profile_window(bool isWindowVisible, Context& context, Table
             asio::co_spawn(context.stExecutor, [] (Context& context_, TabletProfile profile_) -> asio::awaitable<void> {
                 auto nameOfTheProfileBeingEdited = profile_.name;
                 auto nameOfTheCurrentProfile = context_.tablet.settings.profile()->first;
-
                 std::erase_if(context_.tablet.settings.profiles(), [&] (auto const& entry) { return entry.first == profile_.name; });
-
                 profile_.name = profileName.data();
                 auto [iterator, _] = context_.tablet.settings.profiles().insert({ profile_.name, profile_ });
-
-                if (nameOfTheProfileBeingEdited == nameOfTheCurrentProfile)
-                {
-                    context_.tablet.settings.profile(iterator);
-                }
+                if (nameOfTheProfileBeingEdited == nameOfTheCurrentProfile) context_.tablet.settings.profile(iterator);
 
                 context_.hasChangedDeviceSettings = true;
 
@@ -135,14 +129,13 @@ Result<bool> render_profile_window(bool isWindowVisible, Context& context, Table
         isWindowClosed = true;
         asio::co_spawn(context.stExecutor, [] (Context& context_, TabletProfile& profile_) -> asio::awaitable<void> {
             std::erase_if(context_.tablet.settings.profiles(), [&] (auto const& entry) { return entry.first == profile_.name; });
-
-            context_.tablet.settings.profile(ranges::find_if(context_.tablet.settings.profiles(), [&] (auto const& entry) {
-                return entry.first != "INVALID";
-            }));
+            auto iterator = ranges::find_if(context_.tablet.settings.profiles(), [&] (auto const& entry) { return entry.first != "INVALID"; });
+            assert(iterator != context_.tablet.settings.profiles().end());
+            context_.tablet.settings.profile(iterator);
 
             context_.hasChangedDeviceSettings = true;
 
-            co_await asio::co_spawn(context_.mtExecutor, make_async<save_tablet_settings>(auto(context_.tablet.settings)));
+            MUST(co_await asio::co_spawn(context_.mtExecutor, make_async<save_tablet_settings>(auto(context_.tablet.settings))));
 
             ImGui::PushToast(
                 MUST(Localisation::get(context_.settings.language(), Localisation::Toast_Success)),

@@ -11,8 +11,3 @@ Result<MQueue> MQueue::create(std::string_view name, asio::io_context* context, 
     queue.descriptor_ = TRY(MQueueDescriptor::create(name, context, flag, 0660));
     return queue;
 }
-
-Result<MQueue> MQueue::create(std::string_view name, int flag)
-{
-    return MQueue::create(name, nullptr, flag);
-}
