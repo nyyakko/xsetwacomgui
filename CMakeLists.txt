@@ -10,12 +10,11 @@ include(cmake/helpers/add_subproject.cmake)
 include(cmake/helpers/use_cpm.cmake)
 include(cmake/packaging.cmake)
 
-find_package(Freetype REQUIRED)
 find_package(OpenGL REQUIRED)
-find_package(Threads REQUIRED)
 
 CPMAddPackage(URI "gh:ericniebler/range-v3#master"  EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:fmtlib/fmt#10.2.1"            EXCLUDE_FROM_ALL YES)
+CPMAddPackage(URI "gh:freetype/freetype#VER-2-14-1" EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:gabime/spdlog@1.15.3"         EXCLUDE_FROM_ALL YES)
 CPMAddPackage(URI "gh:glfw/glfw#3.4"                EXCLUDE_FROM_ALL YES OPTIONS "GLFW_BUILD_WAYLAND OFF")
 CPMAddPackage(URI "gh:Neargye/magic_enum@0.9.7"     EXCLUDE_FROM_ALL YES)
