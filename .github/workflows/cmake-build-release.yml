@@ -31,8 +31,8 @@ jobs:
 
     - name: Build
       run: |
-        VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,' | sed -e 's/^v//')
-        cmake --preset release -DCMAKE_C_COMPILER=clang-20 -DCMAKE_CXX_COMPILER=clang++-20 -DCPACK_PACKAGE_VERSION=$VERSION
+        CPACK_VER=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,' | sed -e 's/^v//')
+        cmake --preset release -DCMAKE_C_COMPILER=clang-20 -DCMAKE_CXX_COMPILER=clang++-20 -DCPACK_PACKAGE_VERSION=$CPACK_VER
         cmake --build build
 
     - name: Upload Source
