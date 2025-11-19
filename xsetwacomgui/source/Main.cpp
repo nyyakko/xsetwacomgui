@@ -131,7 +131,7 @@ static asio::awaitable<void> ipc_message_handler(DeviceListenerClient& client, C
 
 static Result<void> run_gui()
 {
-    static Context context {
+    Context context {
         .devices  = TRY(get_available_devices()),
         .displays = TRY(get_available_displays()),
     };
