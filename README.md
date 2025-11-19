@@ -12,7 +12,7 @@ A graphical `xsetwacom` wrapper for ease of use.
 Before building, make sure you have the following depencies installed on your system:
 
 ```bash
-sudo apt install cmake ninja-build libfreetype6-dev libglu1-mesa-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libudev-dev
+sudo apt install cmake ninja-build libglu1-mesa-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libudev-dev
 ```
 
 and, of course, a X11 installation with `xsetwacom` available. If not available, you can install with the following command:
