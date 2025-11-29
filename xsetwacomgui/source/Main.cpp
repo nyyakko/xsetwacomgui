@@ -54,7 +54,6 @@ static asio::awaitable<void> ipc_message_handler(DeviceListenerClient& client, C
     while (true)
     {
         auto message = co_await client.receive_message_async();
-
         auto action = magic_enum::enum_cast<UDevDevice::Action>(message.data());
         assert(action);
 
@@ -139,12 +138,6 @@ static Result<void> run_gui()
     auto client = TRY(DeviceListenerClient::create(context.stExecutor));
     TRY(client.connect());
 
-    if (!glfwInit()) return make_error("Failed to initialize glfw");
-
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-
     if (!std::filesystem::exists(APPLICATION_SETTINGS_FILE))
     {
         TRY(save_application_settings(context.settings));
@@ -189,6 +182,12 @@ static Result<void> run_gui()
             context.settings = *result;
         }
     }
+
+    if (!glfwInit()) return make_error("Failed to initialize glfw");
+
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
     set_scale(context.settings.scale());
 

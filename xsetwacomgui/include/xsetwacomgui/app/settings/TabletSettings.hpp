@@ -42,7 +42,7 @@ public:
         : profiles_{that.profiles_}
         , profile_{}
     {
-        this->profile_ = ranges::find_if(this->profiles_, [&] (auto const& entry) {
+        profile_ = ranges::find_if(profiles_, [&] (auto const& entry) {
             return entry.first == that.profile_->first;
         });
     }
@@ -70,7 +70,11 @@ public:
         return self.profile_;
     }
 
-    inline constexpr void profile(TabletProfile const& profile) { profile_->second = profile; }
+    inline constexpr void profile(TabletProfile const& profile)
+    {
+        assert(profile_ != profiles_.end());
+        profile_->second = profile;
+    }
 
     inline constexpr void profile(std::map<std::string, TabletProfile>::iterator iterator) { profile_ = iterator; }
 

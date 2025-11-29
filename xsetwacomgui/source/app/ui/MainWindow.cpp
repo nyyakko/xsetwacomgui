@@ -25,7 +25,6 @@
 #include <span>
 
 using namespace liberror;
-using namespace std::literals;
 
 static Result<void> render_area_mappers(Context& context)
 {
@@ -76,14 +75,13 @@ static Result<void> render_area_mappers(Context& context)
     static const ImVec2 displayMapperSize { 20 * 16_scaled, 20 * 9_scaled };
     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - displayMapperSize.x)/2);
     static ImRect displayMapperPosition {};
-    context.hasChangedDisplayArea =
-        AreaMapper(
-            TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_Tabs_Display_Display)),
-            displayAreaAnchors,
-            displayMapperSize,
-            &displayMapperPosition,
-            context.tablet.settings.profile()->second.display.forceFullArea
-        );
+    context.hasChangedDisplayArea = AreaMapper(
+        TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_Tabs_Display_Display)),
+        displayAreaAnchors,
+        displayMapperSize,
+        &displayMapperPosition,
+        context.tablet.settings.profile()->second.display.forceFullArea
+    );
     ImGui::SetCursorPosX(previousCursorPosition.x);
 
     if (context.hasChangedDisplayArea && context.tablet.settings.profile()->second.display.name != "INVALID")
@@ -141,14 +139,13 @@ static Result<void> render_area_mappers(Context& context)
     static const ImVec2 deviceMapperSize { 15 * 16_scaled, 15 * 9_scaled };
     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - deviceMapperSize.x)/2);
     static ImRect deviceMapperPosition {};
-    context.hasChangedDeviceArea =
-        AreaMapper(
-            TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_Tabs_Tablet_Device)),
-            deviceAreaAnchors,
-            deviceMapperSize,
-            &deviceMapperPosition,
-            context.tablet.settings.profile()->second.stylus.forceFullArea
-        );
+    context.hasChangedDeviceArea = AreaMapper(
+        TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_Tabs_Tablet_Device)),
+        deviceAreaAnchors,
+        deviceMapperSize,
+        &deviceMapperPosition,
+        context.tablet.settings.profile()->second.stylus.forceFullArea
+    );
     ImGui::SetCursorPosX(previousCursorPosition.x);
 
     if (context.hasChangedDeviceArea && context.tablet.settings.profile()->second.stylus.name != "INVALID")
@@ -282,7 +279,6 @@ static Result<void> render_tablet_tab(Context& context)
             }
 
             context.hasChangedDeviceHandedness |= ImGui::Combo("##Orientations", &orientationIndex, orientations, std::size(orientations));
-
             if (context.hasChangedDeviceHandedness)
             {
                 context.tablet.settings.profile()->second.stylus.handedness = Device::Handedness(orientationIndex);
@@ -341,7 +337,6 @@ static Result<void> render_tablet_tab(Context& context)
 
         ImGui::AlignTextToFramePadding();
         context.hasChangedDevicePressure = ImGui::BezierEditor(TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_Tabs_Tablet_PressureCurve)), pressureAnchors, { 250_scaled, 250_scaled });
-
         if (context.hasChangedDevicePressure)
         {
             context.tablet.settings.profile()->second.stylus.pressure = { pressureAnchors[0], pressureAnchors[1], pressureAnchors[2], pressureAnchors[3] };
@@ -392,7 +387,6 @@ static Result<void> render_display_tab(Context& context)
         ImGui::Text("%s", TRY(Localisation::get(context.settings.language(), Localisation::Window_Main_Tabs_Display_Display)));
         ImGui::SetNextItemWidth(300_scaled + ImGui::GetStyle().WindowPadding.x);
         context.hasChangedDisplay = ImGui::Combo("##Displays", &displayIndex, displayNames.data(), int(displayNames.size()));
-
         if (context.hasChangedDisplay)
         {
             context.display = context.displays.at(size_t(displayIndex));
@@ -619,6 +613,7 @@ Result<void> render_main_window(Context& context)
                 auto stylus = ranges::find(context_.devices, context_.tablet.settings.profile()->second.stylus.name, &Device::name);
                 assert(stylus != context_.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
                 context_.tablet.stylus = *stylus;
+
                 auto pad = ranges::find(context_.devices, context_.tablet.settings.profile()->second.pad.name, &Device::name);
                 assert(pad != context_.devices.end() && "FIXME: assuming device connected is the same as the one saved in the settings file");
                 context_.tablet.pad = *pad;

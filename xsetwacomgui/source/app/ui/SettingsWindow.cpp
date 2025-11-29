@@ -27,7 +27,7 @@ static Result<void> render_appearance_tab(Context& context)
 
     if (context.hasChangedTheme)
     {
-        context.settings.theme() = ApplicationSettings::Theme(themeIndex);
+        context.settings.theme(ApplicationSettings::Theme(themeIndex));
     }
 
     static auto fonts = get_available_fonts();
@@ -65,7 +65,7 @@ static Result<void> render_appearance_tab(Context& context)
             fontStyleIndex = 0;
         }
 
-        context.settings.font() = fonts.at(fontsFamily.at(size_t(fontFamilyIndex))).at(size_t(fontStyleIndex));
+        context.settings.font(fonts.at(fontsFamily.at(size_t(fontFamilyIndex))).at(size_t(fontStyleIndex)));
     }
 
     return {};
@@ -80,7 +80,7 @@ static Result<void> render_display_tab(Context& context)
     if (context.hasChangedScale)
     {
         scale = std::clamp(scale, 1.0f, 10.f);
-        context.settings.scale() = scale;
+        context.settings.scale(scale);
     }
 
     return {};
@@ -101,7 +101,7 @@ static Result<void> render_languages_tab(Context& context)
 
     if (context.hasChangedLanguage)
     {
-        context.settings.language() = languages.at(size_t(languageIndex));
+        context.settings.language(languages.at(size_t(languageIndex)));
     }
 
     return {};
