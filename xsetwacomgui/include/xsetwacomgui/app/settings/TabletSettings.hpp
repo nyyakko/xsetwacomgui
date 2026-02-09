@@ -1,7 +1,8 @@
 #pragma once
 
-#include "app/settings/TabletProfile.hpp"
 #include "platform/Environment.hpp"
+#include "platform/hid/X11/Device.hpp"
+#include "platform/hid/X11/Display.hpp"
 #include "SettingsError.hpp"
 
 #include <liberror/Result.hpp>
@@ -10,6 +11,40 @@
 #include <map>
 
 inline std::filesystem::path TABLET_SETTINGS_FILE = get_application_config_path() / "tablet_settings.json";
+
+struct StylusProfile
+{
+    std::string name = "INVALID";
+    Device::Handedness handedness = Device::Handedness::RIGHT;
+    Area area;
+    Device::Pressure pressure;
+    bool forceFullArea;
+    std::map<int, Action> mappings;
+};
+
+struct PadProfile
+{
+    std::string name = "INVALID";
+    std::map<int, Action> mappings;
+};
+
+struct DisplayProfile
+{
+    std::string name = "INVALID";
+    Area area;
+    bool forceFullArea;
+};
+
+struct TabletProfile
+{
+    std::string name = "INVALID";
+    StylusProfile stylus;
+    PadProfile pad;
+    DisplayProfile display;
+};
+
+liberror::Result<TabletProfile> make_tablet_profile(std::string_view name, Device const& stylus, Device const& pad, Display const& display);
+liberror::Result<void> load_tablet_profile(TabletProfile const& profile, Device const& stylus, Device const& pad, Display const& display);
 
 class TabletSettings
 {

@@ -29,6 +29,7 @@ include(GNUInstallDirs)
 
 add_subproject(xsetwacomgui
     CC_OPTIONS "-Wno-gnu-statement-expression-from-macro-expansion"
+    LD_OPTIONS ""
     LIBRARIES
         asio::asio fmt::fmt freetype glfw imgui::imgui LibError::LibError
         LibExec::LibExec magic_enum::magic_enum nlohmann_json::nlohmann_json

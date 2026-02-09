@@ -1,7 +1,7 @@
-#include "app/ui/ProfileWindow.hpp"
+#include "app/ui/profile/ProfileWindow.hpp"
 
-#include "app/core/Localisation.hpp"
-#include "app/core/Scaling.hpp"
+#include "app/ui/Localisation.hpp"
+#include "app/ui/Scaling.hpp"
 #include "utils/MakeAsync.hpp"
 
 #include <imgui/extensions/imgui_toast.hpp>

@@ -1,8 +1,8 @@
-#include "app/ui/AboutWindow.hpp"
+#include "app/ui/about/AboutWindow.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "app/core/Localisation.hpp"
-#include "app/core/Scaling.hpp"
+#include "app/ui/Localisation.hpp"
+#include "app/ui/Scaling.hpp"
 #include "external/stb_image/stb_image.h"
 #include "platform/Environment.hpp"
 

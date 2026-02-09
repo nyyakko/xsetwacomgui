@@ -1,6 +1,6 @@
 #pragma once
 
-#include "app/core/MutexProtected.hpp"
+#include "app/core/concurrency/MutexProtected.hpp"
 #include "platform/mqueue/MQueueDescriptor.hpp"
 #include "platform/mqueue/MQueue.hpp"
 

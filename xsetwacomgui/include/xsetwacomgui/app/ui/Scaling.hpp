@@ -6,7 +6,7 @@ inline auto& get_scale()
     return scale;
 }
 
-inline void set_scale(float value)
+inline auto set_scale(float value)
 {
     get_scale() = value;
 }

@@ -1,7 +1,7 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "app/ui/components/DropupButton.hpp"
 
-#include "app/core/Scaling.hpp"
+#include "app/ui/Scaling.hpp"
 
 #include <numeric>
 

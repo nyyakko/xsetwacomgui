@@ -1,4 +1,4 @@
-#include "app/core/FreeType.hpp"
+#include "app/ui/FreeType.hpp"
 
 #include "platform/Environment.hpp"
 

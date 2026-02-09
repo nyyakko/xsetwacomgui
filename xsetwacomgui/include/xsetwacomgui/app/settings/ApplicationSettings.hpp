@@ -1,6 +1,6 @@
 #pragma once
 
-#include "app/core/FreeType.hpp"
+#include "app/ui/FreeType.hpp"
 #include "platform/Environment.hpp"
 #include "SettingsError.hpp"
 
