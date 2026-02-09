@@ -36,8 +36,16 @@
 using namespace liberror;
 using namespace std::literals;
 
-static asio::awaitable<void> ipc_message_handler(DeviceListenerClient& client, Context& context, bool headless)
+static asio::awaitable<void> ipc_message_handler(Context& context, bool headless)
 {
+    static auto client = MUST(DeviceListenerClient::create(context.stExecutor));
+    MUST(client.connect());
+
+    struct sigaction action;
+    action.sa_handler = [] (int) { client.~DeviceListenerClient(); _exit(0); };
+    sigaction(SIGINT, &action, NULL);
+    sigaction(SIGTERM, &action, NULL);
+
     static auto fnGetAvailableDevices = [] (auto shouldRetry) -> asio::awaitable<std::vector<Device>> {
         std::vector<Device> devices {};
 
@@ -54,10 +62,10 @@ static asio::awaitable<void> ipc_message_handler(DeviceListenerClient& client, C
     while (true)
     {
         auto message = co_await client.receive_message_async();
-        auto action = magic_enum::enum_cast<UDevDevice::Action>(message.data());
-        assert(action);
+        auto deviceAction = magic_enum::enum_cast<UDevDevice::Action>(message.data());
+        assert(deviceAction);
 
-        if (*action == UDevDevice::Action::BIND && ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) < 1)
+        if (*deviceAction == UDevDevice::Action::BIND && ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) < 1)
         {
             context.devices = co_await asio::co_spawn(context.mtExecutor, fnGetAvailableDevices(true));
 
@@ -109,7 +117,7 @@ static asio::awaitable<void> ipc_message_handler(DeviceListenerClient& client, C
             }
         }
 
-        if (*action == UDevDevice::Action::UNBIND && ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) <= 1)
+        if (*deviceAction == UDevDevice::Action::UNBIND && ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) <= 1)
         {
             context.devices = co_await asio::co_spawn(context.mtExecutor, fnGetAvailableDevices(false));
 
@@ -130,13 +138,10 @@ static asio::awaitable<void> ipc_message_handler(DeviceListenerClient& client, C
 
 static Result<void> run_gui()
 {
-    Context context {
+    static Context context {
         .devices  = TRY(get_available_devices()),
         .displays = TRY(get_available_displays()),
     };
-
-    auto client = TRY(DeviceListenerClient::create(context.stExecutor));
-    TRY(client.connect());
 
     if (!std::filesystem::exists(APPLICATION_SETTINGS_FILE))
     {
@@ -229,7 +234,7 @@ static Result<void> run_gui()
     }
 
     auto guard = asio::make_work_guard(context.stExecutor);
-    asio::co_spawn(context.stExecutor, ipc_message_handler(client, context, false), asio::detached);
+    asio::co_spawn(context.stExecutor, ipc_message_handler(context, false), asio::detached);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -372,14 +377,6 @@ static Result<void> run_no_gui()
         .displays = TRY(get_available_displays()),
     };
 
-    static auto client = TRY(DeviceListenerClient::create(context.stExecutor));
-    TRY(client.connect());
-
-    struct sigaction action;
-    action.sa_handler = [] (int) { client.~DeviceListenerClient(); _exit(0); };
-    sigaction(SIGINT, &action, NULL);
-    sigaction(SIGTERM, &action, NULL);
-
     if (!std::filesystem::exists(APPLICATION_SETTINGS_FILE))
     {
         TRY(save_application_settings(context.settings));
@@ -448,7 +445,7 @@ static Result<void> run_no_gui()
     }
 
     auto guard = asio::make_work_guard(context.stExecutor);
-    asio::co_spawn(context.stExecutor, ipc_message_handler(client, context, true), asio::detached);
+    asio::co_spawn(context.stExecutor, ipc_message_handler(context, true), asio::detached);
     context.stExecutor.run();
 
     return {};
