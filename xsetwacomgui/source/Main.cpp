@@ -136,6 +136,38 @@ static asio::awaitable<void> ipc_message_handler(Context& context, bool headless
     co_return;
 }
 
+static Result<void> show_migration_prompt(Context const& context)
+{
+    fmt::println("The currently saved application settings");
+    fmt::println("differs from the expected format. You can:\n");
+
+    fmt::println("1. Overwrite Everything");
+    fmt::println("2. Migrate Manually\n");
+
+    while (true)
+    {
+        fmt::print("How would you like to proceed? (choose a value): ");
+
+        auto choice = 0; std::cin >> choice;
+        if (choice == 1 || choice == 2)
+        {
+            if (choice == 1) TRY(save_application_settings(context.settings));
+            if (choice == 2) TRY(migrate_application_settings(context.settings));
+            break;
+        }
+        else
+        {
+            fmt::println("\nInvalid option. Choose either 1 or 2.\n");
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        }
+    }
+
+    fmt::println("Done. Restart the application.");
+
+    return {};
+}
+
 static Result<void> run_gui()
 {
     static Context context {
@@ -153,34 +185,7 @@ static Result<void> run_gui()
 
         if (!result.has_value())
         {
-            fmt::println("The currently saved application settings");
-            fmt::println("differs from the expected format. You can:\n");
-
-            fmt::println("1. Overwrite Everything");
-            fmt::println("2. Migrate Manually\n");
-
-            while (true)
-            {
-                fmt::print("How would you like to proceed? (choose a value): ");
-
-                auto choice = 0; std::cin >> choice;
-                if (choice == 1 || choice == 2)
-                {
-                    if (choice == 1) TRY(save_application_settings(context.settings));
-                    if (choice == 2) TRY(migrate_application_settings(context.settings));
-                    break;
-                }
-                else
-                {
-                    fmt::println("\nInvalid option. Choose either 1 or 2.\n");
-                    std::cin.clear();
-                    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-                }
-            }
-
-            fmt::println("Done. Restart the application.");
-
-            return {};
+            TRY(show_migration_prompt(context));
         }
         else
         {
@@ -387,34 +392,7 @@ static Result<void> run_no_gui()
 
         if (!result.has_value())
         {
-            fmt::println("The currently saved application settings");
-            fmt::println("differs from the expected format. You can:\n");
-
-            fmt::println("1. Overwrite Everything");
-            fmt::println("2. Migrate Manually\n");
-
-            while (true)
-            {
-                fmt::print("How would you like to proceed? (choose a value): ");
-
-                auto choice = 0; std::cin >> choice;
-                if (choice == 1 || choice == 2)
-                {
-                    if (choice == 1) TRY(save_application_settings(context.settings));
-                    if (choice == 2) TRY(migrate_application_settings(context.settings));
-                    break;
-                }
-                else
-                {
-                    fmt::println("\nInvalid option. Choose either 1 or 2.\n");
-                    std::cin.clear();
-                    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-                }
-            }
-
-            fmt::println("Done. Restart the application.");
-
-            return {};
+            TRY(show_migration_prompt(context));
         }
         else
         {
