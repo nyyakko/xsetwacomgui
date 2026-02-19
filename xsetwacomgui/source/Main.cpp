@@ -46,7 +46,7 @@ static asio::awaitable<void> ipc_message_handler(Context& context, bool headless
     sigaction(SIGINT, &action, NULL);
     sigaction(SIGTERM, &action, NULL);
 
-    static auto fnGetAvailableDevices = [] (auto shouldRetry) -> asio::awaitable<std::vector<Device>> {
+    auto getAvailableDevicesFn = [] (auto shouldRetry) -> asio::awaitable<std::vector<Device>> {
         std::vector<Device> devices {};
 
         for (auto _ : ranges::views::iota(0, 3))
@@ -67,7 +67,7 @@ static asio::awaitable<void> ipc_message_handler(Context& context, bool headless
 
         if (*deviceAction == UDevDevice::Action::BIND && ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) < 1)
         {
-            context.devices = co_await asio::co_spawn(context.mtExecutor, fnGetAvailableDevices(true));
+            context.devices = co_await asio::co_spawn(context.mtExecutor, getAvailableDevicesFn(true));
 
             if (context.devices.empty())
             {
@@ -119,7 +119,7 @@ static asio::awaitable<void> ipc_message_handler(Context& context, bool headless
 
         if (*deviceAction == UDevDevice::Action::UNBIND && ranges::count(context.devices, Device::Kind::STYLUS, &Device::kind) <= 1)
         {
-            context.devices = co_await asio::co_spawn(context.mtExecutor, fnGetAvailableDevices(false));
+            context.devices = co_await asio::co_spawn(context.mtExecutor, getAvailableDevicesFn(false));
 
             if (ranges::find(context.devices, context.tablet.settings.profile()->second.stylus.name, &Device::name) != context.devices.end())
             {
@@ -431,7 +431,7 @@ static Result<void> run_no_gui()
 
 static Result<void> safe_main(std::span<char const*> const& arguments)
 {
-    auto mainHelp = [] {
+    auto mainHelpFn = [] {
         fmt::println("Usage: " NAME " [--help] [--no-gui]");
         fmt::println("\na graphical xsetwacom wrapper for ease of use");
         fmt::println("\nOptional arguments:");
@@ -441,7 +441,7 @@ static Result<void> safe_main(std::span<char const*> const& arguments)
 
     if (auto posHelp = ranges::find(arguments, "--help"sv); posHelp != arguments.end())
     {
-        if (std::distance(arguments.begin(), posHelp) == 1) mainHelp();
+        if (std::distance(arguments.begin(), posHelp) == 1) mainHelpFn();
         return {};
     }
 
